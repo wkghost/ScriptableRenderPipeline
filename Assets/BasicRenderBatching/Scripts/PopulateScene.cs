@@ -1,15 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PopulateScene : MonoBehaviour {
 
 
     public GameObject   m_ObjectPrefab;             // 
     public Transform    m_CenterPoint;
+    public Material     m_Material;
+
     public int          m_GridWidth = 16;
     public float m_Spacing = 0.6f;
 
+    public static bool m_DifferentColors = true;
 
     private GameObject[] m_Objects;               // 
 
@@ -35,8 +39,16 @@ public class PopulateScene : MonoBehaviour {
                 vPos += m_CenterPoint.position;
 
                 m_Objects[iIndex] = Instantiate(m_ObjectPrefab, vPos, m_CenterPoint.rotation) as GameObject;
-                iIndex++;
 
+                if (m_DifferentColors)
+                {
+                    Renderer renderer = m_Objects[iIndex].GetComponent<Renderer>();
+                    Material mat = Instantiate(m_Material);
+                    Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
+                    mat.color = oColor;
+                    renderer.material = mat;
+                }
+                iIndex++;
             }
         }
     }
@@ -46,5 +58,18 @@ public class PopulateScene : MonoBehaviour {
     {
 		
 	}
+
+    void OnGUI()
+    {
+
+        GUI.changed = false;
+        m_DifferentColors = GUI.Toggle(new Rect(10, 10, 200, 20), m_DifferentColors, "One color per object");
+
+        if (GUI.changed)
+        {
+            SceneManager.LoadScene("BasicBatching");
+        }
+
+    }
 
 }
