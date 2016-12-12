@@ -1,3 +1,7 @@
+// Upgrade NOTE: replaced 'glstate_matrix_invtrans_modelview0' with 'UNITY_MATRIX_IT_MV'
+// Upgrade NOTE: replaced 'glstate_matrix_modelview0' with 'UNITY_MATRIX_MV'
+// Upgrade NOTE: replaced 'glstate_matrix_mvp' with 'UNITY_MATRIX_MVP'
+
 // Example shader for a scriptable render loop that calculates multiple lights
 // in a single forward-rendered shading pass. Uses same PBR shading model as the
 // Standard shader.
@@ -55,6 +59,20 @@ CBUFFER_START(GlobalLightData)
     float4 globalSH[7];
 CBUFFER_END
 
+/*
+CBUFFER_START(UnityPerDraw)			// 352 bytes, uploaded per object (even if just position change position )
+	float4x4 UNITY_MATRIX_MVP;
+	float4x4 UNITY_MATRIX_MV;
+	float4x4 UNITY_MATRIX_IT_MV;
+
+	float4x4 unity_ObjectToWorld;
+	float4x4 unity_WorldToObject;
+	float4 unity_LODFade; // x is the fade value ranging within [0,1]. y is x quantized into 16 levels
+	float4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
+CBUFFER_END
+*/
+
+
 // Compute attenuation & illumination from one light
 half3 EvaluateOneLight(int idx, float3 positionWS, half3 normalWS, float3 vAlbedo)
 {
@@ -77,20 +95,28 @@ half3 EvaluateOneLight(int idx, float3 positionWS, half3 normalWS, float3 vAlbed
 }
 
 // Vertex shader
-struct v2f
+struct v2f			// vertex to fragment
 {
-    float2 uv : TEXCOORD0;
+//    float2 uv : TEXCOORD0;
     float3 positionWS : TEXCOORD1;
     float3 normalWS : TEXCOORD2;
     float4 hpos : SV_POSITION;
 };
 
-v2f vert(appdata_base v)
+struct s2v			// stream to vertex
+{
+	float4 vertex : POSITION;
+	float3 normal : NORMAL;
+	float4 texcoord : TEXCOORD0;
+};
+
+
+v2f vert(s2v v)
 {
     v2f o;
-    o.hpos = UnityObjectToClipPos(v.vertex);
+    o.hpos = mul(UNITY_MATRIX_MVP, v.vertex);
     o.positionWS = mul(unity_ObjectToWorld, v.vertex).xyz;
-    o.normalWS = UnityObjectToWorldNormal(v.normal);
+	o.normalWS = normalize(mul((float3x3)unity_WorldToObject, v.normal));
     return o;
 }
 
