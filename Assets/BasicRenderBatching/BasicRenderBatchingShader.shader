@@ -14,11 +14,12 @@ Shader "RenderLoop/Batching/Standard"
     // but the inspector UI expects all these to exist.
 	Properties
 	{
-		_Color("Color", Color) = (1,1,1,1)
-        [HideInInspector] _Mode("__mode", Float) = 0.0
-        [HideInInspector] _SrcBlend("__src", Float) = 1.0
-        [HideInInspector] _DstBlend("__dst", Float) = 0.0
-        [HideInInspector] _ZWrite("__zw", Float) = 1.0
+//		_Color("Color", Color) = (1,1,1,1)
+		myColor("Color", Color) = (1,1,1,1)
+		//        [HideInInspector] _Mode("__mode", Float) = 0.0
+ //       [HideInInspector] _SrcBlend("__src", Float) = 1.0
+   //     [HideInInspector] _DstBlend("__dst", Float) = 0.0
+     //   [HideInInspector] _ZWrite("__zw", Float) = 1.0
     }
 
     SubShader
@@ -32,15 +33,16 @@ Shader "RenderLoop/Batching/Standard"
             Tags { "LightMode" = "BasicPass" }
 
             // Use same blending / depth states as Standard shader
-            Blend[_SrcBlend][_DstBlend]
-            ZWrite[_ZWrite]
+            Blend One Zero
+            ZWrite On
 
 CGPROGRAM
 #pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag
-#pragma shader_feature _METALLICGLOSSMAP
-#include "UnityCG.cginc"
+//#pragma shader_feature _METALLICGLOSSMAP
+//#include "UnityCG.cginc"
+#include "HLSLSupport.cginc"
 
 float4 _Color;
 
@@ -58,6 +60,11 @@ CBUFFER_START(GlobalLightData)
     // Global ambient/SH probe, similar to unity_SH* built-in variables.
     float4 globalSH[7];
 CBUFFER_END
+
+CBUFFER_START(FastBatch_PerObjectData : register(b0) )
+	float4 myColor;
+CBUFFER_END
+
 
 /*
 CBUFFER_START(UnityPerDraw)			// 352 bytes, uploaded per object (even if just position change position )
@@ -125,7 +132,7 @@ half4 frag(v2f i) : SV_Target
 {
     i.normalWS = normalize(i.normalWS);
 	float4 color;
-	color.rgb = EvaluateOneLight(0, i.positionWS, i.normalWS, _Color.rgb);
+	color = half4(EvaluateOneLight(0, i.positionWS, i.normalWS, myColor.rgb),1);
     return color;
 }
 

@@ -45,7 +45,7 @@ public class PopulateScene : MonoBehaviour {
                     Renderer renderer = m_Objects[iIndex].GetComponent<Renderer>();
                     Material mat = Instantiate(m_Material);
                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
-                    mat.color = oColor;
+                    mat.SetColor("myColor", oColor);
                     renderer.material = mat;
                 }
                 iIndex++;
