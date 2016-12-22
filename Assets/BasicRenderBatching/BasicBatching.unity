@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731704, g: 0.13414727, b: 0.121078536, a: 1}
+  m_IndirectSpecularColor: {r: 0.1273174, g: 0.13414761, b: 0.12107885, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -325,6 +325,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ObjectPrefab: {fileID: 1877103646185790, guid: b764b667902787f459cc591ec15679db,
     type: 2}
+  m_ObjectsPrefab:
+  - {fileID: 1877103646185790, guid: b764b667902787f459cc591ec15679db, type: 2}
+  - {fileID: 1877103646185790, guid: c840622845d2c194ca0be162e7ea07e6, type: 2}
+  - {fileID: 1877103646185790, guid: 1bf8e80f86a36f94e9ae928a98696056, type: 2}
+  - {fileID: 1877103646185790, guid: 8f7529457c6468241a2043fcfcc241d5, type: 2}
   m_CenterPoint: {fileID: 970523335}
   m_Material: {fileID: 2100000, guid: 4c676c131a81b634988506c3023ea7a5, type: 2}
   m_GridWidth: 64

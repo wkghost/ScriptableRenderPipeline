@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 public class PopulateScene : MonoBehaviour {
 
 
-    public GameObject   m_ObjectPrefab;             // 
+    public GameObject[] m_ObjectsPrefab = new GameObject[4];
     public Transform    m_CenterPoint;
     public Material     m_Material;
 
@@ -32,13 +32,15 @@ public class PopulateScene : MonoBehaviour {
                 //                    int i = z * m_CubesRow + x;
 
                 float fX = (x - (m_GridWidth / 2)) * 2;
-                float fY = 0.0f;
+                float fY = Random.Range(-0.5f, 0.5f);
                 float fZ = (z - (m_GridWidth / 2)) * 2;
 
                 Vector3 vPos = new Vector3(fX * m_Spacing, fY, fZ * m_Spacing);
                 vPos += m_CenterPoint.position;
 
-                m_Objects[iIndex] = Instantiate(m_ObjectPrefab, vPos, m_CenterPoint.rotation) as GameObject;
+                int r = Random.Range(0, 3);
+
+                m_Objects[iIndex] = Instantiate(m_ObjectsPrefab[r], vPos, m_CenterPoint.rotation) as GameObject;
 
                 if (m_DifferentColors)
                 {

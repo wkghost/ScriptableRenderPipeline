@@ -27,6 +27,8 @@ public class MiniProfiler : MonoBehaviour {
 
     RecorderEntry[] recordersList =
     {
+        new RecorderEntry() { name="RenderLoop.Draw" },
+/*
         new RecorderEntry() { name="Camera.Render" },
         new RecorderEntry() { name="GUI.Repaint" },
         new RecorderEntry() { name="PrepareValues" },
@@ -35,6 +37,7 @@ public class MiniProfiler : MonoBehaviour {
         new RecorderEntry() { name="FlushBuffers" },
         new RecorderEntry() { name="BindBuffers" },
 		new RecorderEntry() { name="Gfx.ProcessCommand" },
+*/
 	};
 
     void Awake()
