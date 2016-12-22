@@ -16,7 +16,8 @@ Shader "RenderLoop/Batching/Standard"
 	{
 //		_Color("Color", Color) = (1,1,1,1)
 		myColor("Color", Color) = (1,1,1,1)
-		//        [HideInInspector] _Mode("__mode", Float) = 0.0
+		_MainTex("Albedo", 2D) = "white" {}
+	//        [HideInInspector] _Mode("__mode", Float) = 0.0
  //       [HideInInspector] _SrcBlend("__src", Float) = 1.0
    //     [HideInInspector] _DstBlend("__dst", Float) = 0.0
      //   [HideInInspector] _ZWrite("__zw", Float) = 1.0
@@ -101,10 +102,13 @@ half3 EvaluateOneLight(int idx, float3 positionWS, half3 normalWS, float3 vAlbed
     return c;
 }
 
+sampler2D _MainTex;
+
+
 // Vertex shader
 struct v2f			// vertex to fragment
 {
-//    float2 uv : TEXCOORD0;
+    float2 uv : TEXCOORD0;
     float3 positionWS : TEXCOORD1;
     float3 normalWS : TEXCOORD2;
     float4 hpos : SV_POSITION;
@@ -121,6 +125,7 @@ struct s2v			// stream to vertex
 v2f vert(s2v v)
 {
     v2f o;
+	o.uv = v.texcoord.xy;
     o.hpos = mul(UNITY_MATRIX_MVP, v.vertex);
     o.positionWS = mul(unity_ObjectToWorld, v.vertex).xyz;
 	o.normalWS = normalize(mul((float3x3)unity_WorldToObject, v.normal));
@@ -132,7 +137,11 @@ half4 frag(v2f i) : SV_Target
 {
     i.normalWS = normalize(i.normalWS);
 	float4 color;
-	color = half4(EvaluateOneLight(0, i.positionWS, i.normalWS, myColor.rgb),1);
+
+	float4 diffuseAlbedo = tex2D(_MainTex, i.uv);
+
+
+	color = half4(EvaluateOneLight(0, i.positionWS, i.normalWS, diffuseAlbedo.rgb * myColor.rgb),1);
     return color;
 }
 

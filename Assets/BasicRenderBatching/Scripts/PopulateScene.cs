@@ -10,6 +10,8 @@ public class PopulateScene : MonoBehaviour {
     public Transform    m_CenterPoint;
     public Material     m_Material;
 
+    public Texture2D[] m_Textures = new Texture2D[8];
+
     public int          m_GridWidth = 16;
     public float m_Spacing = 0.6f;
 
@@ -48,6 +50,9 @@ public class PopulateScene : MonoBehaviour {
                     Material mat = Instantiate(m_Material);
                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
                     mat.SetColor("myColor", oColor);
+
+                    int t = Random.Range(0, 7);
+                    mat.SetTexture("_MainTex", m_Textures[t]);
 
                     mat.InitUniformBuffers();
 
