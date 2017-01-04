@@ -45,7 +45,7 @@ CGPROGRAM
 //#include "UnityCG.cginc"
 #include "HLSLSupport.cginc"
 
-float4 _Color;
+//float4 _Color;
 
 // Global lighting data (setup from C# code once per frame).
 
