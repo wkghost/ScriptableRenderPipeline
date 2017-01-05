@@ -49,6 +49,21 @@ float ComputeCubeToSphereMapSqMagnitude(float3 v)
     return dot(v, v) - v2.x * v2.y - v2.y * v2.z - v2.z * v2.x + v2.x * v2.y * v2.z;
 }
 
+// texelArea = 4.0 / (resolution * resolution).
+// Ref: http://bpeers.com/blog/?itemid=1017
+float ComputeCubemapTexelSolidAngle(float3 L, float texelArea)
+{
+    // Stretch 'L' by (1/d) so that it points at a side of a [-1, 1]^2 cube.
+    float d = Max3(abs(L.x), abs(L.y), abs(L.z));
+    // Since 'L' is a unit vector, we can directly compute its
+    // new (inverse) length without dividing 'L' by 'd' first.
+    float invDist = d;
+
+    // dw = dA * cosTheta / (dist * dist), cosTheta = 1.0 / dist,
+    // where 'dA' is the area of the cube map texel.
+    return texelArea * invDist * invDist * invDist;
+}
+
 //-----------------------------------------------------------------------------
 // Attenuation functions
 //-----------------------------------------------------------------------------
@@ -155,12 +170,21 @@ float2 GetIESTextureCoordinate(float3x3 lightToWord, float3 L)
 // Get local frame
 //-----------------------------------------------------------------------------
 
-// generate an orthonormalBasis from 3d unit vector.
-void GetLocalFrame(float3 N, out float3 tangentX, out float3 tangentY)
+// Generates an orthonormal basis from two orthogonal unit vectors.
+float3x3 GetLocalFrame(float3 localZ, float3 localX)
 {
-    float3 upVector     = abs(N.z) < 0.999 ? float3(0.0, 0.0, 1.0) : float3(1.0, 0.0, 0.0);
-    tangentX            = normalize(cross(upVector, N));
-    tangentY            = cross(N, tangentX);
+    float3 localY = cross(localZ, localX);
+
+    return float3x3(localX, localY, localZ);
+}
+
+// Generates an orthonormal basis from a unit vector.
+float3x3 GetLocalFrame(float3 localZ)
+{
+    float3 upVector = abs(localZ.z) < 0.999 ? float3(0.0, 0.0, 1.0) : float3(1.0, 0.0, 0.0);
+    float3 localX   = normalize(cross(upVector, localZ));
+
+    return GetLocalFrame(localZ, localX);
 }
 
 // TODO: test

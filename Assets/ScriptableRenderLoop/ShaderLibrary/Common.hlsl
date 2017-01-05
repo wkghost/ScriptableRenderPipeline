@@ -79,6 +79,30 @@ uint BitFieldExtract(uint data, uint size, uint offset)
 #define Clamp clamp
 #endif // INTRINSIC_CLAMP
 
+#ifndef INTRINSIC_MUL24
+int Mul24(int a, int b)
+{
+    return a * b;
+}
+
+uint Mul24(uint a, uint b)
+{
+    return a * b;
+}
+#endif // INTRINSIC_MUL24
+
+#ifndef INTRINSIC_MAD24
+int Mad24(int a, int b, int c)
+{
+    return a * b + c;
+}
+
+uint Mad24(uint a, uint b, uint c)
+{
+    return a * b + c;
+}
+#endif // INTRINSIC_MAD24
+
 #ifndef INTRINSIC_MED3
 float Med3(float a, float b, float c)
 {
@@ -148,8 +172,15 @@ void Swap(inout float4 a, inout float4 b)
     float4 t = a; a = b; b = t;
 }
 
+#define CUBEMAPFACE_POSITIVE_X 0
+#define CUBEMAPFACE_NEGATIVE_X 1
+#define CUBEMAPFACE_POSITIVE_Y 2
+#define CUBEMAPFACE_NEGATIVE_Y 3
+#define CUBEMAPFACE_POSITIVE_Z 4
+#define CUBEMAPFACE_NEGATIVE_Z 5
+
 #ifndef INTRINSIC_CUBEMAP_FACE_ID
-// TODO: implement this. Is the reference implementation of cubemapID provide by AMD the reverse of our ? 
+// TODO: implement this. Is the reference implementation of cubemapID provide by AMD the reverse of our ?
 /*
 float CubemapFaceID(float3 dir)
 {
@@ -169,14 +200,6 @@ float CubemapFaceID(float3 dir)
     return faceID;
 }
 */
-#endif // INTRINSIC_CUBEMAP_FACE_ID
-
-#define CUBEMAPFACE_POSITIVE_X 0
-#define CUBEMAPFACE_NEGATIVE_X 1
-#define CUBEMAPFACE_POSITIVE_Y 2
-#define CUBEMAPFACE_NEGATIVE_Y 3
-#define CUBEMAPFACE_POSITIVE_Z 4
-#define CUBEMAPFACE_NEGATIVE_Z 5
 
 void GetCubeFaceID(float3 dir, out int faceIndex)
 {
@@ -198,6 +221,8 @@ void GetCubeFaceID(float3 dir, out int faceIndex)
     }
 }
 
+#endif // INTRINSIC_CUBEMAP_FACE_ID
+
 // ----------------------------------------------------------------------------
 // Common math definition and fastmath function
 // ----------------------------------------------------------------------------
@@ -212,6 +237,7 @@ void GetCubeFaceID(float3 dir, out int faceIndex)
 #define INV_HALF_PI 0.636619772367
 
 #define FLT_EPSILON 1.192092896e-07 // Smallest positive number, such that 1.0 + FLT_EPSILON != 1.0
+#define FLT_MIN     1.175494351e-38 // Minimum representable positive floating-point number
 #define FLT_MAX     3.402823466e+38 // Maximum representable floating-point number
 
 #define MERGE_NAME(X, Y) X##Y
@@ -262,7 +288,7 @@ float FastATanPos(float x)
 
 // 4 VGPR, 16 FR (12 FR, 1 QR), 2 scalar
 // input [-infinity, infinity] and output [-PI/2, PI/2]
-float FastATan(float x) 
+float FastATan(float x)
 {
     float t0 = FastATanPos(abs(x));
     return (x < 0.0) ? -t0 : t0;
@@ -310,78 +336,123 @@ float4 PositivePow(float4 base, float4 power)
 // World position reconstruction / transformation
 // ----------------------------------------------------------------------------
 
-struct Coordinate
+// Z buffer to linear 0..1 depth (0 at near plane, 1 at far plane)
+float Linear01DepthFromNear(float depth, float4 zBufferParam)
 {
-    // Normalize coordinates
-    float2  positionSS;
-    // Unormalize coordinates
-    uint2    unPositionSS;
-};
-
-// This function is use to provide an easy way to sample into a screen texture, either from a pixel or a compute shaders.
-// This allow to easily share code.
-// If a compute shader call this function unPositionSS is an integer usually calculate like: uint2 unPositionSS = groupId.xy * BLOCK_SIZE + groupThreadId.xy
-// else it is current unormalized screen coordinate like return by VPOS
-Coordinate GetCoordinate(float2 unPositionSS, float2 invScreenSize)
-{
-    Coordinate coord;
-    coord.positionSS = unPositionSS;
-#if SHADER_STAGE_COMPUTE
-    // In case of compute shader an extra half offset is added to the screenPos to shift the integer position to pixel center.
-    coord.positionSS.xy += float2(0.5, 0.5);
-#endif
-    coord.positionSS *= invScreenSize;
-
-    coord.unPositionSS = uint2(unPositionSS);
-
-    return coord;
+    return 1.0 / (zBufferParam.x + zBufferParam.y / depth);
 }
 
-// screenPos is screen coordinate in [0..1] (return by Coordinate.positionSS)
-// depth must be the depth from the raw depth buffer. This allow to handle all kind of depth automatically with the inverse view projection matrix.
-// For information. In Unity Depth is always in range 0..1 (even on OpenGL) but can be reversed.
-float3 UnprojectToWorld(float depth, float2 screenPos, float4x4 invViewProjectionMatrix)
-{
-    float4 positionCS   = float4(screenPos.xy * 2.0 - 1.0, depth, 1.0);
-    float4 hpositionWS  = mul(invViewProjectionMatrix, positionCS);
-
-    return hpositionWS.xyz / hpositionWS.w;
-}
-
-// Z buffer to linear 0..1 depth
+// Z buffer to linear 0..1 depth (0 at camera position, 1 at far plane)
 float Linear01Depth(float depth, float4 zBufferParam)
 {
     return 1.0 / (zBufferParam.x * depth + zBufferParam.y);
 }
+
 // Z buffer to linear depth
 float LinearEyeDepth(float depth, float4 zBufferParam)
 {
     return 1.0 / (zBufferParam.z * depth + zBufferParam.w);
 }
 
+struct PositionInputs
+{
+    // Normalize screen position (offset by 0.5)
+    float2 positionSS;
+    // Unormalize screen position (offset by 0.5)
+    uint2 unPositionSS;
+
+    float depthRaw; // raw depth from depth buffer
+    float depthVS;
+
+    float4 positionCS;
+    float3 positionWS;
+};
+
+// This function is use to provide an easy way to sample into a screen texture, either from a pixel or a compute shaders.
+// This allow to easily share code.
+// If a compute shader call this function unPositionSS is an integer usually calculate like: uint2 unPositionSS = groupId.xy * BLOCK_SIZE + groupThreadId.xy
+// else it is current unormalized screen coordinate like return by SV_Position
+PositionInputs GetPositionInput(float2 unPositionSS, float2 invScreenSize)
+{
+    PositionInputs posInput;
+    ZERO_INITIALIZE(PositionInputs, posInput);
+
+    posInput.positionSS = unPositionSS;
+#if SHADER_STAGE_COMPUTE
+    // In case of compute shader an extra half offset is added to the screenPos to shift the integer position to pixel center.
+    posInput.positionSS.xy += float2(0.5, 0.5);
+#endif
+    posInput.positionSS *= invScreenSize;
+
+    posInput.unPositionSS = uint2(unPositionSS);
+
+    return posInput;
+}
+
+// From forward
+// depthRaw and depthVS come directly form .zw of SV_Position
+void UpdatePositionInput(float depthRaw, float depthVS, float3 positionWS, inout PositionInputs posInput)
+{
+    posInput.depthRaw = depthRaw;
+    posInput.depthVS = depthVS;
+
+    // TODO: We revert for DX but maybe it is not the case of OGL ? Test the define ?
+    posInput.positionCS = float4((posInput.positionSS - 0.5) * float2(2.0, -2.0), depthRaw, 1.0) * depthVS; // depthVS is SV_Position.w
+    posInput.positionWS = positionWS;
+}
+
+// From deferred or compute shader
+// depth must be the depth from the raw depth buffer. This allow to handle all kind of depth automatically with the inverse view projection matrix.
+// For information. In Unity Depth is always in range 0..1 (even on OpenGL) but can be reversed.
+void UpdatePositionInput(float depth, float4x4 invViewProjectionMatrix, float4x4 ViewProjectionMatrix, inout PositionInputs posInput)
+{
+    posInput.depthRaw = depth;
+
+    // TODO: Do we need to flip Y axis here on OGL ?
+    posInput.positionCS = float4(posInput.positionSS.xy * 2.0 - 1.0, depth, 1.0);
+    float4 hpositionWS = mul(invViewProjectionMatrix, posInput.positionCS);
+    posInput.positionWS = hpositionWS.xyz / hpositionWS.w;
+
+    // The compiler should optimize this (less expensive than reconstruct depth VS from depth buffer)
+    posInput.depthVS = mul(ViewProjectionMatrix, float4(posInput.positionWS, 1.0)).w;
+
+    posInput.positionCS *= posInput.depthVS;
+}
+
+// depthOffsetVS is always in the direction of the view vector (V)
+void ApplyDepthOffsetPositionInput(float V, float depthOffsetVS, inout PositionInputs posInput)
+{
+    posInput.depthVS += depthOffsetVS;
+    // TODO: it is an approx, need a correct value where we use projection matrix to reproject the depth from VS
+    posInput.depthRaw = posInput.positionCS.z / posInput.depthVS;
+
+    // TODO: Do we need to flip Y axis here on OGL ?
+    posInput.positionCS = float4(posInput.positionSS.xy * 2.0 - 1.0, posInput.depthRaw, 1.0) * posInput.depthVS;
+    // Just add the offset along the view vector is sufficiant for world position
+    posInput.positionWS += V * depthOffsetVS;
+}
+
 //-----------------------------------------------------------------------------
 // various helper
 //-----------------------------------------------------------------------------
 
-// NdotV should not be negative for visible pixels, but it can happen due to perspective projection and normal mapping + decal
-// In this case this may cause weird artifact.
-// GetNdotV return a 'valid' data
-float GetNdotV(float3 N, float3 V)
+// NdotV should not be negative for visible pixels, but it can happen due to the
+// perspective projection and the normal mapping + decals. In that case, the normal
+// should be modified to become valid (i.e facing the camera) to avoid weird artifacts.
+// Note: certain applications (e.g. SpeedTree) make use of two-sided lighting.
+float GetShiftedNdotV(inout float3 N, float3 V, bool twoSided)
 {
-    return abs(dot(N, V)); // This abs allow to limit artifact
+    float NdotV = dot(N, V);
+    float limit = 1e-4;
+
+    if (!twoSided && NdotV < limit)
+    {
+        // We do not renormalize the normal because { abs(length(N) - 1.0) < limit }.
+        N    += (-NdotV + limit) * V;
+        NdotV = limit;
+    }
+
+    return NdotV;
 }
 
-// NdotV should not be negative for visible pixels, but it can happen due to perspective projection and normal mapping + decal
-// In this case normal should be modified to become valid (i.e facing camera) and not cause weird artifacts.
-// but this operation adds few ALU and users may not want it. Alternative is to simply take the abs of NdotV (less correct but works too).
-// Note: This code is not compatible with two sided lighting used in SpeedTree (TODO: investigate).
-float GetShiftedNdotV(float3 N, float3 V)
-{
-    // The amount we shift the normal toward the view vector is defined by the dot product.
-    float shiftAmount = dot(N, V);
-    N = shiftAmount < 0.0 ? N + V * (-shiftAmount + 1e-5f) : N;
-    N = normalize(N);
-
-    return saturate(dot(N, V)); // TODO: this saturate should not be necessary here
-}
 #endif // UNITY_COMMON_INCLUDED
