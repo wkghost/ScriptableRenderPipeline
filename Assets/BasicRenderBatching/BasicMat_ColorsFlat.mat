@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: BasicMat_ColorsFlat
-  m_Shader: {fileID: 4800000, guid: 88dc421b065e08e4caeb32d940c57312, type: 3}
+  m_Shader: {fileID: 4800000, guid: 915ec92038355ed418b43639259468cc, type: 3}
   m_ShaderKeywords: _EMISSION
   m_LightmapFlags: 1
   m_CustomRenderQueue: -1
@@ -52,6 +52,38 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - myTexture1:
+        m_Texture: {fileID: 2800000, guid: 4425fca2a65e78c49b2415476d1cc5ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture2:
+        m_Texture: {fileID: 2800000, guid: 04b429f47f1e0d54ca799a2a31986801, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture3:
+        m_Texture: {fileID: 2800000, guid: 70233265683595f468e46f6300a0c7f5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture4:
+        m_Texture: {fileID: 2800000, guid: b94537f3a7934f84a9e66c662bc06800, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture5:
+        m_Texture: {fileID: 2800000, guid: ff3ba92a36048274ab6eb2ec4567fa44, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture6:
+        m_Texture: {fileID: 2800000, guid: 2d69bdda1399802499987e9f68ae88ed, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture7:
+        m_Texture: {fileID: 2800000, guid: 14d974c88ade21747938eb13f6cfc152, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - myTexture8:
+        m_Texture: {fileID: 2800000, guid: 8e18cf146b7c0d0449454cdeb8653d94, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -72,3 +104,4 @@ Material:
     m_Colors:
     - _Color: {r: 0.97794116, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - myColor: {r: 1, g: 1, b: 1, a: 1}

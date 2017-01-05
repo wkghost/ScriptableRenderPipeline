@@ -57,8 +57,14 @@ public class PopulateScene : MonoBehaviour {
                         Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
                         mat.SetColor("myColor", oColor);
 
-                        int t = Random.Range(0, 7 + 1);
-                        mat.SetTexture("_MainTex", m_Textures[t]);
+                        mat.SetTexture("myTexture1", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture2", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture3", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture4", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture5", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture6", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture7", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture8", m_Textures[Random.Range(0, 7 + 1)]);
 
                         mat.InitUniformBuffers();
 
