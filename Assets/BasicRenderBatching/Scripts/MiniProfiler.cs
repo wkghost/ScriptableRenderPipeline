@@ -28,6 +28,12 @@ public class MiniProfiler : MonoBehaviour {
     RecorderEntry[] recordersList =
     {
         new RecorderEntry() { name="RenderLoop.Draw" },
+//        new RecorderEntry() { name="BatchRenderer.Flush" },
+        new RecorderEntry() { name="BatchRenderer.RenderBatch" },
+        new RecorderEntry() { name="BatchRenderer.ApplyShaderPass" },
+        new RecorderEntry() { name="PerformFlushProperties" },
+
+        
 /*
         new RecorderEntry() { name="Camera.Render" },
         new RecorderEntry() { name="GUI.Repaint" },

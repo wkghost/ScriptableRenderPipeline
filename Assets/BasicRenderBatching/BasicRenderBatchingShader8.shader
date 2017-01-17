@@ -171,5 +171,5 @@ ENDCG
 		}
 	}
 
-	CustomEditor "StandardShaderGUI"
+//	CustomEditor "StandardShaderGUI"
 }

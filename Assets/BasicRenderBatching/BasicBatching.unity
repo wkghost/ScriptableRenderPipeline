@@ -341,8 +341,8 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 2d69bdda1399802499987e9f68ae88ed, type: 3}
   - {fileID: 2800000, guid: 14d974c88ade21747938eb13f6cfc152, type: 3}
   - {fileID: 2800000, guid: 8e18cf146b7c0d0449454cdeb8653d94, type: 3}
-  m_GridWidth: 100
-  m_GridLayers: 2
+  m_GridWidth: 32
+  m_GridLayers: 1
   m_Spacing: 0.4
 --- !u!114 &870320119
 MonoBehaviour:
