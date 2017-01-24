@@ -332,6 +332,7 @@ MonoBehaviour:
   - {fileID: 1877103646185790, guid: 8f7529457c6468241a2043fcfcc241d5, type: 2}
   m_CenterPoint: {fileID: 970523335}
   m_Material: {fileID: 2100000, guid: 4c676c131a81b634988506c3023ea7a5, type: 2}
+  m_MaterialFlat: {fileID: 2100000, guid: a210f34e3be3934469873bc52280e018, type: 2}
   m_Textures:
   - {fileID: 2800000, guid: 4425fca2a65e78c49b2415476d1cc5ec, type: 3}
   - {fileID: 2800000, guid: 04b429f47f1e0d54ca799a2a31986801, type: 3}
@@ -341,7 +342,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 2d69bdda1399802499987e9f68ae88ed, type: 3}
   - {fileID: 2800000, guid: 14d974c88ade21747938eb13f6cfc152, type: 3}
   - {fileID: 2800000, guid: 8e18cf146b7c0d0449454cdeb8653d94, type: 3}
-  m_GridWidth: 32
+  m_GridWidth: 128
   m_GridLayers: 1
   m_Spacing: 0.4
 --- !u!114 &870320119

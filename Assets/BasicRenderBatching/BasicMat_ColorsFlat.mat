@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: BasicMat_ColorsFlat
-  m_Shader: {fileID: 4800000, guid: 915ec92038355ed418b43639259468cc, type: 3}
+  m_Shader: {fileID: 4800000, guid: 552f186b9e84fe1409a0c237fff4c3e6, type: 3}
   m_ShaderKeywords: _EMISSION
   m_LightmapFlags: 1
   m_CustomRenderQueue: -1

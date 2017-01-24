@@ -8,7 +8,8 @@ public class PopulateScene : MonoBehaviour {
 
     public GameObject[] m_ObjectsPrefab = new GameObject[4];
     public Transform    m_CenterPoint;
-    public Material     m_Material;
+    public Material m_Material;
+    public Material m_MaterialFlat;
 
     public Texture2D[] m_Textures = new Texture2D[8];
 
@@ -16,7 +17,7 @@ public class PopulateScene : MonoBehaviour {
     public int          m_GridLayers = 1;
     public float m_Spacing = 0.6f;
 
-    public static bool m_ChangeTexture = false;
+    public static bool m_Use8Textures = false;
 
     private GameObject[] m_Objects;               // 
     private Material[] m_Materials;               // 
@@ -53,18 +54,26 @@ public class PopulateScene : MonoBehaviour {
                     m_Objects[iIndex] = Instantiate(m_ObjectsPrefab[r], vPos, m_CenterPoint.rotation) as GameObject;
 
                     Renderer renderer = m_Objects[iIndex].GetComponent<Renderer>();
-                    Material mat = Instantiate(m_Material);
+                    Material mat;
+                    if ( m_Use8Textures )
+                        mat = Instantiate(m_Material);
+                    else
+                        mat = Instantiate(m_MaterialFlat);
+
                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
                     mat.SetColor("myColor", oColor);
 
-                    mat.SetTexture("myTexture1", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture2", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture3", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture4", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture5", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture6", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture7", m_Textures[Random.Range(0, 7 + 1)]);
-                    mat.SetTexture("myTexture8", m_Textures[Random.Range(0, 7 + 1)]);
+                    if (m_Use8Textures)
+                    {
+                        mat.SetTexture("myTexture1", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture2", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture3", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture4", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture5", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture6", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture7", m_Textures[Random.Range(0, 7 + 1)]);
+                        mat.SetTexture("myTexture8", m_Textures[Random.Range(0, 7 + 1)]);
+                    }
 
                     renderer.material = mat;
                     renderer.material.InitUniformBuffers();
@@ -79,7 +88,8 @@ public class PopulateScene : MonoBehaviour {
     // Update is called once per frame
     void Update ()
     {
-        if ( m_ChangeTexture )
+/*
+        if ( m_Use8Textures )
         {
             int r = Random.Range(0, m_GridWidth * m_GridWidth * m_GridLayers);
             m_Materials[r].SetTexture("myTexture1", m_Textures[Random.Range(0, 7 + 1)]);
@@ -91,6 +101,7 @@ public class PopulateScene : MonoBehaviour {
             m_Materials[r].SetTexture("myTexture7", m_Textures[Random.Range(0, 7 + 1)]);
             m_Materials[r].SetTexture("myTexture8", m_Textures[Random.Range(0, 7 + 1)]);
         }
+*/
 
     }
 
@@ -98,7 +109,7 @@ public class PopulateScene : MonoBehaviour {
     {
 
         GUI.changed = false;
-        m_ChangeTexture = GUI.Toggle(new Rect(10, 10, 200, 20), m_ChangeTexture, "change rand texture");
+        m_Use8Textures = GUI.Toggle(new Rect(10, 10, 200, 20), m_Use8Textures, "change rand texture");
 
         if (GUI.changed)
         {

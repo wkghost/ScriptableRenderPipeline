@@ -33,6 +33,9 @@ public class Scatterer
         foreach (var o in toErase)
             Object.DestroyImmediate(o);
 
+        toErase = (Object.FindObjectsOfType(typeof(GameObject)) as GameObject[]).Where(o => o.name.Contains("Iron5") && o.name.Contains("(Clone)"));
+        foreach (var o in toErase)
+            Object.DestroyImmediate(o);
 
         Random.InitState(31415926);
 
@@ -58,7 +61,9 @@ public class Scatterer
                     GameObject obj = GameObject.Instantiate(m_ObjectsPrefab[Random.Range(0, 4)], vPos, Quaternion.identity) as GameObject;
 
                     Renderer renderer = obj.GetComponent<Renderer>();
-                    Material mat = Material.Instantiate(m_MaterialPrefab[Random.Range(0, 4)]);
+
+                    int matN = 0; // Random.Range(0, 4)
+                    Material mat = Material.Instantiate(m_MaterialPrefab[matN]);
                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
                     mat.SetColor("myColor", oColor);
 
