@@ -9,6 +9,7 @@ public class Scatterer
 {
     static public GameObject[] m_ObjectsPrefab = new GameObject[4];
     static public Material[] m_MaterialPrefab = new Material[4];
+    static public Texture2D[] m_TexturesPrefab = new Texture2D[4];
 
 
     [MenuItem("Arnaud/Generator")]
@@ -23,6 +24,12 @@ public class Scatterer
         m_MaterialPrefab[1] = (Material)AssetDatabase.LoadAssetAtPath("Assets/TestScenes/HDTest/Material/BatchingTest/Materials/Iron51.mat", typeof(Material));
         m_MaterialPrefab[2] = (Material)AssetDatabase.LoadAssetAtPath("Assets/TestScenes/HDTest/Material/BatchingTest/Materials/Iron52.mat", typeof(Material));
         m_MaterialPrefab[3] = (Material)AssetDatabase.LoadAssetAtPath("Assets/TestScenes/HDTest/Material/BatchingTest/Materials/Iron53.mat", typeof(Material));
+
+        m_TexturesPrefab[0] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/Glass.tif", typeof(Texture2D));
+        m_TexturesPrefab[1] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/ColorGrid.png", typeof(Texture2D));
+        m_TexturesPrefab[2] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/cookieTest.png", typeof(Texture2D));
+        m_TexturesPrefab[3] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/fx_flame_01_d.tif", typeof(Texture2D));
+
 
         int m_GridLayers = 1;
         int m_GridWidth = 32;
@@ -64,8 +71,11 @@ public class Scatterer
 
                     int matN = 0; // Random.Range(0, 4)
                     Material mat = Material.Instantiate(m_MaterialPrefab[matN]);
-                    Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
-                    mat.SetColor("myColor", oColor);
+//                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
+//                     mat.SetColor("myColor", oColor);
+
+                    mat.SetTexture("_BaseColorMap", m_TexturesPrefab[Random.Range(0, 4)]);
+
 
                     renderer.material = mat;
 //                    renderer.material.InitUniformBuffers();
