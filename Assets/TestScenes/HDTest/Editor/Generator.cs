@@ -25,6 +25,8 @@ public class Scatterer
         m_MaterialPrefab[2] = (Material)AssetDatabase.LoadAssetAtPath("Assets/TestScenes/HDTest/Material/BatchingTest/Materials/Iron52.mat", typeof(Material));
         m_MaterialPrefab[3] = (Material)AssetDatabase.LoadAssetAtPath("Assets/TestScenes/HDTest/Material/BatchingTest/Materials/Iron53.mat", typeof(Material));
 
+        Material chromeMat = (Material)AssetDatabase.LoadAssetAtPath("Assets/TestScenes/HDTest/Material/BatchingTest/Materials/Chrome.mat", typeof(Material));
+
         m_TexturesPrefab[0] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/Glass.tif", typeof(Texture2D));
         m_TexturesPrefab[1] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/ColorGrid.png", typeof(Texture2D));
         m_TexturesPrefab[2] = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/BasicRenderBatching/Textures/cookieTest.png", typeof(Texture2D));
@@ -69,12 +71,16 @@ public class Scatterer
 
                     Renderer renderer = obj.GetComponent<Renderer>();
 
-                    int matN = 0; // Random.Range(0, 4)
-                    Material mat = Material.Instantiate(m_MaterialPrefab[matN]);
+//                    int matN = 0; // Random.Range(0, 4)
+//                    Material mat = Material.Instantiate(m_MaterialPrefab[matN]);
+
+                    Material mat = Material.Instantiate(chromeMat);
+
+
 //                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
 //                     mat.SetColor("myColor", oColor);
 
-                    mat.SetTexture("_BaseColorMap", m_TexturesPrefab[Random.Range(0, 4)]);
+//                    mat.SetTexture("_BaseColorMap", m_TexturesPrefab[Random.Range(0, 4)]);
 
 
                     renderer.material = mat;
