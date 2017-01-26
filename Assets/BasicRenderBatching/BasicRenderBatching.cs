@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.ScriptableRenderPipeline;
+//using UnityEngine.ScriptableRenderPipeline;
 
 // Very basic scriptable rendering loop example:
 // - Use with BasicRenderLoopShader.shader (the loop expects "BasicPass" pass type to exist)
@@ -71,7 +71,7 @@ public static class BasicRenderingBatching
             var settings = new DrawRendererSettings(cull, camera, new ShaderPassName("BasicPass"));
             settings.sorting.flags = SortFlags.CommonOpaque;
             settings.inputFilter.SetQueuesOpaque();
-            context.DrawRenderers(ref settings);
+//            context.DrawRenderers(ref settings);
 
             // Draw skybox
             context.DrawSkybox(camera);
@@ -79,7 +79,7 @@ public static class BasicRenderingBatching
             // Draw transparent objects using BasicPass shader pass
             settings.sorting.flags = SortFlags.CommonTransparent;
             settings.inputFilter.SetQueuesTransparent();
-            context.DrawRenderers(ref settings);
+//            context.DrawRenderers(ref settings);
 
             context.Submit();
         }
