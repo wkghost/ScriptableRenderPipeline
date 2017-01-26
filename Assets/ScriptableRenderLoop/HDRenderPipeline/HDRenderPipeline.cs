@@ -1,10 +1,11 @@
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
 using System.Collections.Generic;
 using System;
-using UnityEngine.ScriptableRenderPipeline;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
-namespace UnityEngine.Experimental.ScriptableRenderLoop
+namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class HDRenderPipelineInstance : RenderPipeline
     {
@@ -17,14 +18,14 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             if (m_Owner != null)
                 m_Owner.Build();
         }
-        
+
         public override void Dispose()
         {
             base.Dispose();
             if (m_Owner != null)
                 m_Owner.Cleanup();
         }
-        
+
 
         public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
@@ -45,6 +46,21 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         {
             var instance = ScriptableObject.CreateInstance<HDRenderPipeline>();
             UnityEditor.AssetDatabase.CreateAsset(instance, k_HDRenderPipelinePath);
+
+            instance.m_setup = UnityEditor.AssetDatabase.LoadAssetAtPath<HDRenderPipelineSetup>("Assets/HDRenderPipelineSetup.asset");
+        }
+
+        [UnityEditor.MenuItem("RenderPipeline/UpdateHDLoop")]
+        static void UpdateHDLoop()
+        {
+            var guids = AssetDatabase.FindAssets("t:HDRenderPipeline");
+            foreach (var guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var loop = AssetDatabase.LoadAssetAtPath<HDRenderPipeline>(path);
+                loop.m_setup = AssetDatabase.LoadAssetAtPath<HDRenderPipelineSetup>("Assets/HDRenderPipelineSetup.asset");
+                EditorUtility.SetDirty(loop);
+            }
         }
 
         [UnityEditor.MenuItem("HDRenderPipeline/Add \"Additional Light Data\" (if not present)")]
@@ -63,11 +79,23 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         }
 #endif
 
+        HDRenderPipeline()
+        {
+            m_lightLoop = new TilePass.LightLoop(this);
+        }
+
+        [SerializeField]
+        private HDRenderPipelineSetup m_setup;
+
+        public HDRenderPipelineSetup renderPipelineSetup
+        {
+            get { return m_setup; }
+        }
         protected override IRenderPipeline InternalCreatePipeline()
         {
             return new HDRenderPipelineInstance(this);
         }
-        
+
         SkyManager m_SkyManager = new SkyManager();
         public SkyManager skyManager
         {
@@ -92,8 +120,9 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             public bool useDepthPrepass = false;
             public bool useDistortion = true;
 
-            public bool enableTonemap = true;
-            public float exposure = 0;
+            // we have to fallback to forward-only rendering when scene view is using wireframe rendering mode --
+            // as rendering everything in wireframe + deferred do not play well together
+            public bool ShouldUseForwardRenderingOnly () { return useForwardRenderingOnly || GL.wireframe; }
         }
 
         DebugParameters m_DebugParameters = new DebugParameters();
@@ -173,7 +202,6 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         }
 
         // Various set of material use in render loop
-        Material m_FinalPassMaterial;
         Material m_DebugViewMaterialGBuffer;
 
         // Various buffer
@@ -193,10 +221,10 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
         // Keep these settings safe to recover when leaving the render pipeline
         bool previousLightsUseLinearIntensity;
-        bool previousLightsUseCCT;
+        bool previousLightsUseColorTemperature;
 
         // This must be allocate outside of Build() else the option in the class can't be set in the inspector (as it will in this case recreate the class with default value)
-        BaseLightLoop m_lightLoop = new TilePass.LightLoop();
+        BaseLightLoop m_lightLoop;
 
         public BaseLightLoop lightLoop
         {
@@ -232,9 +260,9 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 #endif
 
             previousLightsUseLinearIntensity = UnityEngine.Rendering.GraphicsSettings.lightsUseLinearIntensity;
-            previousLightsUseCCT = UnityEngine.Rendering.GraphicsSettings.lightsUseCCT;
+            previousLightsUseColorTemperature = UnityEngine.Rendering.GraphicsSettings.lightsUseColorTemperature;
             UnityEngine.Rendering.GraphicsSettings.lightsUseLinearIntensity = true;
-            UnityEngine.Rendering.GraphicsSettings.lightsUseCCT = true;
+            UnityEngine.Rendering.GraphicsSettings.lightsUseColorTemperature = true;
 
             m_CameraColorBuffer = Shader.PropertyToID("_CameraColorTexture");
             m_CameraDepthBuffer  = Shader.PropertyToID("_CameraDepthTexture");
@@ -244,7 +272,6 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
             m_SkyManager.Build();
 
-            m_FinalPassMaterial = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/FinalPass");
             m_DebugViewMaterialGBuffer = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/DebugViewMaterialGBuffer");
 
             m_ShadowPass = new ShadowRenderPass(m_ShadowSettings);
@@ -280,8 +307,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         {
             m_lightLoop.Cleanup();
             m_LitRenderLoop.Cleanup();
- 
-            Utilities.Destroy(m_FinalPassMaterial);
+
             Utilities.Destroy(m_DebugViewMaterialGBuffer);
 
             m_SkyManager.Cleanup();
@@ -290,7 +316,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             UnityEditor.SupportedRenderingFeatures.active = UnityEditor.SupportedRenderingFeatures.Default;
 #endif
            UnityEngine.Rendering.GraphicsSettings.lightsUseLinearIntensity = previousLightsUseLinearIntensity;
-           UnityEngine.Rendering.GraphicsSettings.lightsUseCCT = previousLightsUseCCT;
+           UnityEngine.Rendering.GraphicsSettings.lightsUseColorTemperature = previousLightsUseColorTemperature;
         }
 
         void InitAndClearBuffer(Camera camera, ScriptableRenderContext renderContext)
@@ -314,7 +340,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                     cmd.GetTemporaryRT(m_CameraColorBuffer, w, h, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, true);   // Enable UAV
                     cmd.GetTemporaryRT(m_CameraDepthBuffer, w, h, 24, FilterMode.Point, RenderTextureFormat.Depth);
-                    if (!debugParameters.useForwardRenderingOnly)
+                    if (!debugParameters.ShouldUseForwardRenderingOnly())
                     {
                         m_gbufferManager.InitGBuffers(w, h, cmd);
                     }
@@ -334,11 +360,13 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
 
                 // Clear GBuffers
-                using (new Utilities.ProfilingSample("Clear GBuffer", renderContext))
+                if (!debugParameters.ShouldUseForwardRenderingOnly())
                 {
-                    Utilities.SetRenderTarget(renderContext, m_gbufferManager.GetGBuffers(), m_CameraDepthBufferRT, ClearFlag.ClearColor, Color.black);
+                    using (new Utilities.ProfilingSample("Clear GBuffer", renderContext))
+                    {
+                        Utilities.SetRenderTarget(renderContext, m_gbufferManager.GetGBuffers(), m_CameraDepthBufferRT, ClearFlag.ClearColor, Color.black);
+                    }
                 }
-
                 // END TEMP
             }
         }
@@ -354,7 +382,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 sorting = { flags = SortFlags.CommonOpaque }
             };
             settings.inputFilter.SetQueuesOpaque();
-            renderContext.DrawRenderers(ref settings);
+            renderContext.DrawRenderers(settings);
         }
 
         void RenderTransparentRenderList(CullResults cull, Camera camera, ScriptableRenderContext renderContext, string passName, RendererConfiguration rendererConfiguration = 0)
@@ -368,7 +396,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 sorting = { flags = SortFlags.CommonTransparent }
             };
             settings.inputFilter.SetQueuesTransparent();
-            renderContext.DrawRenderers(ref settings);
+            renderContext.DrawRenderers(settings);
         }
 
         void RenderDepthPrepass(CullResults cull, Camera camera, ScriptableRenderContext renderContext)
@@ -389,7 +417,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
         void RenderGBuffer(CullResults cull, Camera camera, ScriptableRenderContext renderContext)
         {
-            if (debugParameters.useForwardRenderingOnly)
+            if (debugParameters.ShouldUseForwardRenderingOnly())
             {
                 return ;
             }
@@ -404,17 +432,17 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         }
 
         // This pass is use in case of forward opaque and deferred rendering. We need to render forward objects before tile lighting pass
-        void RenderForwardOnlyDepthPrepass(CullResults cull, Camera camera, ScriptableRenderContext renderContext)
+        void RenderForwardOnlyOpaqueDepthPrepass(CullResults cull, Camera camera, ScriptableRenderContext renderContext)
         {
-            // If we are forward only we don't need to render ForwardOpaqueDepth object
+            // If we are forward only we don't need to render ForwardOnlyOpaqueDepthOnly object
             // But in case we request a prepass we render it
-            if (debugParameters.useForwardRenderingOnly && !debugParameters.useDepthPrepass)
+            if (debugParameters.ShouldUseForwardRenderingOnly() && !debugParameters.useDepthPrepass)
                 return;
 
             using (new Utilities.ProfilingSample("Forward opaque depth", renderContext))
             {
                 Utilities.SetRenderTarget(renderContext, m_CameraDepthBufferRT);
-                RenderOpaqueRenderList(cull, camera, renderContext, "ForwardOnlyDepthOnly");
+                RenderOpaqueRenderList(cull, camera, renderContext, "ForwardOnlyOpaqueDepthOnly");
             }
         }
 
@@ -427,11 +455,11 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                 Shader.SetGlobalInt("_DebugViewMaterial", (int)debugParameters.debugViewMaterial);
 
-                RenderOpaqueRenderList(cull, hdCamera.camera, renderContext, "DebugViewMaterial");
+                RenderOpaqueRenderList(cull, hdCamera.camera, renderContext, "DebugViewMaterial", Utilities.kRendererConfigurationBakedLighting);
             }
 
             // Render GBuffer opaque
-            if (!debugParameters.useForwardRenderingOnly)
+            if (!debugParameters.ShouldUseForwardRenderingOnly())
             {
                 Utilities.SetupMaterialHDCamera(hdCamera, m_DebugViewMaterialGBuffer);
                 m_DebugViewMaterialGBuffer.SetFloat("_DebugViewMaterial", (float)debugParameters.debugViewMaterial);
@@ -446,7 +474,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
             // Render forward transparent
             {
-                RenderTransparentRenderList(cull, hdCamera.camera, renderContext, "DebugViewMaterial");
+                RenderTransparentRenderList(cull, hdCamera.camera, renderContext, "DebugViewMaterial", Utilities.kRendererConfigurationBakedLighting);
             }
 
             // Last blit
@@ -460,13 +488,11 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
         void RenderDeferredLighting(HDCamera hdCamera, ScriptableRenderContext renderContext)
         {
-            if (debugParameters.useForwardRenderingOnly)
+            if (debugParameters.ShouldUseForwardRenderingOnly())
             {
                 return ;
             }
 
-            // Bind material data
-            m_LitRenderLoop.Bind();
             m_lightLoop.RenderDeferredLighting(hdCamera, renderContext, m_CameraColorBuffer);
         }
 
@@ -479,26 +505,23 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         {
             m_SkyManager.RenderSky(hdCamera, m_lightLoop.GetCurrentSunLight(), m_CameraColorBufferRT, m_CameraDepthBufferRT, renderContext);
         }
-
+        
         void RenderForward(CullResults cullResults, Camera camera, ScriptableRenderContext renderContext, bool renderOpaque)
         {
             // TODO: Currently we can't render opaque object forward when deferred is enabled
             // miss option
-            if (!debugParameters.useForwardRenderingOnly && renderOpaque)
+            if (!debugParameters.ShouldUseForwardRenderingOnly() && renderOpaque)
                 return;
 
             using (new Utilities.ProfilingSample("Forward Pass", renderContext))
             {
-                // Bind material data
-                m_LitRenderLoop.Bind();
-
                 Utilities.SetRenderTarget(renderContext, m_CameraColorBufferRT, m_CameraDepthBufferRT);
 
                 m_lightLoop.RenderForward(camera, renderContext, renderOpaque);
 
                 if (renderOpaque)
                 {
-                    RenderOpaqueRenderList(cullResults, camera, renderContext, "Forward");
+                    RenderOpaqueRenderList(cullResults, camera, renderContext, "Forward", Utilities.kRendererConfigurationBakedLighting);
                 }
                 else
                 {
@@ -507,32 +530,15 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             }
         }
 
-        // Render material that are forward opaque only (like eye)
-        // TODO: Think about hair that could be render both as opaque and transparent...
-        void RenderForwardOnly(CullResults cullResults, Camera camera, ScriptableRenderContext renderContext)
+        // Render material that are forward opaque only (like eye), this include unlit material
+        void RenderForwardOnlyOpaque(CullResults cullResults, Camera camera, ScriptableRenderContext renderContext)
         {
             using (new Utilities.ProfilingSample("Forward Only Pass", renderContext))
             {
-                // Bind material data
-                m_LitRenderLoop.Bind();
-
                 Utilities.SetRenderTarget(renderContext, m_CameraColorBufferRT, m_CameraDepthBufferRT);
 
                 m_lightLoop.RenderForward(camera, renderContext, true);
-                RenderOpaqueRenderList(cullResults, camera, renderContext, "ForwardOnly");
-            }
-        }
-
-        void RenderForwardUnlit(CullResults cullResults, Camera camera, ScriptableRenderContext renderContext)
-        {
-            using (new Utilities.ProfilingSample("Forward Unlit Pass", renderContext))
-            {
-                // Bind material data
-                m_LitRenderLoop.Bind();
-
-                Utilities.SetRenderTarget(renderContext, m_CameraColorBufferRT, m_CameraDepthBufferRT);
-                RenderOpaqueRenderList(cullResults, camera, renderContext, "ForwardUnlit");
-                RenderTransparentRenderList(cullResults, camera, renderContext, "ForwardUnlit");
+                RenderOpaqueRenderList(cullResults, camera, renderContext, "ForwardOnlyOpaque", Utilities.kRendererConfigurationBakedLighting);
             }
         }
 
@@ -541,7 +547,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             using (new Utilities.ProfilingSample("Velocity Pass", renderContext))
             {
                 // If opaque velocity have been render during GBuffer no need to render it here
-                if ((ShaderConfig.s_VelocityInGbuffer == 0) || debugParameters.useForwardRenderingOnly)
+                if ((ShaderConfig.s_VelocityInGbuffer == 1) || debugParameters.ShouldUseForwardRenderingOnly())
                     return ;
 
                 int w = camera.pixelWidth;
@@ -579,36 +585,32 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             }
         }
 
-        void FinalPass(ScriptableRenderContext renderContext)
+        void FinalPass(Camera camera, ScriptableRenderContext renderContext)
         {
             using (new Utilities.ProfilingSample("Final Pass", renderContext))
             {
-                // Those could be tweakable for the neutral tonemapper, but in the case of the LookDev we don't need that
-                const float blackIn = 0.02f;
-                const float whiteIn = 10.0f;
-                const float blackOut = 0.0f;
-                const float whiteOut = 10.0f;
-                const float whiteLevel = 5.3f;
-                const float whiteClip = 10.0f;
-                const float dialUnits = 20.0f;
-                const float halfDialUnits = dialUnits * 0.5f;
+                // All of this is temporary, sub-optimal and quickly hacked together but is necessary
+                // for artists to do lighting work until the fully-featured framework is ready
 
-                // converting from artist dial units to easy shader-lerps (0-1)
-                var tonemapCoeff1 = new Vector4((blackIn * dialUnits) + 1.0f, (blackOut * halfDialUnits) + 1.0f, (whiteIn / dialUnits), (1.0f - (whiteOut / dialUnits)));
-                var tonemapCoeff2 = new Vector4(0.0f, 0.0f, whiteLevel, whiteClip / halfDialUnits);
+                var localPostProcess = camera.GetComponent<PostProcessing>();
+                var globalPostProcess = commonSettings == null
+                    ? null
+                    : commonSettings.GetComponent<PostProcessing>();
 
-                m_FinalPassMaterial.SetVector("_ToneMapCoeffs1", tonemapCoeff1);
-                m_FinalPassMaterial.SetVector("_ToneMapCoeffs2", tonemapCoeff2);
+                bool localActive = localPostProcess != null && localPostProcess.enabled;
+                bool globalActive = globalPostProcess != null && globalPostProcess.enabled;
 
-                m_FinalPassMaterial.SetFloat("_EnableToneMap", debugParameters.enableTonemap ? 1.0f : 0.0f);
-                m_FinalPassMaterial.SetFloat("_Exposure", debugParameters.exposure);
+                if (!localActive && !globalActive)
+                {
+                    var cmd = new CommandBuffer { name = "" };
+                    cmd.Blit(m_CameraColorBufferRT, BuiltinRenderTextureType.CameraTarget);
+                    renderContext.ExecuteCommandBuffer(cmd);
+                    cmd.Dispose();
+                    return;
+                }
 
-                var cmd = new CommandBuffer { name = "" };
-
-                // Resolve our HDR texture to CameraTarget.
-                cmd.Blit(m_CameraColorBufferRT, BuiltinRenderTextureType.CameraTarget, m_FinalPassMaterial, 0);
-                renderContext.ExecuteCommandBuffer(cmd);
-                cmd.Dispose();
+                var target = localActive ? localPostProcess : globalPostProcess;
+                target.Render(camera, renderContext, m_CameraColorBufferRT, BuiltinRenderTextureType.CameraTarget);
             }
         }
 
@@ -627,7 +629,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             // TODO: This is the wrong way to handle resize/allocation. We can have several different camera here, mean that the loop on camera will allocate and deallocate
             // the below buffer which is bad. Best is to have a set of buffer for each camera that is persistent and reallocate resource if need
             // For now consider we have only one camera that go to this code, the main one.
-            m_SkyManager.Resize(); // TODO: Also a bad naming, here we just want to realloc texture if skyparameters change (usefull for lookdev)
+            m_SkyManager.Resize(camera.nearClipPlane, camera.farClipPlane); // TODO: Also a bad naming, here we just want to realloc texture if skyparameters change (usefull for lookdev)
 
             if (camera.pixelWidth != m_currentWidth || camera.pixelHeight != m_currentHeight || m_lightLoop.NeedResize())
             {
@@ -683,7 +685,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 m_ShadowSettings.maxShadowDistance = m_CommonSettings.shadowMaxDistance;
             }
         }
-        
+
         public void Render(ScriptableRenderContext renderContext, IEnumerable<Camera> cameras)
         {
             if (!m_LitRenderLoop.isInit)
@@ -720,12 +722,16 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                 InitAndClearBuffer(camera, renderContext);
 
+                // TODO: Find a correct place to bind these material textures
+                // We have to bind the material specific global parameters in this mode
+                m_LitRenderLoop.Bind();
+
                 RenderDepthPrepass(cullResults, camera, renderContext);
 
                 // Forward opaque with deferred/cluster tile require that we fill the depth buffer
                 // correctly to build the light list.
                 // TODO: avoid double lighting by tagging stencil or gbuffer that we must not lit.
-                RenderForwardOnlyDepthPrepass(cullResults, camera, renderContext);
+                RenderForwardOnlyOpaqueDepthPrepass(cullResults, camera, renderContext);
                 RenderGBuffer(cullResults, camera, renderContext);
 
                 if (debugParameters.debugViewMaterial != 0)
@@ -738,30 +744,35 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                     using (new Utilities.ProfilingSample("Shadow Pass", renderContext))
                     {
                         m_ShadowPass.Render(renderContext, cullResults, out shadows);
-                    } 
-                    
+                    }
+
                     renderContext.SetupCameraProperties(camera); // Need to recall SetupCameraProperties after m_ShadowPass.Render
 
                     using (new Utilities.ProfilingSample("Build Light list", renderContext))
                     {
                         m_lightLoop.PrepareLightsForGPU(m_ShadowSettings, cullResults, camera, ref shadows);
-                        m_lightLoop.BuildGPULightLists(camera, renderContext, m_CameraDepthBufferRT);
+                        m_lightLoop.BuildGPULightLists(camera, renderContext, m_CameraDepthBufferRT); // TODO: Use async compute here to run light culling during shadow                        
+                    }
 
-                        PushGlobalParams(hdCamera, renderContext);
-                    } 
-                    
-                    UpdateSkyEnvironment(hdCamera, renderContext);
+                    PushGlobalParams(hdCamera, renderContext);
+
+                    // Caution: We require sun light here as some sky use the sun light to render, mean UpdateSkyEnvironment
+                    // must be call after BuildGPULightLists. 
+                    // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
+                    UpdateSkyEnvironment(hdCamera, renderContext); 
 
                     RenderDeferredLighting(hdCamera, renderContext);
 
-                    RenderForward(cullResults, camera, renderContext, true);
-                    RenderForwardOnly(cullResults, camera, renderContext);
+                    // For opaque forward we have split rendering in two categories
+                    // Material that are always forward and material that can be deferred or forward depends on render pipeline options (like switch to rendering forward only mode)
+                    // Material that are always forward are unlit and complex (Like Hair) and don't require sorting, so it is ok to split them.
+                    RenderForward(cullResults, camera, renderContext, true); // Render deferred or forward opaque
+                    RenderForwardOnlyOpaque(cullResults, camera, renderContext);
 
                     RenderSky(hdCamera, renderContext);
 
+                    // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
                     RenderForward(cullResults, camera, renderContext, false);
-
-                    RenderForwardUnlit(cullResults, camera, renderContext);
 
                     RenderVelocity(cullResults, camera, renderContext); // Note we may have to render velocity earlier if we do temporalAO, temporal volumetric etc... Mean we will not take into account forward opaque in case of deferred rendering ?
 
@@ -771,7 +782,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                     // Instead we chose to apply distortion at the end after we cumulate distortion vector and desired blurriness. This
                     RenderDistortion(cullResults, camera, renderContext);
 
-                    FinalPass(renderContext);
+                    FinalPass(camera, renderContext);
                 }
 
                 // bind depth surface for editor grid/gizmo/selection rendering
@@ -785,8 +796,6 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                 renderContext.Submit();
             }
-            
-            // Post effects
         }
     }
 }

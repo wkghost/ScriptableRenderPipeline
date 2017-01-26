@@ -4,13 +4,54 @@
 
 #include "Color.hlsl"
 
-// TODO: This is the max value allowed for emissive (bad name - but keep for now to retrieve it) (It is 8^2.2 (gamma) and 8 is the limit of punctual light slider...), comme from UnityCg.cginc. Fix it!
-// Ask Jesper if this can be change for HDRenderPipeline
-#define EMISSIVE_RGBM_SCALE 97.0
+CBUFFER_START(UnityMetaPass)
+// x = use uv1 as raster position
+// y = use uv2 as raster position
+bool4 unity_MetaVertexControl;
 
-float4 Frag(PackedVaryings packedInput) : SV_Target
+// x = return albedo
+// y = return normal
+bool4 unity_MetaFragmentControl;
+CBUFFER_END
+
+
+// This was not in constant buffer in original unity, so keep outiside. But should be in as ShaderRenderPass frequency
+float unity_OneOverOutputBoost;
+float unity_MaxOutputValue;
+
+#include "VertMesh.hlsl"
+
+PackedVaryingsToPS Vert(AttributesMesh inputMesh)
 {
-    FragInputs input = UnpackVaryings(packedInput);
+    VaryingsToPS output;
+
+    // Output UV coordinate in vertex shader
+    if (unity_MetaVertexControl.x)
+    {
+        inputMesh.positionOS.xy = inputMesh.uv1 * unity_LightmapST.xy + unity_LightmapST.zw;
+        // OpenGL right now needs to actually use incoming vertex position,
+        // so use it in a very dummy way
+        //v.positionOS.z = vertex.z > 0 ? 1.0e-4 : 0.0;
+    }
+    if (unity_MetaVertexControl.y)
+    {
+        inputMesh.positionOS.xy = inputMesh.uv2 * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
+        // OpenGL right now needs to actually use incoming vertex position,
+        // so use it in a very dummy way
+        //v.positionOS.z = vertex.z > 0 ? 1.0e-4 : 0.0;
+    }
+
+    float3 positionWS = TransformObjectToWorld(inputMesh.positionOS);
+    output.vmesh.positionCS = TransformWorldToHClip(positionWS);
+    output.vmesh.texCoord0 = inputMesh.uv0;
+    output.vmesh.texCoord1 = inputMesh.uv1;
+
+    return PackVaryingsToPS(output);
+}
+
+float4 Frag(PackedVaryingsToPS packedInput) : SV_Target
+{
+    FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     // input.unPositionSS is SV_Position
     PositionInputs posInput = GetPositionInput(input.unPositionSS.xy, _ScreenSize.zw);
@@ -41,7 +82,7 @@ float4 Frag(PackedVaryings packedInput) : SV_Target
     {
         // TODO: THIS LIMIT MUST BE REMOVE, IT IS NOT HDR, change when RGB9e5 is here.
         // Do we assume here that emission is [0..1] ?
-        res = PackRGBM(lightTransportData.emissiveColor, EMISSIVE_RGBM_SCALE);
+        res = PackEmissiveRGBM(lightTransportData.emissiveColor);
     }
 
     return res;

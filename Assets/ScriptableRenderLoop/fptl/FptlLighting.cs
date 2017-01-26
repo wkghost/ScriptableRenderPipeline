@@ -1,10 +1,8 @@
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
 using System;
 using System.Collections.Generic;
-using UnityEngine.ScriptableRenderPipeline;
 
-namespace UnityEngine.Experimental.ScriptableRenderLoop
+namespace UnityEngine.Experimental.Rendering.Fptl
 {
     public class FptlLightingInstance : RenderPipeline
     {
@@ -324,7 +322,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             //@TODO: need to get light probes + LPPV too?
             settings.inputFilter.SetQueuesOpaque();
             settings.rendererConfiguration = RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe;
-            loop.DrawRenderers(ref settings);
+            loop.DrawRenderers(settings);
         }
 
         void RenderForward(CullResults cull, Camera camera, ScriptableRenderContext loop, bool opaquesOnly)
@@ -350,7 +348,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             if (opaquesOnly) settings.inputFilter.SetQueuesOpaque();
             else settings.inputFilter.SetQueuesTransparent();
 
-            loop.DrawRenderers(ref settings);
+            loop.DrawRenderers(settings);
         }
 
         static void DepthOnlyForForwardOpaques(CullResults cull, Camera camera, ScriptableRenderContext loop)
@@ -366,7 +364,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 sorting = { flags = SortFlags.CommonOpaque }
             };
             settings.inputFilter.SetQueuesOpaque();
-            loop.DrawRenderers(ref settings);
+            loop.DrawRenderers(settings);
         }
 
         bool usingFptl

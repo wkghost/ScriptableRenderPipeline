@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Experimental.Rendering;
 using NUnit.Framework;
 using UnityEngine.Rendering;
-using UnityEngine.ScriptableRenderPipeline;
 
 [ExecuteInEditMode]
 public class RenderLoopTestFixture : RenderPipelineAsset
@@ -56,7 +53,7 @@ public class RenderLoopTestFixtureInstance : RenderPipeline
         var sceneCamera = Camera.main;
         var camObject = sceneCamera.gameObject;
 
-        GraphicsSettings.renderPipeline = m_Instance;
+        GraphicsSettings.renderPipelineAsset = m_Instance;
         s_Callback = renderCallback;
         Transform t = camObject.transform;
 
@@ -67,6 +64,6 @@ public class RenderLoopTestFixtureInstance : RenderPipeline
         SceneView.lastActiveSceneView.LookAtDirect(t.position + t.forward * camDist, t.rotation, size);
 
         sceneCamera.Render();
-        GraphicsSettings.renderPipeline = null;
+        GraphicsSettings.renderPipelineAsset = null;
     }
 }

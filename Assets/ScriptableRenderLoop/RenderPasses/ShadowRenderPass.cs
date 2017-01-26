@@ -4,7 +4,7 @@ using UnityEngine.Profiling;
 using System.Collections.Generic;
 using System;
 
-namespace UnityEngine.Experimental.ScriptableRenderLoop
+namespace UnityEngine.Experimental.Rendering
 {
     [System.Serializable]
     public class ShadowSettings
@@ -419,7 +419,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             commandBuffer.Dispose();
 
             // Render
-            loop.DrawShadows(ref settings);
+            loop.DrawShadows(settings);
         }
     }
 }

@@ -1,16 +1,18 @@
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 using System.Collections.Generic;
 using System;
 
 
-namespace UnityEngine.Experimental.ScriptableRenderLoop
+namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     abstract public class SkyRenderer
     {
         abstract public void Build();
         abstract public void Cleanup();
-        abstract public void RenderSky(BuiltinSkyParameters builtinParams, SkyParameters skyParameters);
+        abstract public void SetRenderTargets(BuiltinSkyParameters builtinParams);
+        // renderForCubemap: When rendering into a cube map, no depth buffer is available so user has to make sure not to use depth testing or the depth texture.
+        abstract public void RenderSky(BuiltinSkyParameters builtinParams, SkyParameters skyParameters, bool renderForCubemap);
         abstract public bool IsSkyValid(SkyParameters skyParameters);
 
         virtual public bool IsParameterValid(SkyParameters skyParameters) { return false; }

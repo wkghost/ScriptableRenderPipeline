@@ -1,6 +1,4 @@
-using UnityEngine;
-
-namespace UnityEngine.Experimental.ScriptableRenderLoop
+namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     namespace Attributes
     {
@@ -26,7 +24,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
         public enum DebugViewGbuffer
         {
             Depth = DebugViewVarying.VertexColorAlpha + 1,
-            BakeDiffuseLighting,
+            BakeDiffuseLightingWithAlbedoPlusEmissive,
         }
     }
-} // namespace UnityEngine.Experimental.ScriptableRenderLoop
+}

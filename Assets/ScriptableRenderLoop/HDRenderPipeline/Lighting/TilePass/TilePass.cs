@@ -1,10 +1,13 @@
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using System;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
-namespace UnityEngine.Experimental.ScriptableRenderLoop
+namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     namespace TilePass
     {
@@ -38,7 +41,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             public static float VIEWPORT_SCALE_Z = 1.0f;
 
             // enable unity's original left-hand shader camera space (right-hand internally in unity).
-            public static int USE_LEFTHAND_CAMERASPACE = 0;
+            public static int USE_LEFTHAND_CAMERASPACE = 1;
 
             // flags
             public static int IS_CIRCULAR_SPOT_SHAPE = 1;
@@ -142,11 +145,11 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             int m_areaLightCount = 0;
             int m_lightCount = 0;
 
-            static ComputeShader buildScreenAABBShader = null;
-            static ComputeShader buildPerTileLightListShader = null;     // FPTL
-            static ComputeShader buildPerBigTileLightListShader = null;
-            static ComputeShader buildPerVoxelLightListShader = null;    // clustered
-            static ComputeShader shadeOpaqueShader = null;
+            private ComputeShader buildScreenAABBShader { get { return m_Parent.renderPipelineSetup.buildScreenAABBShader; } }
+            private ComputeShader buildPerTileLightListShader { get { return m_Parent.renderPipelineSetup.buildPerTileLightListShader; } }
+            private ComputeShader buildPerBigTileLightListShader { get { return m_Parent.renderPipelineSetup.buildPerBigTileLightListShader; } }
+            private ComputeShader buildPerVoxelLightListShader { get { return m_Parent.renderPipelineSetup.buildPerVoxelLightListShader; } }
+            private ComputeShader shadeOpaqueShader { get { return m_Parent.renderPipelineSetup.shadeOpaqueShader; } }
 
             static int s_GenAABBKernel;
             static int s_GenListPerTileKernel;
@@ -164,16 +167,16 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             static int s_GenListPerBigTileKernel;
 
             public bool enableDrawLightBoundsDebug = false;
-            public bool disableTileAndCluster = true; // For debug / test
+            public bool disableTileAndCluster = false; // For debug / test
             public bool disableDeferredShadingInCompute = true;
             public bool enableSplitLightEvaluation = true;
             public bool enableComputeLightEvaluation = false;
 
             // clustered light list specific buffers and data begin
             public int debugViewTilesFlags = 0;
-            public bool enableClustered = false;
-            public bool disableFptlWhenClustered = true;    // still useful on opaques. Should be false by default to force tile on opaque.
-            public bool enableBigTilePrepass = false;
+            public bool enableClustered = true;
+            public bool disableFptlWhenClustered = false;    // still useful on opaques. Should be false by default to force tile on opaque.
+            public bool enableBigTilePrepass = true;
             const bool k_UseDepthBuffer = true;      // only has an impact when EnableClustered is true (requires a depth-prepass)
             const bool k_UseAsyncCompute = true;        // should not use on mobile
 
@@ -186,6 +189,9 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             static ComputeBuffer s_GlobalLightListAtomic = null;
             // clustered light list specific buffers and data end
 
+            private static GameObject s_DefaultAdditionalLightDataGameObject;
+            private static AdditionalLightData s_DefaultAdditionalLightData;
+
             bool usingFptl
             {
                 get
@@ -197,6 +203,20 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 }
             }
 
+            private static AdditionalLightData DefaultAdditionalLightData
+            {
+                get
+                {
+                    if (s_DefaultAdditionalLightDataGameObject == null)
+                    {
+                        s_DefaultAdditionalLightDataGameObject = new GameObject("Default Light Data");
+                        s_DefaultAdditionalLightDataGameObject.hideFlags = HideFlags.HideAndDontSave;
+                        s_DefaultAdditionalLightData = s_DefaultAdditionalLightDataGameObject.AddComponent<AdditionalLightData>();
+                    }
+                    return s_DefaultAdditionalLightData;
+                }
+            }
+
             Material m_DeferredDirectMaterial = null;
             Material m_DeferredIndirectMaterial = null;
             Material m_DeferredAllMaterial = null;
@@ -205,6 +225,8 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             Material m_SingleDeferredMaterial = null;
 
             const int k_TileSize = 16;
+            private readonly HDRenderPipeline m_Parent;
+
 
             int GetNumTileX(Camera camera)
             {
@@ -214,6 +236,11 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             int GetNumTileY(Camera camera)
             {
                 return (camera.pixelHeight + (k_TileSize - 1)) / k_TileSize;
+            }
+
+            public LightLoop(HDRenderPipeline hdRenderPipeline)
+            {
+                m_Parent = hdRenderPipeline;
             }
 
             public override void Build(TextureSettings textureSettings)
@@ -232,12 +259,6 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 m_CubeCookieTexArray.AllocTextureArray(4, textureSettings.pointCookieSize, TextureFormat.RGBA32, true);
                 m_CubeReflTexArray = new TextureCacheCubemap();
                 m_CubeReflTexArray.AllocTextureArray(32, textureSettings.reflectionCubemapSize, TextureFormat.BC6H, true);
-
-                buildScreenAABBShader = Resources.Load<ComputeShader>("scrbound");
-                buildPerTileLightListShader = Resources.Load<ComputeShader>("lightlistbuild");
-                buildPerBigTileLightListShader = Resources.Load<ComputeShader>("lightlistbuild-bigtile");
-                buildPerVoxelLightListShader = Resources.Load<ComputeShader>("lightlistbuild-clustered");
-                shadeOpaqueShader = Resources.Load<ComputeShader>("shadeopaque");
 
                 s_GenAABBKernel = buildScreenAABBShader.FindKernel("ScreenBoundsAABB");
                 s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(enableBigTilePrepass ? "TileLightListGen_SrcBigTile" : "TileLightListGen");
@@ -350,6 +371,10 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 Utilities.Destroy(m_DebugViewTilesMaterial);
 
                 Utilities.Destroy(m_SingleDeferredMaterial);
+
+                GameObject.DestroyImmediate(s_DefaultAdditionalLightDataGameObject);
+                s_DefaultAdditionalLightDataGameObject = null;
+                s_DefaultAdditionalLightData = null;
             }
 
             public override void NewFrame()
@@ -847,7 +872,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
             {
                 m_lightList.Clear();
 
-                if (cullResults.visibleLights.Length == 0)
+                if (cullResults.visibleLights.Length == 0 && cullResults.visibleReflectionProbes.Length == 0)
                     return;
 
                 // 1. Count the number of lights and sort all light by category, type and volume
@@ -867,8 +892,8 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                     if (additionalData == null)
                     {
-                        Debug.LogWarning("Light entity detected without additional data, will not be taken into account " + light.light.name);
-                        continue;
+                        Debug.LogWarningFormat("Light entity {0} has no additional data, will be rendered using default values.", light.light.name);
+                        additionalData = DefaultAdditionalLightData;
                     }
 
                     LightCategory lightCategory = LightCategory.Count;
@@ -970,7 +995,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                     int lightIndex = (int)(sortKey & 0xFFFF);
 
                     var light = cullResults.visibleLights[lightIndex];
-                    var additionalData = light.light.GetComponent<AdditionalLightData>();
+                    var additionalData = light.light.GetComponent<AdditionalLightData>() ?? DefaultAdditionalLightData;
 
                     // Directional rendering side, it is separated as it is always visible so no volume to handle here
                     if (gpuLightType == GPULightType.Directional)
@@ -1213,7 +1238,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                     for (int n = 0; n < numVectors; n++)
                     {
                         for (int i = 0; i < 4; i++)
-            {
+                        {
                             data[4 * n + i] = values[n][i];
                         }
                     }
@@ -1293,6 +1318,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
 #if UNITY_EDITOR
             private Vector2 m_mousePosition = Vector2.zero;
+
             private void OnSceneGUI(UnityEditor.SceneView sceneview)
             {
                 m_mousePosition = Event.current.mousePosition;
@@ -1321,8 +1347,6 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                     SetGlobalBuffer("g_vLightListGlobal", bUseClusteredForDeferred ? s_PerVoxelLightLists : s_LightList);       // opaques list (unless MSAA possibly)
                     SetGlobalPropertyRedirect(shadeOpaqueShader, usingFptl ? s_shadeOpaqueFptlKernel : s_shadeOpaqueClusteredKernel, cmd);
-                    SetGlobalBuffer("g_vLightListGlobal", bUseClusteredForDeferred ? s_PerVoxelLightLists : s_LightList);       // opaques list (unless MSAA possibly)
-
 
                     // In case of bUseClusteredForDeferred disable toggle option since we're using m_perVoxelLightLists as opposed to lightList
                     if (bUseClusteredForDeferred)
@@ -1332,6 +1356,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                     if (disableTileAndCluster)
                     {
+                        // This is a debug brute force renderer to debug tile/cluster which render all the lights
                         Utilities.SetupMaterialHDCamera(hdCamera, m_SingleDeferredMaterial);
                         m_SingleDeferredMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                         m_SingleDeferredMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
@@ -1394,12 +1419,12 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
                             cmd.SetComputeTextureParam(shadeOpaqueShader, kernel, "uavOutput", cameraColorBufferRT);
                             cmd.DispatchCompute(shadeOpaqueShader, kernel, numTilesX, numTilesY, 1);
-                    }
-                    else
-                    {
-                            // Pixel shader evaluation
-                        if (enableSplitLightEvaluation)
+                        }
+                        else
                         {
+                            // Pixel shader evaluation
+                            if (enableSplitLightEvaluation)
+                            {
                                 Utilities.SetupMaterialHDCamera(hdCamera, m_DeferredDirectMaterial);
                                 m_DeferredDirectMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                                 m_DeferredDirectMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
@@ -1412,19 +1437,19 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                                 m_DeferredIndirectMaterial.EnableKeyword(bUseClusteredForDeferred ? "USE_CLUSTERED_LIGHTLIST" : "USE_FPTL_LIGHTLIST");
                                 m_DeferredIndirectMaterial.DisableKeyword(!bUseClusteredForDeferred ? "USE_CLUSTERED_LIGHTLIST" : "USE_FPTL_LIGHTLIST");
 
-                            cmd.Blit(null, cameraColorBufferRT, m_DeferredDirectMaterial, 0);
-                            cmd.Blit(null, cameraColorBufferRT, m_DeferredIndirectMaterial, 0);
-                        }
-                        else
-                        {
+                                cmd.Blit(null, cameraColorBufferRT, m_DeferredDirectMaterial, 0);
+                                cmd.Blit(null, cameraColorBufferRT, m_DeferredIndirectMaterial, 0);
+                            }
+                            else
+                            {
                                 Utilities.SetupMaterialHDCamera(hdCamera, m_DeferredAllMaterial);
                                 m_DeferredAllMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                                 m_DeferredAllMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
                                 m_DeferredAllMaterial.EnableKeyword(bUseClusteredForDeferred ? "USE_CLUSTERED_LIGHTLIST" : "USE_FPTL_LIGHTLIST");
                                 m_DeferredAllMaterial.DisableKeyword(!bUseClusteredForDeferred ? "USE_CLUSTERED_LIGHTLIST" : "USE_FPTL_LIGHTLIST");
 
-                            cmd.Blit(null, cameraColorBufferRT, m_DeferredAllMaterial, 0);
-                        }
+                                cmd.Blit(null, cameraColorBufferRT, m_DeferredAllMaterial, 0);
+                            }
                         }
 
                         // Draw tile debugging
@@ -1441,7 +1466,6 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                     }
 
                     SetGlobalPropertyRedirect(null, 0, null);
-                    //}
 
                     renderContext.ExecuteCommandBuffer(cmd);
                     cmd.Dispose();
@@ -1450,7 +1474,7 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
 
             public override void RenderForward(Camera camera, ScriptableRenderContext renderContext, bool renderOpaque)
             {
-                // Note: if we use render opaque with deferred tiling we need to render a opque depth pass for these opaque objects
+                // Note: if we use render opaque with deferred tiling we need to render a opaque depth pass for these opaque objects
                 bool useFptl = renderOpaque && usingFptl;
 
                 var cmd = new CommandBuffer();
@@ -1464,9 +1488,10 @@ namespace UnityEngine.Experimental.ScriptableRenderLoop
                 else
                 {
                     cmd.name = useFptl ? "Forward Tiled pass" : "Forward Clustered pass";
+                    // say that we want to use tile of single loop
                     cmd.EnableShaderKeyword("LIGHTLOOP_TILE_PASS");
                     cmd.DisableShaderKeyword("LIGHTLOOP_SINGLE_PASS");
-                    cmd.SetGlobalFloat("g_isOpaquesOnlyEnabled", useFptl ? 1 : 0);      // leaving this as a dynamic toggle for now for forward opaques to keep shader variants down.
+                    cmd.SetGlobalFloat("_UseTileLightList", useFptl ? 1 : 0);      // leaving this as a dynamic toggle for now for forward opaques to keep shader variants down.
                     cmd.SetGlobalBuffer("g_vLightListGlobal", useFptl ? s_LightList : s_PerVoxelLightLists);
                 }
 

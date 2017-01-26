@@ -51,8 +51,8 @@ TEXTURE2D(g_tShadowBuffer); // TODO: No choice, the name is hardcoded in Shadowr
 SAMPLER2D_SHADOW(samplerg_tShadowBuffer);
 
 // Use texture array for IES
-TEXTURE2D_ARRAY(_IESArray);
-SAMPLER2D(sampler_IESArray);
+//TEXTURE2D_ARRAY(_IESArray);
+//SAMPLER2D(sampler_IESArray);
 
 // Used by directional and spot lights
 TEXTURE2D_ARRAY(_CookieTextures);
@@ -62,9 +62,14 @@ SAMPLER2D(sampler_CookieTextures);
 TEXTURECUBE_ARRAY(_CookieCubeTextures);
 SAMPLERCUBE(sampler_CookieCubeTextures);
 
-// Use texture array for reflection
+// Use texture array for reflection (or LatLong 2D array for mobile)
+#ifdef CUBE_ARRAY_NOT_SUPPORTED
+TEXTURE2D_ARRAY(_EnvTextures);
+SAMPLER2D(sampler_EnvTextures);
+#else
 TEXTURECUBE_ARRAY(_EnvTextures);
 SAMPLERCUBE(sampler_EnvTextures);
+#endif
 
 TEXTURECUBE(_SkyTexture);
 SAMPLERCUBE(sampler_SkyTexture); // NOTE: Sampler could be share here with _EnvTextures. Don't know if the shader compiler will complain...
@@ -217,10 +222,10 @@ float4 SampleCookieCube(LightLoopContext lightLoopContext, float3 coord, int ind
 // ----------------------------------------------------------------------------
 
 // sphericalTexCoord is theta and phi spherical coordinate
-float4 SampleIES(LightLoopContext lightLoopContext, int index, float2 sphericalTexCoord, float lod)
-{
-    return SAMPLE_TEXTURE2D_ARRAY_LOD(_IESArray, sampler_IESArray, sphericalTexCoord, index, 0);
-}
+//float4 SampleIES(LightLoopContext lightLoopContext, int index, float2 sphericalTexCoord, float lod)
+//{
+//    return SAMPLE_TEXTURE2D_ARRAY_LOD(_IESArray, sampler_IESArray, sphericalTexCoord, index, 0);
+//}
 
 //-----------------------------------------------------------------------------
 // Reflection proble / Sky sampling function
@@ -233,12 +238,14 @@ float4 SampleIES(LightLoopContext lightLoopContext, int index, float2 sphericalT
 // EnvIndex can also be use to fetch in another array of struct (to  atlas information etc...).
 float4 SampleEnv(LightLoopContext lightLoopContext, int index, float3 texCoord, float lod)
 {
-    lod = min(lod, UNITY_SPECCUBE_LOD_STEPS);
-
     // This code will be inlined as lightLoopContext is hardcoded in the light loop
     if (lightLoopContext.sampleReflection == SINGLE_PASS_CONTEXT_SAMPLE_REFLECTION_PROBES)
     {
+        #ifdef CUBE_ARRAY_NOT_SUPPORTED
+        return SAMPLE_TEXTURE2D_ARRAY_LOD(_EnvTextures, sampler_EnvTextures, DirectionToLatLongCoordinate(texCoord), index, lod);
+        #else
         return SAMPLE_TEXTURECUBE_ARRAY_LOD(_EnvTextures, sampler_EnvTextures, texCoord, index, lod);
+        #endif
     }
     else // SINGLE_PASS_SAMPLE_SKY
     {

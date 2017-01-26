@@ -9,14 +9,14 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
             Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #pragma target 5.0
-            #pragma only_renderers d3d11 // TEMP: unitl we go futher in dev
+            #pragma target 4.5
+            #pragma only_renderers d3d11 ps4 metal // TEMP: unitl we go futher in dev
 
             #pragma vertex Vert
             #pragma fragment Frag
 
-            #define LIGHTLOOP_TILE_PASS 1            
-            #define LIGHTLOOP_TILE_ALL	1
+            #define LIGHTLOOP_TILE_PASS           
+            #define LIGHTLOOP_TILE_ALL
 
             #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
 
@@ -141,9 +141,9 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
                     float depthMouse = LOAD_TEXTURE2D(_CameraDepthTexture, mousePosInput.unPositionSS).x;
                     UpdatePositionInput(depthMouse, _InvViewProjMatrix, _ViewProjMatrix, mousePosInput);
 
-                    int category = (LIGHTCATEGORY_COUNT - 1) - tileCoord.y;
-                    int start;
-                    int count;
+                    uint category = (LIGHTCATEGORY_COUNT - 1) - tileCoord.y;
+                    uint start;
+                    uint count;
                     GetCountAndStart(mousePosInput, category, start, count);
 
                     float4 result2 = float4(.1,.1,.1,.9);
@@ -153,9 +153,9 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
                     int n = -1;
                     if(tileCoord.x == 0)
                     {
-                        n = count;
+                        n = (int)count;
                     }
-                    else if(lightListIndex >= 0 && lightListIndex < count)
+                    else if(lightListIndex >= 0 && lightListIndex < (int)count)
                     {
                         n = FetchIndex(start, lightListIndex);
                     }
