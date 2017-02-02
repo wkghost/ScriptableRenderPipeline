@@ -1,83 +1,86 @@
 #ifndef LAYERED_LIT_SHADER
 
-// Set of users variables
-float4 _BaseColor;
-TEXTURE2D(_BaseColorMap);
-SAMPLER2D(sampler_BaseColorMap);
-float4 _BaseColorMap_ST;
+CBUFFER_START(_PerMaterial)
 
-float _Metallic;
-float _Smoothness;
-TEXTURE2D(_MaskMap);
-SAMPLER2D(sampler_MaskMap);
-TEXTURE2D(_SpecularOcclusionMap);
-SAMPLER2D(sampler_SpecularOcclusionMap);
+	// Set of users variables
+	float4 _BaseColor;
+	TEXTURE2D(_BaseColorMap);
+	SAMPLER2D(sampler_BaseColorMap);
+	float4 _BaseColorMap_ST;
 
-TEXTURE2D(_NormalMap);
-SAMPLER2D(sampler_NormalMap);
-float _NormalScale;
+	float _Metallic;
+	float _Smoothness;
+	TEXTURE2D(_MaskMap);
+	SAMPLER2D(sampler_MaskMap);
+	TEXTURE2D(_SpecularOcclusionMap);
+	SAMPLER2D(sampler_SpecularOcclusionMap);
 
-TEXTURE2D(_DetailMask);
-SAMPLER2D(sampler_DetailMask);
-TEXTURE2D(_DetailMap);
-SAMPLER2D(sampler_DetailMap);
-float4 _DetailMap_ST;
-float _DetailAlbedoScale;
-float _DetailNormalScale;
-float _DetailSmoothnessScale;
-float _DetailHeightScale;
-float _DetailAOScale;
+	TEXTURE2D(_NormalMap);
+	SAMPLER2D(sampler_NormalMap);
+	float _NormalScale;
 
-TEXTURE2D(_HeightMap);
-SAMPLER2D(sampler_HeightMap);
-float4 _HeightMap_TexelSize; // Unity facility. This will provide the size of the heightmap to the shader
+	TEXTURE2D(_DetailMask);
+	SAMPLER2D(sampler_DetailMask);
+	TEXTURE2D(_DetailMap);
+	SAMPLER2D(sampler_DetailMap);
+	float4 _DetailMap_ST;
+	float _DetailAlbedoScale;
+	float _DetailNormalScale;
+	float _DetailSmoothnessScale;
+	float _DetailHeightScale;
+	float _DetailAOScale;
 
-float _HeightAmplitude;
-float _HeightCenter;
+	TEXTURE2D(_HeightMap);
+	SAMPLER2D(sampler_HeightMap);
+	float4 _HeightMap_TexelSize; // Unity facility. This will provide the size of the heightmap to the shader
 
-TEXTURE2D(_TangentMap);
-SAMPLER2D(sampler_TangentMap);
+	float _HeightAmplitude;
+	float _HeightCenter;
 
-float _Anisotropy;
-TEXTURE2D(_AnisotropyMap);
-SAMPLER2D(sampler_AnisotropyMap);
+	TEXTURE2D(_TangentMap);
+	SAMPLER2D(sampler_TangentMap);
 
-//float _SubSurfaceRadius;
-//TEXTURE2D(_SubSurfaceRadiusMap);
-//SAMPLER2D(sampler_SubSurfaceRadiusMap);
+	float _Anisotropy;
+	TEXTURE2D(_AnisotropyMap);
+	SAMPLER2D(sampler_AnisotropyMap);
 
-// float _Thickness;
-//TEXTURE2D(_ThicknessMap);
-//SAMPLER2D(sampler_ThicknessMap);
+	//float _SubSurfaceRadius;
+	//TEXTURE2D(_SubSurfaceRadiusMap);
+	//SAMPLER2D(sampler_SubSurfaceRadiusMap);
 
-// float _CoatCoverage;
-//TEXTURE2D(_CoatCoverageMap);
-//SAMPLER2D(sampler_CoatCoverageMap);
+	// float _Thickness;
+	//TEXTURE2D(_ThicknessMap);
+	//SAMPLER2D(sampler_ThicknessMap);
 
-// float _CoatRoughness;
-//TEXTURE2D(_CoatRoughnessMap);
-//SAMPLER2D(sampler_CoatRoughnessMap);
+	// float _CoatCoverage;
+	//TEXTURE2D(_CoatCoverageMap);
+	//SAMPLER2D(sampler_CoatCoverageMap);
 
-TEXTURE2D(_DiffuseLightingMap);
-SAMPLER2D(sampler_DiffuseLightingMap);
+	// float _CoatRoughness;
+	//TEXTURE2D(_CoatRoughnessMap);
+	//SAMPLER2D(sampler_CoatRoughnessMap);
 
-TEXTURE2D(_DistortionVectorMap);
-SAMPLER2D(sampler_DistortionVectorMap);
+	TEXTURE2D(_DiffuseLightingMap);
+	SAMPLER2D(sampler_DiffuseLightingMap);
 
-float3 _EmissiveColor;
-TEXTURE2D(_EmissiveColorMap);
-SAMPLER2D(sampler_EmissiveColorMap);
-float _EmissiveIntensity;
+	TEXTURE2D(_DistortionVectorMap);
+	SAMPLER2D(sampler_DistortionVectorMap);
 
-float _AlphaCutoff;
+	float3 _EmissiveColor;
+	TEXTURE2D(_EmissiveColorMap);
+	SAMPLER2D(sampler_EmissiveColorMap);
+	float _EmissiveIntensity;
 
-float _TexWorldScale;
-float _UVMappingPlanar;
-float4 _UVMappingMask;
-float4 _UVDetailsMappingMask;
+	float _AlphaCutoff;
 
-float _PPDMaxSamples;
-float _PPDMinSamples;
+	float _TexWorldScale;
+	float _UVMappingPlanar;
+	float4 _UVMappingMask;
+	float4 _UVDetailsMappingMask;
+
+	float _PPDMaxSamples;
+	float _PPDMinSamples;
+CBUFFER_END
 
 #else // LAYERED_LIT_SHADER
 

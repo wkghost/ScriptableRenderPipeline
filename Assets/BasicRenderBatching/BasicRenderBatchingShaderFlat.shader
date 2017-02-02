@@ -61,7 +61,7 @@ CBUFFER_START(GlobalLightData)
     float4 globalSH[7];
 CBUFFER_END
 
-CBUFFER_START(UniformBuffer_FastBatch : register(b1) )
+CBUFFER_START(testmybuffer)
 	float4 myColor;
 CBUFFER_END
 

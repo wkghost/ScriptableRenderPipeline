@@ -76,7 +76,7 @@ public class PopulateScene : MonoBehaviour {
                     }
 
                     renderer.material = mat;
-                    renderer.material.InitUniformBuffers();
+//                    renderer.material.InitUniformBuffers();
                     m_Materials[iIndex] = renderer.material;
 
                     iIndex++;

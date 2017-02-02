@@ -51,8 +51,8 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 0
   m_MotionVectors: 1
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 2
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 0
   m_Materials:
   - {fileID: 2100000, guid: de48705454e39554fb09f6cd7f8e9cdf, type: 2}
   m_StaticBatchInfo:
