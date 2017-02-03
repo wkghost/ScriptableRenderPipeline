@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Text;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering.HDPipeline;
 
 using UnityObject = UnityEngine.Object;
 
@@ -9,9 +11,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [Flags]
     public enum ClearFlag
     {
-        ClearNone = 0,
+        ClearNone  = 0,
         ClearColor = 1,
         ClearDepth = 2
+    }
+
+    [Flags]
+    public enum StencilBits
+    {
+        None      = Lit.MaterialId.LitStandard, 
+        SSS       = Lit.MaterialId.LitSSS,
+        ClearCoat = Lit.MaterialId.LitClearCoat,
+        All       = 255 // 0xff
     }
 
     public class Utilities
@@ -100,21 +111,48 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 else
                     UnityObject.DestroyImmediate(obj);
 #else
-                    UnityObject.Destroy(obj);
+                UnityObject.Destroy(obj);
 #endif
-                obj = null;
             }
         }
 
         public static void SafeRelease(ComputeBuffer buffer)
         {
             if (buffer != null)
-            {
                 buffer.Release();
-                buffer = null;
-            }
         }
 
+        public static string GetFieldPath<TType, TValue>(Expression<Func<TType, TValue>> expr)
+        {
+            MemberExpression me;
+            switch (expr.Body.NodeType)
+            {
+                case ExpressionType.Convert:
+                case ExpressionType.ConvertChecked:
+                    var ue = expr.Body as UnaryExpression;
+                    me = (ue != null ? ue.Operand : null) as MemberExpression;
+                    break;
+                default:
+                    me = expr.Body as MemberExpression;
+                    break;
+            }
+
+            var members = new List<string>();
+            while (me != null)
+            {
+                members.Add(me.Member.Name);
+                me = me.Expression as MemberExpression;
+            }
+
+            var sb = new StringBuilder();
+            for (int i = members.Count - 1; i >= 0; i--)
+            {
+                sb.Append(members[i]);
+                if (i > 0) sb.Append('.');
+            }
+
+            return sb.ToString();
+        }
 
         public class ProfilingSample
             : IDisposable
@@ -141,7 +179,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             public void Dispose()
-            { 
+            {
                 Dispose(true);
             }
 
@@ -149,7 +187,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             protected virtual void Dispose(bool disposing)
             {
                 if (disposed)
-                    return; 
+                    return;
 
                 if (disposing)
                 {
@@ -174,9 +212,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return gpuVP;
         }
 
-        public static HDRenderPipeline.HDCamera GetHDCamera(Camera camera)
+        public static HDCamera GetHDCamera(Camera camera)
         {
-            HDRenderPipeline.HDCamera hdCamera = new HDRenderPipeline.HDCamera();
+            HDCamera hdCamera = new HDCamera();
             hdCamera.camera = camera;
             hdCamera.screenSize = new Vector4(camera.pixelWidth, camera.pixelHeight, 1.0f / camera.pixelWidth, 1.0f / camera.pixelHeight);
 
@@ -185,13 +223,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var gpuProj = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
             var gpuVP = gpuProj * camera.worldToCameraMatrix;
 
-            hdCamera.viewProjectionMatrix = gpuVP;
+            hdCamera.viewProjectionMatrix    = gpuVP;
             hdCamera.invViewProjectionMatrix = gpuVP.inverse;
+            hdCamera.invProjectionMatrix     = gpuProj.inverse;
 
             return hdCamera;
         }
-        
-        public static void SetupMaterialHDCamera(HDRenderPipeline.HDCamera hdCamera, Material material)
+
+        public static void SetupMaterialHDCamera(HDCamera hdCamera, Material material)
         {
             material.SetVector("_ScreenSize", hdCamera.screenSize);
             material.SetMatrix("_ViewProjMatrix", hdCamera.viewProjectionMatrix);
@@ -243,6 +282,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m.DisableKeyword(keyword);
         }
 
+        public static void SelectKeyword(Material material, string keyword1, string keyword2, bool enableFirst)
+        {
+            material.EnableKeyword (enableFirst ? keyword1 : keyword2);
+            material.DisableKeyword(enableFirst ? keyword2 : keyword1);
+        }
+
+        public static void SelectKeyword(Material material, string[] keywords, int enabledKeywordIndex)
+        {
+            material.EnableKeyword(keywords[enabledKeywordIndex]);
+
+            for (int i = 0; i < keywords.Length; i++)
+            {
+                if (i != enabledKeywordIndex)
+                {
+                    material.DisableKeyword(keywords[i]);
+                }
+            }
+        }
+
         public static HDRenderPipeline GetHDRenderPipeline()
         {
             HDRenderPipeline renderContext = GraphicsSettings.renderPipelineAsset as HDRenderPipeline;
@@ -253,6 +311,49 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             return renderContext;
+        }
+
+        // Draws a full screen triangle as a faster alternative to drawing a full screen quad.
+        public static void DrawFullScreen(CommandBuffer commandBuffer, Material material, HDCamera camera,
+                                          RenderTargetIdentifier colorBuffer,
+                                          MaterialPropertyBlock properties = null, int shaderPassID = 0)
+        {
+            SetupMaterialHDCamera(camera, material);
+            commandBuffer.SetRenderTarget(colorBuffer);
+            commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassID, MeshTopology.Triangles, 3, 1, properties);
+        }
+
+        // Draws a full screen triangle as a faster alternative to drawing a full screen quad.
+        public static void DrawFullScreen(CommandBuffer commandBuffer, Material material, HDCamera camera,
+                                          RenderTargetIdentifier colorBuffer, RenderTargetIdentifier depthStencilBuffer,
+                                          MaterialPropertyBlock properties = null, int shaderPassID = 0)
+        {
+            SetupMaterialHDCamera(camera, material);
+            commandBuffer.SetRenderTarget(colorBuffer, depthStencilBuffer);
+            commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassID, MeshTopology.Triangles, 3, 1, properties);
+        }
+
+        // Draws a full screen triangle as a faster alternative to drawing a full screen quad.
+        public static void DrawFullScreen(CommandBuffer commandBuffer, Material material, HDCamera camera,
+                                          RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthStencilBuffer,
+                                          MaterialPropertyBlock properties = null, int shaderPassID = 0)
+        {
+            SetupMaterialHDCamera(camera, material);
+            commandBuffer.SetRenderTarget(colorBuffers, depthStencilBuffer);
+            commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassID, MeshTopology.Triangles, 3, 1, properties);
+        }
+
+        // Draws a full screen triangle as a faster alternative to drawing a full screen quad.
+        // Important: the first RenderTarget must be created with 0 depth bits!
+        public static void DrawFullScreen(CommandBuffer commandBuffer, Material material, HDCamera camera,
+                                          RenderTargetIdentifier[] colorBuffers,
+                                          MaterialPropertyBlock properties = null, int shaderPassID = 0)
+        {
+            // It is currently not possible to have MRT without also setting a depth target.
+            // To work around this deficiency of the CommandBuffer.SetRenderTarget() API,
+            // we pass the first color target as the depth target. If it has 0 depth bits,
+            // no depth target ends up being bound.
+            DrawFullScreen(commandBuffer, material, camera, colorBuffers, colorBuffers[0], properties, shaderPassID);
         }
     }
 }

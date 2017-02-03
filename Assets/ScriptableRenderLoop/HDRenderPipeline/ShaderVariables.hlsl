@@ -8,7 +8,6 @@
 // As I haven't change the variables name yet, I simply don't define anything, and I put the transform function at the end of the file outside the guard header.
 // This need to be fixed.
 
-float4x4 glstate_matrix_inv_projection;
 #define UNITY_MATRIX_M unity_ObjectToWorld
 
 // These are updated per eye in VR
@@ -86,36 +85,33 @@ CBUFFER_END
 // ----------------------------------------------------------------------------
 
 CBUFFER_START(UnityPerDraw : register(b0))
-#ifdef UNITY_USE_PREMULTIPLIED_MATRICES
-float4x4 glstate_matrix_mvp;
-float4x4 glstate_matrix_modelview0;
-float4x4 glstate_matrix_invtrans_modelview0;
-#endif
+	#ifdef UNITY_USE_PREMULTIPLIED_MATRICES
+	float4x4 glstate_matrix_mvp;
+	float4x4 glstate_matrix_modelview0;
+	float4x4 glstate_matrix_invtrans_modelview0;
+	#endif
 
-float4x4 unity_ObjectToWorld;
-float4x4 unity_WorldToObject;
-float4 unity_LODFade; // x is the fade value ranging within [0,1]. y is x quantized into 16 levels
-float4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
+	float4x4 unity_ObjectToWorld;
+	float4x4 unity_WorldToObject;
+	float4 unity_LODFade; // x is the fade value ranging within [0,1]. y is x quantized into 16 levels
+	float4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
 
-// light maps
-float4 unity_LightmapST;
-float4 unity_DynamicLightmapST;
-// SH lighting environment
-float4 unity_SHAr;
-float4 unity_SHAg;
-float4 unity_SHAb;
-float4 unity_SHBr;
-float4 unity_SHBg;
-float4 unity_SHBb;
-float4 unity_SHC;
-// probe volumes
-float4 unity_ProbeVolumeParams;
-float4x4 unity_ProbeVolumeWorldToObject;
-float3 unity_ProbeVolumeSizeInv;
-float3 unity_ProbeVolumeMin;
-
-
-
+	// light maps
+	float4 unity_LightmapST;
+	float4 unity_DynamicLightmapST;
+	// SH lighting environment
+	float4 unity_SHAr;
+	float4 unity_SHAg;
+	float4 unity_SHAb;
+	float4 unity_SHBr;
+	float4 unity_SHBg;
+	float4 unity_SHBb;
+	float4 unity_SHC;
+	// probe volumes
+	float4 unity_ProbeVolumeParams;
+	float4x4 unity_ProbeVolumeWorldToObject;
+	float3 unity_ProbeVolumeSizeInv;
+	float3 unity_ProbeVolumeMin;
 
 CBUFFER_END
 
@@ -174,6 +170,11 @@ float4 unity_ShadowColor;
 CBUFFER_END
 
 
+
+// Use the regular depth camera texture sampler for sampling this: sampler_CameraDepthTexture
+TEXTURE2D_FLOAT(_CameraDepthTextureCopy);
+SAMPLER2D(sampler_CameraDepthTextureCopy);
+
 // Main lightmap
 TEXTURE2D(unity_Lightmap);
 SAMPLER2D(samplerunity_Lightmap);
@@ -188,7 +189,7 @@ TEXTURE2D(unity_DynamicDirectionality);
 
 
 // TODO: Change code here so probe volume use only one transform instead of all this parameters!
-TEXTURE3D(unity_ProbeVolumeSH);
+TEXTURE3D_FLOAT(unity_ProbeVolumeSH);
 SAMPLER3D(samplerunity_ProbeVolumeSH);
 
 CBUFFER_START(UnityVelocityPass)
@@ -226,12 +227,6 @@ float4x4 GetWorldToObjectMatrix()
 float4x4 GetWorldToHClipMatrix()
 {
     return UNITY_MATRIX_VP;
-}
-
-// Transform from clip space to homogenous world space
-float4x4 GetClipToHWorldMatrix()
-{
-    return glstate_matrix_inv_projection;
 }
 
 float GetOddNegativeScale()

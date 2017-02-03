@@ -86,6 +86,27 @@ void GetPreIntegratedFGD(float NdotV, float perceptualRoughness, float3 fresnel0
 #endif
 }
 
+void ApplyDebugToBSDFData(inout BSDFData bsdfData)
+{
+#ifdef LIGHTING_DEBUG
+    int lightDebugMode = (int)_DebugLightModeAndAlbedo.x;
+    float3 lightDebugAlbedo = _DebugLightModeAndAlbedo.yzw;
+    bool overrideSmoothness = _DebugLightingSmoothness.x != 0.0f;
+    float overrideSmoothnessValue = _DebugLightingSmoothness.y;
+
+    if (overrideSmoothness)
+    {
+        bsdfData.perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(overrideSmoothnessValue);
+        bsdfData.roughness = PerceptualRoughnessToRoughness(bsdfData.perceptualRoughness);
+    }
+
+    if (lightDebugMode == LIGHTINGDEBUGMODE_DIFFUSE_LIGHTING)
+    {
+        bsdfData.diffuseColor = lightDebugAlbedo;
+    }
+
+#endif
+}
 //-----------------------------------------------------------------------------
 // conversion function for forward
 //-----------------------------------------------------------------------------
@@ -116,10 +137,10 @@ BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
     else if (bsdfData.materialId == MATERIALID_LIT_SSS)
     {
         bsdfData.diffuseColor = surfaceData.baseColor;
-        bsdfData.fresnel0 = 0.028; // TODO take from subSurfaceProfile
-        bsdfData.subSurfaceRadius = surfaceData.subSurfaceRadius;
+        bsdfData.fresnel0 = 0.028; // TODO take from subsurfaceProfile
+        bsdfData.subsurfaceRadius = surfaceData.subsurfaceRadius;
         bsdfData.thickness = surfaceData.thickness;
-        bsdfData.subSurfaceProfile = surfaceData.subSurfaceProfile;
+        bsdfData.subsurfaceProfile = surfaceData.subsurfaceProfile;
     }
     else if (bsdfData.materialId == MATERIALID_LIT_CLEAR_COAT)
     {
@@ -134,6 +155,8 @@ BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
         bsdfData.fresnel0 = surfaceData.specularColor;
     }
 
+    ApplyDebugToBSDFData(bsdfData);
+    
     return bsdfData;
 }
 
@@ -181,7 +204,7 @@ void EncodeIntoGBuffer( SurfaceData surfaceData,
     }
     else if (surfaceData.materialId == MATERIALID_LIT_SSS)
     {
-        outGBuffer2 = float4(surfaceData.subSurfaceRadius, surfaceData.thickness, 0.0, surfaceData.subSurfaceProfile / 8.0); // Number of profile not define yet
+        outGBuffer2 = float4(surfaceData.subsurfaceRadius, surfaceData.thickness, 0.0, surfaceData.subsurfaceProfile / 8.0); // Number of profile not define yet
     }
     else if (surfaceData.materialId == MATERIALID_LIT_CLEAR_COAT)
     {
@@ -287,10 +310,10 @@ void DecodeFromGBuffer(
     else if (bsdfData.materialId == MATERIALID_LIT_SSS)
     {
         bsdfData.diffuseColor = baseColor;
-        bsdfData.fresnel0 = 0.028; // TODO take from subSurfaceProfile
-        bsdfData.subSurfaceRadius = inGBuffer2.r;
+        bsdfData.fresnel0 = 0.028; // TODO take from subsurfaceProfile
+        bsdfData.subsurfaceRadius = inGBuffer2.r;
         bsdfData.thickness = inGBuffer2.g;
-        bsdfData.subSurfaceProfile = inGBuffer2.a * 8.0;
+        bsdfData.subsurfaceProfile = inGBuffer2.a * 8.0;
     }
     else if (bsdfData.materialId == MATERIALID_LIT_CLEAR_COAT)
     {
@@ -310,6 +333,8 @@ void DecodeFromGBuffer(
     }
 
     bakeDiffuseLighting = inGBuffer3.rgb;
+
+    ApplyDebugToBSDFData(bsdfData);
 }
 
 //-----------------------------------------------------------------------------
@@ -351,14 +376,14 @@ void GetSurfaceDataDebug(uint paramId, SurfaceData surfaceData, inout float3 res
         case DEBUGVIEW_LIT_SURFACEDATA_SPECULAR:
             result = surfaceData.specular.xxx;
             break;
-        case DEBUGVIEW_LIT_SURFACEDATA_SUB_SURFACE_RADIUS:
-            result = surfaceData.subSurfaceRadius.xxx;
+        case DEBUGVIEW_LIT_SURFACEDATA_SUBSURFACE_RADIUS:
+            result = surfaceData.subsurfaceRadius.xxx;
             break;
         case DEBUGVIEW_LIT_SURFACEDATA_THICKNESS:
             result = surfaceData.thickness.xxx;
             break;
-        case DEBUGVIEW_LIT_SURFACEDATA_SUB_SURFACE_PROFILE:
-            result = GetIndexColor(surfaceData.subSurfaceProfile);
+        case DEBUGVIEW_LIT_SURFACEDATA_SUBSURFACE_PROFILE:
+            result = GetIndexColor(surfaceData.subsurfaceProfile);
             break;
         case DEBUGVIEW_LIT_SURFACEDATA_COAT_NORMAL_WS:
             result = surfaceData.coatNormalWS * 0.5 + 0.5;
@@ -412,14 +437,14 @@ void GetBSDFDataDebug(uint paramId, BSDFData bsdfData, inout float3 result, inou
         case DEBUGVIEW_LIT_BSDFDATA_ANISOTROPY:
             result = bsdfData.anisotropy.xxx;
             break;
-        case DEBUGVIEW_LIT_BSDFDATA_SUB_SURFACE_RADIUS:
-            result = bsdfData.subSurfaceRadius.xxx;
+        case DEBUGVIEW_LIT_BSDFDATA_SUBSURFACE_RADIUS:
+            result = bsdfData.subsurfaceRadius.xxx;
             break;
         case DEBUGVIEW_LIT_BSDFDATA_THICKNESS:
             result = bsdfData.thickness.xxx;
             break;
-        case DEBUGVIEW_LIT_BSDFDATA_SUB_SURFACE_PROFILE:
-            result = GetIndexColor(bsdfData.subSurfaceProfile);
+        case DEBUGVIEW_LIT_BSDFDATA_SUBSURFACE_PROFILE:
+            result = GetIndexColor(bsdfData.subsurfaceProfile);
             break;
         case DEBUGVIEW_LIT_BSDFDATA_COAT_NORMAL_WS:
             result = bsdfData.coatNormalWS * 0.5 + 0.5;

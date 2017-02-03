@@ -1,5 +1,5 @@
 void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 texCoord2, float2 texCoord3,
-                                    float3 positionWS, float3 normalWS, bool isTriplanar, inout LayerTexCoord layerTexCoord, float additionalTiling = 1.0)
+                                    float3 positionWS, float3 vertexNormalWS, bool isTriplanar, inout LayerTexCoord layerTexCoord, float additionalTiling = 1.0)
 {
     // Handle uv0, uv1, uv2, uv3 based on _UVMappingMask weight (exclusif 0..1)
     float2 uvBase = ADD_IDX(_UVMappingMask).x * texCoord0 +
@@ -18,7 +18,7 @@ void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 t
     // Note that if base is planar/triplanar, detail map is too
 
     // planar
-    // TODO: Do we want to manage local or world triplanar/planar
+    // TODO: Do we want to manage local or world triplanar/planar ? In this case update ApplyPerPixelDisplacement() too
     //float3 position = localTriplanar ? TransformWorldToObject(positionWS) : positionWS;
     float3 position = positionWS;
     position *= ADD_IDX(_TexWorldScale);
@@ -27,6 +27,13 @@ void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 t
     {
         uvBase = -position.xz;
         uvDetails = -position.xz;
+        ADD_IDX(layerTexCoord.base).isPlanar = true;
+        ADD_IDX(layerTexCoord.details).isPlanar = true;
+    }
+    else
+    {
+        ADD_IDX(layerTexCoord.base).isPlanar = false;
+        ADD_IDX(layerTexCoord.details).isPlanar = false;
     }
 
     ADD_IDX(layerTexCoord.base).uv = TRANSFORM_TEX(uvBase, ADD_IDX(_BaseColorMap));
@@ -35,7 +42,7 @@ void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 t
     // triplanar
     ADD_IDX(layerTexCoord.base).isTriplanar = isTriplanar;
 
-    float3 direction = sign(normalWS);
+    float3 direction = sign(vertexNormalWS);
 
     // In triplanar, if we are facing away from the world axis, a different axis will be flipped for each direction.
     // This is particularly problematic for tangent space normal maps which need to be in the right direction.
@@ -55,135 +62,6 @@ void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 t
     ADD_IDX(layerTexCoord.details).uvXY = TRANSFORM_TEX(uvXY, ADD_IDX(_DetailMap));
 }
 
-float ADD_IDX(SampleHeightmap)(LayerTexCoord layerTexCoord, float centerOffset = 0.0, float multiplier = 1.0)
-{
-#ifdef _HEIGHTMAP
-    return (SAMPLE_LAYER_TEXTURE2D(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), ADD_IDX(layerTexCoord.base)).r - ADD_IDX(_HeightCenter) - centerOffset) * ADD_IDX(_HeightAmplitude) * multiplier;
-#else
-    return 0.0;
-#endif
-}
-
-float ADD_IDX(SampleHeightmapLod)(LayerTexCoord layerTexCoord, float lod, float centerOffset = 0.0, float multiplier = 1.0)
-{
-#ifdef _HEIGHTMAP
-    return (SAMPLE_LAYER_TEXTURE2D_LOD(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), ADD_IDX(layerTexCoord.base), lod).r - ADD_IDX(_HeightCenter) - centerOffset) * ADD_IDX(_HeightAmplitude) * multiplier;
-#else
-    return 0.0;
-#endif
-}
-
-// Note: The sampling of heightmap inside POM don't use sampling abstraction (with triplanar) as 
-// POM must be apply separately for each uv set (so 3 time for triplanar)
-void ADD_IDX(ParallaxOcclusionMappingLayer)(inout LayerTexCoord layerTexCoord, int numSteps, float3 viewDirTS)
-{
-    // Convention: 1.0 is top, 0.0 is bottom - POM is always inward, no extrusion
-    float stepSize = 1.0 / (float)numSteps;
-
-    // View vector is from the point to the camera, but we want to raymarch from camera to point, so reverse the sign
-    // The length of viewDirTS vector determines the furthest amount of displacement:
-    // float parallaxLimit = -length(viewDirTS.xy) / viewDirTS.z;
-    // float2 parallaxDir = normalize(Out.viewDirTS.xy);
-    // float2 parallaxMaxOffsetTS = parallaxDir * parallaxLimit;
-    // Above code simplify to
-    float2 parallaxMaxOffsetTS = (viewDirTS.xy / -viewDirTS.z) * ADD_IDX(_HeightAmplitude);
-    float2 texOffsetPerStep = stepSize * parallaxMaxOffsetTS;
-
-    float2 uv = ADD_IDX(layerTexCoord.base).uv;
-
-    // Compute lod as we will sample inside a loop (so can't use regular sampling)
-    // It appear that CALCULATE_TEXTURE2D_LOD only return interger lod. We want to use float lod to have smoother transition and fading
-    // float lod = CALCULATE_TEXTURE2D_LOD(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), uv);
-    float lod = ComputeTextureLOD(uv, GET_TEXELSIZE_NAME(ADD_IDX(_HeightMap))); 
-
-    // Do a first step before the loop to init all value correctly
-    float2 texOffsetCurrent = 0;
-    float prevHeight = SAMPLE_TEXTURE2D_LOD(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), uv + texOffsetCurrent, lod).r;
-    texOffsetCurrent += texOffsetPerStep;
-    float currHeight = SAMPLE_TEXTURE2D_LOD(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), uv + texOffsetCurrent, lod).r;
-    float rayHeight = 1.0 - stepSize; // Start at top less one sample
-
-    // Linear search
-    for (int stepIndex = 0; stepIndex < numSteps; ++stepIndex)
-    {
-        // Have we found a height below our ray height ? then we have an intersection
-        if (currHeight > rayHeight)
-            break; // end the loop
-
-        prevHeight = currHeight;
-        rayHeight -= stepSize;
-        texOffsetCurrent += texOffsetPerStep;
-
-        // Sample height map which in this case is stored in the alpha channel of the normal map:
-        currHeight = SAMPLE_TEXTURE2D_LOD(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), uv + texOffsetCurrent, lod).r;
-    }
-
-    // Found below and above points, now perform line interesection (ray) with piecewise linear heightfield approximation
-
-    // Refine the search by adding few extra intersection
-#define POM_REFINE 1
-#if POM_REFINE
-
-    float pt0 = rayHeight + stepSize;
-    float pt1 = rayHeight;
-    float delta0 = pt0 - prevHeight;
-    float delta1 = pt1 - currHeight;
-
-    float2 offset = float2(0.0, 0.0);
-
-    float threshold = 1.0;
-
-    for (int i = 0; i < 5; ++i)
-    {
-        float t = (pt0 * delta1 - pt1 * delta0) / (delta1 - delta0);
-        offset = (1 - t) * texOffsetPerStep * numSteps;
-
-        currHeight = SAMPLE_TEXTURE2D_LOD(ADD_IDX(_HeightMap), ADD_ZERO_IDX(sampler_HeightMap), uv + offset, lod).r;
-
-        threshold = t - currHeight;
-
-        if (abs(threshold) <= 0.01)
-            break;
-
-        if (threshold < 0.0)
-        {
-            delta1 = threshold;
-            pt1 = t;
-        }
-        else
-        {
-            delta0 = threshold;
-            pt0 = t;
-        }
-    }
-
-#else
-    
-    //float pt0 = rayHeight + stepSize;
-    //float pt1 = rayHeight; 
-    //float delta0 = pt0 - prevHeight;
-    //float delta1 = pt1 - currHeight;
-    //float t = (pt0 * delta1 - pt1 * delta0) / (delta1 - delta0);
-    //float2 offset = (1 - t) * texOffsetPerStep * numSteps;
-
-    // A bit more optimize
-    float delta0 = currHeight - rayHeight;
-    float delta1 = (rayHeight + stepSize) - prevHeight;
-    float ratio = delta0 / (delta0 + delta1);
-    float2 offset = texOffsetCurrent - ratio * texOffsetPerStep;
-
-#endif
-
-    // TODO: expose LOD fading
-    //float lodThreshold = 0.0;
-    //offset *= (1.0 - saturate(lod - lodThreshold));
-
-    // Apply offset only on base. Details could use another mapping and will not be consistant...
-    // Don't know if this will still ok.
-    // TODO: check with artists
-    ADD_IDX(layerTexCoord.base).uv += offset;
-}
-
 float3 ADD_IDX(GetNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float3 detailNormalTS, float detailMask, bool useBias, float bias)
 {
     float3 normalTS;
@@ -192,23 +70,23 @@ float3 ADD_IDX(GetNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float
         #ifdef _NORMALMAP_TANGENT_SPACE
             if (useBias)
             {
-                normalTS = SAMPLE_LAYER_NORMALMAP_BIAS(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_ZERO_IDX(_NormalScale), bias);
+                normalTS = SAMPLE_LAYER_NORMALMAP_BIAS(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_IDX(_NormalScale), bias);
             }
             else
             {
-                normalTS = SAMPLE_LAYER_NORMALMAP(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_ZERO_IDX(_NormalScale));
+                normalTS = SAMPLE_LAYER_NORMALMAP(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_IDX(_NormalScale));
             }            
         #else // Object space
             // to be able to combine object space normal with detail map we transform it to tangent space (object space normal composition is not simple).
             // then later we will re-transform it to world space.
             if (useBias)
             {
-                float3 normalOS = SAMPLE_LAYER_NORMALMAP_RGB_BIAS(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_ZERO_IDX(_NormalScale), bias).rgb;
+                float3 normalOS = SAMPLE_LAYER_NORMALMAP_RGB_BIAS(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_IDX(_NormalScale), bias).rgb;
                 normalTS = TransformObjectToTangent(normalOS, input.tangentToWorld);
             }
             else
             {
-                float3 normalOS = SAMPLE_LAYER_NORMALMAP_RGB(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_ZERO_IDX(_NormalScale)).rgb;
+                float3 normalOS = SAMPLE_LAYER_NORMALMAP_RGB(ADD_IDX(_NormalMap), ADD_ZERO_IDX(sampler_NormalMap), ADD_IDX(layerTexCoord.base), ADD_IDX(_NormalScale)).rgb;
                 normalTS = TransformObjectToTangent(normalOS, input.tangentToWorld);
             }
         #endif
@@ -246,7 +124,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 #endif
 
     // Perform alha test very early to save performance (a killed pixel will not sample textures)
-#ifdef _ALPHATEST_ON
+#if defined(_ALPHATEST_ON) && !defined(LAYERED_LIT_SHADER)
     clip(alpha - _AlphaCutoff);
 #endif
 
@@ -278,10 +156,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     // TODO: Do something. For now just take alpha channel
     surfaceData.specularOcclusion = SAMPLE_LAYER_TEXTURE2D(ADD_IDX(_SpecularOcclusionMap), ADD_ZERO_IDX(sampler_SpecularOcclusionMap), ADD_IDX(layerTexCoord.base)).a;
 #else
-    // Horizon Occlusion for Normal Mapped Reflections: http://marmosetco.tumblr.com/post/81245981087
-    //surfaceData.specularOcclusion = saturate(1.0 + horizonFade * dot(r, input.tangentToWorld[2].xyz);
-    // smooth it
-    //surfaceData.specularOcclusion *= surfaceData.specularOcclusion;
+    // The specular occlusion will be perform outside the internal loop
     surfaceData.specularOcclusion = 1.0;
 #endif
     surfaceData.normalWS = float3(0.0, 0.0, 0.0); // Need to init this so that the compiler leaves us alone.
@@ -314,7 +189,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     // This part of the code is not used in case of layered shader but we keep the same macro system for simplicity
 #if !defined(LAYERED_LIT_SHADER)
 
-    surfaceData.materialId = 0; // TODO
+    surfaceData.materialId = _MaterialID;
 
     // TODO: think about using BC5
 #ifdef _TANGENTMAP
@@ -339,9 +214,17 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 
     surfaceData.specular = 0.04;
 
-    surfaceData.subSurfaceRadius = 1.0;
-    surfaceData.thickness = 0.0;
-    surfaceData.subSurfaceProfile = 0;
+    surfaceData.subsurfaceProfile = _SubsurfaceProfile;
+#ifdef _Subsurface_RADIUS_MAP
+	surfaceData.subsurfaceProfile = SAMPLE_LAYER_TEXTURE2D(ADD_IDX(_SubsurfaceRadiusMap), ADD_ZERO_IDX(sampler_SubsurfaceRadiusMap), ADD_IDX(layerTexCoord.base)).r;
+#else
+    surfaceData.subsurfaceRadius = _SubsurfaceRadius;
+#endif
+#ifdef _THICKNESS_MAP
+	surfaceData.thickness = SAMPLE_LAYER_TEXTURE2D(ADD_IDX(_ThicknessMap), ADD_ZERO_IDX(sampler_ThicknessMap), ADD_IDX(layerTexCoord.base)).r;
+#else
+    surfaceData.thickness = _Thickness;
+#endif
 
     surfaceData.coatNormalWS = float3(1.0, 0.0, 0.0);
     surfaceData.coatPerceptualSmoothness = 1.0;
@@ -358,9 +241,9 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     surfaceData.anisotropy = 0;
     surfaceData.specular = 0.04;
 
-    surfaceData.subSurfaceRadius = 1.0;
+    surfaceData.subsurfaceRadius = 1.0;
     surfaceData.thickness = 0.0;
-    surfaceData.subSurfaceProfile = 0;
+    surfaceData.subsurfaceProfile = 0;
 
     surfaceData.coatNormalWS = float3(1.0, 0.0, 0.0);
     surfaceData.coatPerceptualSmoothness = 1.0;

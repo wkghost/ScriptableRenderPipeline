@@ -10,7 +10,7 @@ Shader "HDRenderPipeline/Lit"
         _BaseColorMap("BaseColorMap", 2D) = "white" {}
 
         _Metallic("_Metallic", Range(0.0, 1.0)) = 0
-        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+        _Smoothness("Smoothness", Range(0.0, 1.0)) = 1.0
         _MaskMap("MaskMap", 2D) = "white" {}
 
         _SpecularOcclusionMap("SpecularOcclusion", 2D) = "white" {}
@@ -32,13 +32,14 @@ Shader "HDRenderPipeline/Lit"
         _DetailNormalScale("_DetailNormalScale", Range(0.0, 2.0)) = 1
         _DetailSmoothnessScale("_DetailSmoothnessScale", Range(-2.0, 2.0)) = 1
         _DetailHeightScale("_DetailHeightScale", Range(-2.0, 2.0)) = 1
-        _DetailAOScale("_DetailAOScale", Range(-2.0, 2.0)) = 1        
+        _DetailAOScale("_DetailAOScale", Range(-2.0, 2.0)) = 1
 
-        _SubSurfaceRadius("SubSurfaceRadius", Range(0.0, 1.0)) = 0
-        _SubSurfaceRadiusMap("SubSurfaceRadiusMap", 2D) = "white" {}
-        //_Thickness("Thickness", Range(0.0, 1.0)) = 0
-        //_ThicknessMap("ThicknessMap", 2D) = "white" {}
-        //_SubSurfaceProfile("SubSurfaceProfile", Float) = 0
+        [Enum(Standard, 0, Subsurface Scattering, 1, Clear Coat, 2, Specular Color, 3)] _MaterialID("MaterialId", Int) = 0
+        _SubsurfaceProfile("Subsurface Profile", Int) = 0
+        _SubsurfaceRadius("Subsurface Radius", Range(0.004, 1.0)) = 0.5
+        _SubsurfaceRadiusMap("Subsurface Radius Map", 2D) = "white" {}
+        _Thickness("Thickness", Range(0.004, 1.0)) = 0.5
+        _ThicknessMap("Thickness Map", 2D) = "white" {}
 
         //_CoatCoverage("CoatCoverage", Range(0.0, 1.0)) = 0
         //_CoatCoverageMap("CoatCoverageMapMap", 2D) = "white" {}
@@ -63,6 +64,11 @@ Shader "HDRenderPipeline/Lit"
         [ToggleOff]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
         _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
+        _HorizonFade("Horizon fade", Range(0.0, 5.0)) = 1.0
+
+        // Stencil state
+        [HideInInspector] _StencilRef("_StencilRef", Int) = 0
+
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
         [HideInInspector] _BlendMode("__blendmode", Float) = 0.0
@@ -86,10 +92,11 @@ Shader "HDRenderPipeline/Lit"
         [ToggleOff]  _EnablePerPixelDisplacement("Enable per pixel displacement", Float) = 0.0
         _PPDMinSamples("Min sample for POM", Range(1.0, 64.0)) = 5
         _PPDMaxSamples("Max sample for POM", Range(1.0, 64.0)) = 15
+        _PPDLodThreshold("Start lod to fade out the POM effect", Range(0.0, 16.0)) = 5
         [Enum(DetailMapNormal, 0, DetailMapAOHeight, 1)] _DetailMapMode("DetailMap mode", Float) = 0
         [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVDetail("UV Set for detail", Float) = 0
         [HideInInspector] _UVDetailsMappingMask("_UVDetailsMappingMask", Color) = (1, 0, 0, 0)
-        [Enum(Use Emissive Color, 0, Use Emissive Mask, 1)] _EmissiveColorMode("Emissive color mode", Float) = 1                
+        [Enum(Use Emissive Color, 0, Use Emissive Mask, 1)] _EmissiveColorMode("Emissive color mode", Float) = 1        
     }
 
     HLSLINCLUDE
@@ -110,7 +117,7 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
     #pragma shader_feature _MAPPING_TRIPLANAR
     #pragma shader_feature _DETAIL_MAP_WITH_NORMAL
-    #pragma shader_feature _NORMALMAP_TANGENT_SPACE   
+    #pragma shader_feature _NORMALMAP_TANGENT_SPACE
     #pragma shader_feature _PER_PIXEL_DISPLACEMENT
     #pragma shader_feature _ _REQUIRE_UV2 _REQUIRE_UV3
     #pragma shader_feature _EMISSIVE_COLOR
@@ -122,13 +129,15 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _HEIGHTMAP
     #pragma shader_feature _TANGENTMAP
     #pragma shader_feature _ANISOTROPYMAP
-    #pragma shader_feature _DETAIL_MAP  
+    #pragma shader_feature _DETAIL_MAP
+    #pragma shader_feature _SUBSURFACE_RADIUS_MAP
+    #pragma shader_feature _THICKNESS_MAP
 
     #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
     #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
     #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
     // TODO: We should have this keyword only if VelocityInGBuffer is enable, how to do that ?
-    //#pragma multi_compile VELOCITYOUTPUT_OFF VELOCITYOUTPUT_ON 
+    //#pragma multi_compile VELOCITYOUTPUT_OFF VELOCITYOUTPUT_ON
 
     //-------------------------------------------------------------------------------------
     // Define
@@ -139,7 +148,7 @@ Shader "HDRenderPipeline/Lit"
     //-------------------------------------------------------------------------------------
     // Include
     //-------------------------------------------------------------------------------------
-    
+
     #include "common.hlsl"
     #include "Assets/ScriptableRenderLoop/HDRenderPipeline/ShaderConfig.cs.hlsl"
     #include "Assets/ScriptableRenderLoop/HDRenderPipeline/ShaderVariables.hlsl"
@@ -170,9 +179,44 @@ Shader "HDRenderPipeline/Lit"
 
             Cull  [_CullMode]
 
+            Stencil
+            {
+                Ref  [_StencilRef]
+                Comp Always
+                Pass Replace
+            }
+
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_GBUFFER
+            #include "../../Material/Material.hlsl"
+            #include "ShaderPass/LitSharePass.hlsl"
+            #include "LitData.hlsl"
+            #include "../../ShaderPass/ShaderPassGBuffer.hlsl"
+
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "GBufferDebugLighting"  // Name is not used
+            Tags{ "LightMode" = "GBufferDebugLighting" } // This will be only for opaque object based on the RenderQueue index
+
+            Cull[_CullMode]
+
+                Stencil
+            {
+                Ref[_StencilRef]
+                Comp Always
+                Pass Replace
+            }
+
+            HLSLPROGRAM
+
+            #define LIGHTING_DEBUG
+            #define SHADERPASS SHADERPASS_GBUFFER
+            #include "Assets/ScriptableRenderLoop/HDRenderPipeline/Debug/HDRenderPipelineDebug.cs.hlsl"
+            #include "Assets/ScriptableRenderLoop/HDRenderPipeline/Debug/DebugLighting.hlsl"
             #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitSharePass.hlsl"
             #include "LitData.hlsl"
@@ -215,7 +259,7 @@ Shader "HDRenderPipeline/Lit"
             // both direct and indirect lighting) will hand up in the "regular" lightmap->LIGHTMAP_ON.
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
-            #include "../../Material/Material.hlsl"            
+            #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitMetaPass.hlsl"
             #include "LitData.hlsl"
             #include "../../ShaderPass/ShaderPassLightTransport.hlsl"
@@ -230,7 +274,7 @@ Shader "HDRenderPipeline/Lit"
 
             Cull[_CullMode]
 
-            ZWrite On 
+            ZWrite On
             ZTest LEqual
 
             HLSLPROGRAM
@@ -251,12 +295,12 @@ Shader "HDRenderPipeline/Lit"
 
             Cull[_CullMode]
 
-            ZWrite On 
- 
+            ZWrite On
+
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
-            #include "../../Material/Material.hlsl"            
+            #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitDepthPass.hlsl"
             #include "LitData.hlsl"
             #include "../../ShaderPass/ShaderPassDepthOnly.hlsl"
@@ -276,7 +320,7 @@ Shader "HDRenderPipeline/Lit"
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_VELOCITY
-            #include "../../Material/Material.hlsl"         
+            #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitVelocityPass.hlsl"
             #include "LitData.hlsl"
             #include "../../ShaderPass/ShaderPassVelocity.hlsl"
@@ -328,6 +372,35 @@ Shader "HDRenderPipeline/Lit"
 
             ENDHLSL
         }
+
+        Pass
+        {
+            Name "ForwardDebugLighting" // Name is not used
+            Tags{ "LightMode" = "ForwardDebugLighting" } // This will be only for transparent object based on the RenderQueue index
+
+            Blend[_SrcBlend][_DstBlend]
+            ZWrite[_ZWrite]
+            Cull[_CullMode]
+
+            HLSLPROGRAM
+
+            #define LIGHTING_DEBUG
+            #define SHADERPASS SHADERPASS_FORWARD
+            #include "../../Lighting/Forward.hlsl"
+            #include "Assets/ScriptableRenderLoop/HDRenderPipeline/Debug/HDRenderPipelineDebug.cs.hlsl"
+            #include "Assets/ScriptableRenderLoop/HDRenderPipeline/Debug/DebugLighting.hlsl"
+
+            // TEMP until pragma work in include
+            #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+
+            #include "../../Lighting/Lighting.hlsl"
+            #include "ShaderPass/LitSharePass.hlsl"
+            #include "LitData.hlsl"
+            #include "../../ShaderPass/ShaderPassForward.hlsl"
+
+            ENDHLSL
+        }
+
     }
 
     CustomEditor "Experimental.Rendering.HDPipeline.LitGUI"

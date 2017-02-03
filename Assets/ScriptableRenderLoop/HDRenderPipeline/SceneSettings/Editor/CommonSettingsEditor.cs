@@ -26,7 +26,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public readonly int[] shadowsCascadeCountValues = new int[] { 1, 2, 3, 4 };
             public readonly GUIContent shadowsCascades = new GUIContent("Cascade values");
             public readonly GUIContent[] shadowSplits = new GUIContent[] { new GUIContent("Split 0"), new GUIContent("Split 1"), new GUIContent("Split 2") };
-
         }
 
         private static Styles s_Styles = null;
@@ -136,7 +135,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             for (int i = 0; i < targets.Length; ++i)
             {
                 CommonSettings settings = targets[i] as CommonSettings;
-                maxCascadeCount = Math.Max(maxCascadeCount, settings.shadowCascadeCount);
+                maxCascadeCount = Math.Max(maxCascadeCount, settings.settings.shadowCascadeCount);
             }
 
             EditorGUI.indentLevel++;
@@ -148,6 +147,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             EditorGUI.indentLevel--;
         }
 
+        /*
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -157,5 +157,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             serializedObject.ApplyModifiedProperties();
         }
+        */
     }
 }
