@@ -10,8 +10,9 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
   m_ShaderKeywords: _ALPHACUTOFFENABLE_OFF _DEPTHOFFSETENABLE_OFF _DETAIL_MAP_WITH_NORMAL
     _DISTORTIONDEPTHTEST_OFF _DISTORTIONENABLE_OFF _DISTORTIONONLY_OFF _EMISSION _METALLICGLOSSMAP
-    _NORMALMAP _NORMALMAP_TANGENT_SPACE
+    _NORMALMAP _NORMALMAP_TANGENT_SPACE _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
   m_LightmapFlags: 1
+  m_EnableInstancingVariants: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses:
@@ -126,10 +127,13 @@ Material:
     - _DstBlend: 0
     - _EmissiveColorMode: 1
     - _EmissiveIntensity: 0
+    - _EnablePerPixelDisplacement: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.6
     - _GlossyReflections: 1
+    - _HeightAmplitude: 0.01
     - _HeightBias: 0
+    - _HeightCenter: 0.5
     - _HeightMapMode: 0
     - _HeightScale: 0.01
     - _MaterialId: 0
@@ -138,9 +142,11 @@ Material:
     - _NormalMapSpace: 0
     - _NormalScale: 0.302
     - _OcclusionStrength: 1
+    - _PPDMaxSamples: 15
+    - _PPDMinSamples: 5
     - _Parallax: 0.02
     - _Smoothness: 0.811
-    - _SmoothnessTextureChannel: 0
+    - _SmoothnessTextureChannel: 1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SubSurfaceRadius: 0

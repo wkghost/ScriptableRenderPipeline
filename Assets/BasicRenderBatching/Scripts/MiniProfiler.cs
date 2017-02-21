@@ -31,6 +31,11 @@ public class MiniProfiler : MonoBehaviour {
 //        new RecorderEntry() { name="BatchRenderer.Flush" },
         new RecorderEntry() { name="Shadows.Draw" },
         new RecorderEntry() { name="BatchRenderer.RenderBatch" },
+
+        new RecorderEntry() { name="Map_PerDraw_Buffer" },
+        new RecorderEntry() { name="Unmap_PerDraw_Buffer" },
+        new RecorderEntry() { name="DrawBuffersBatchMode" },
+        new RecorderEntry() { name="DrawBatchIndexed" },
         new RecorderEntry() { name="BatchRenderer.ApplyShaderPass" },
         new RecorderEntry() { name="PerformFlushProperties" },
 
