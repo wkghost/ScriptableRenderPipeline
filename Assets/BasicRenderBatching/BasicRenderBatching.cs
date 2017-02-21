@@ -71,7 +71,7 @@ public static class BasicRenderingBatching
             var settings = new DrawRendererSettings(cull, camera, new ShaderPassName("BasicPass"));
             settings.sorting.flags = SortFlags.CommonOpaque;
             settings.inputFilter.SetQueuesOpaque();
-            context.DrawRenderers(settings);
+            context.DrawRenderers(ref settings);
 
             // Draw skybox
             context.DrawSkybox(camera);
@@ -79,7 +79,7 @@ public static class BasicRenderingBatching
             // Draw transparent objects using BasicPass shader pass
             settings.sorting.flags = SortFlags.CommonTransparent;
             settings.inputFilter.SetQueuesTransparent();
-            context.DrawRenderers(settings);
+            context.DrawRenderers(ref settings);
 
             context.Submit();
         }

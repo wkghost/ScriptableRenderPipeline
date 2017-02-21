@@ -44,13 +44,14 @@ CBUFFER_START(_PerMaterial)
 	TEXTURE2D(_AnisotropyMap);
 	SAMPLER2D(sampler_AnisotropyMap);
 
-	//float _SubSurfaceRadius;
-	//TEXTURE2D(_SubSurfaceRadiusMap);
-	//SAMPLER2D(sampler_SubSurfaceRadiusMap);
-
-	// float _Thickness;
-	//TEXTURE2D(_ThicknessMap);
-	//SAMPLER2D(sampler_ThicknessMap);
+int   _MaterialID;
+int   _SubsurfaceProfile;
+float _SubsurfaceRadius;
+float _Thickness;
+TEXTURE2D(_SubsurfaceRadiusMap);
+SAMPLER2D(sampler_SubsurfaceRadiusMap);
+TEXTURE2D(_ThicknessMap);
+SAMPLER2D(sampler_ThicknessMap);
 
 	// float _CoatCoverage;
 	//TEXTURE2D(_CoatCoverageMap);
@@ -73,13 +74,16 @@ CBUFFER_START(_PerMaterial)
 
 	float _AlphaCutoff;
 
-	float _TexWorldScale;
-	float _UVMappingPlanar;
-	float4 _UVMappingMask;
-	float4 _UVDetailsMappingMask;
+float _HorizonFade;
 
-	float _PPDMaxSamples;
-	float _PPDMinSamples;
+float _TexWorldScale;
+float _UVMappingPlanar;
+float4 _UVMappingMask;
+float4 _UVDetailsMappingMask;
+
+float _PPDMaxSamples;
+float _PPDMinSamples;
+float _PPDLodThreshold;
 CBUFFER_END
 
 #else // LAYERED_LIT_SHADER
@@ -141,26 +145,13 @@ SAMPLER2D(sampler_DistortionVectorMap);
 TEXTURE2D(_LayerMaskMap);
 SAMPLER2D(sampler_LayerMaskMap);
 
-float _HeightOffset1;
-float _HeightOffset2;
-float _HeightOffset3;
-float _HeightFactor1;
-float _HeightFactor2;
-float _HeightFactor3;
-float _BlendSize1;
-float _BlendSize2;
-float _BlendSize3;
-float _VertexColorHeightFactor;
-
-// Blend Properties V2
-float _UseHeightBasedBlendV2;
-
-float _HeightCenterOffset1;
-float _HeightCenterOffset2;
-float _HeightCenterOffset3;
 float _BlendUsingHeight1;
 float _BlendUsingHeight2;
 float _BlendUsingHeight3;
+PROP_DECL(float, _LayerHeightAmplitude);
+PROP_DECL(float, _LayerCenterOffset);
+PROP_DECL(float, _MinimumOpacity);
+PROP_DECL(float, _OpacityAsDensity);
 float _InheritBaseNormal1;
 float _InheritBaseNormal2;
 float _InheritBaseNormal3;
@@ -173,12 +164,7 @@ float _InheritBaseColor3;
 float _InheritBaseColorThreshold1;
 float _InheritBaseColorThreshold2;
 float _InheritBaseColorThreshold3;
-float _MinimumOpacity1;
-float _MinimumOpacity2;
-float _MinimumOpacity3;
-float _OpacityAsDensity1;
-float _OpacityAsDensity2;
-float _OpacityAsDensity3;
+float _LayerTilingBlendMask;
 PROP_DECL(float, _LayerTiling);
 
 float3 _EmissiveColor;
@@ -193,8 +179,11 @@ PROP_DECL(float4, _UVDetailsMappingMask);
 
 float _AlphaCutoff;
 
+float _HorizonFade;
+
 float _PPDMaxSamples;
 float _PPDMinSamples;
+float _PPDLodThreshold;
 
 #endif // LAYERED_LIT_SHADER
 
