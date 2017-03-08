@@ -25,29 +25,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Serializable]
         public class TileSettings
         {
-            public bool enableDrawLightBoundsDebug;
-            public bool disableTileAndCluster; // For debug / test
-            public bool disableDeferredShadingInCompute;
+            public bool enableTileAndCluster; // For debug / test
             public bool enableSplitLightEvaluation;
             public bool enableComputeLightEvaluation;
 
             // clustered light list specific buffers and data begin
             public int debugViewTilesFlags;
             public bool enableClustered;
-            public bool disableFptlWhenClustered; // still useful on opaques. Should be false by default to force tile on opaque.
+            public bool enableFptlForOpaqueWhenClustered; // still useful on opaques. Should be true by default to force tile on opaque.
             public bool enableBigTilePrepass;
+
+            [Range(0.0f, 1.0f)]
+            public float diffuseGlobalDimmer = 1.0f;
+            [Range(0.0f, 1.0f)]
+            public float specularGlobalDimmer = 1.0f;
 
             public static TileSettings defaultSettings = new TileSettings
             {
-                enableDrawLightBoundsDebug = false,
-                disableTileAndCluster = false,
-                disableDeferredShadingInCompute = true,
+                enableTileAndCluster = true,
                 enableSplitLightEvaluation = true,
                 enableComputeLightEvaluation = false,
 
                 debugViewTilesFlags = 0,
                 enableClustered = true,
-                disableFptlWhenClustered = false,
+                enableFptlForOpaqueWhenClustered = true,
                 enableBigTilePrepass = true,
             };
         }
