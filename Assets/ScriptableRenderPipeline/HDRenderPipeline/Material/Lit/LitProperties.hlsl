@@ -1,3 +1,7 @@
+
+CBUFFER_START(_PerMaterial)
+
+
 // shared constant between lit and layered lit
 float _AlphaCutoff;
 float4 _DoubleSidedConstants;
@@ -26,8 +30,6 @@ float _EmissiveIntensity;
 float3 _EmissionColor;
 
 #ifndef LAYERED_LIT_SHADER
-
-CBUFFER_START(_PerMaterial)
 
 	// Set of users variables
 	float4 _BaseColor;
@@ -90,7 +92,6 @@ float _TexWorldScale;
 float4 _UVMappingMask;
 float4 _UVDetailsMappingMask;
 
-CBUFFER_END
 
 #else // LAYERED_LIT_SHADER
 
@@ -189,3 +190,5 @@ float _TessellationBackFaceCullEpsilon;
 float _TessellationObjectScale;
 float _TessellationTilingScale;
 #endif
+
+CBUFFER_END
