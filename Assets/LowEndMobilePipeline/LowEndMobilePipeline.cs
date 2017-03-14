@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
+using UnityEngine.VR;
+using UnityEditor;
+
 namespace UnityEngine.Experimental.Rendering.LowendMobile
 {
     public class LowEndMobilePipeline : RenderPipeline
@@ -43,6 +46,7 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
 
             foreach (Camera camera in cameras)
             {
+
                 CullingParameters cullingParameters;
                 if (!CullResults.GetCullingParameters(camera, out cullingParameters))
                     continue;
@@ -50,17 +54,82 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
                 cullingParameters.shadowDistance = m_ShadowSettings.maxShadowDistance;
                 CullResults cull = CullResults.Cull(ref cullingParameters, context);
 
-                var cmd = new CommandBuffer() {name = "Clear"};
-                cmd.ClearRenderTarget(true, true, Color.black);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Dispose();
-
                 // Render Shadow Map
                 bool shadowsRendered = RenderShadows(cull, context);
 
                 // Draw Opaques with support to one directional shadow cascade
+
                 // Setup camera matrices
-                context.SetupCameraProperties(camera);
+                //context.SetupCameraProperties(camera);
+                if (VRSettings.isDeviceActive)
+                {
+                    //camera.stereoTargetEye = StereoTargetEyeMask.Left;
+                    context.StereoSetupCameraProperties(camera);
+                    context.StartMultiEye(camera);
+                }
+                else
+                {
+                    context.SetupCameraProperties(camera);
+                }
+
+                // set up a temporary RT to render to
+                var intermediateRT = Shader.PropertyToID("_IntermediateTarget");
+                var intermediateRTID = new RenderTargetIdentifier(intermediateRT);
+                var intermediateDepthRT = Shader.PropertyToID("_IntermediateDepthTarget");
+                var intermediateDepthRTID = new RenderTargetIdentifier(intermediateDepthRT);
+
+                if (VRSettings.isDeviceActive)
+                {
+                    int w = VRSettings.eyeTextureWidth;
+                    int h = VRSettings.eyeTextureHeight;
+
+                    var aa = QualitySettings.antiAliasing;
+                    if (aa < 1)
+                        aa = 1;
+
+                    var bindTempRTCmd = new CommandBuffer() { name = "Bind intermediate RT" };
+
+                    // TODO: this won't work in...the Player
+                    var stereoPath = PlayerSettings.stereoRenderingPath;
+                    if (StereoRenderingPath.Instancing == stereoPath) // can't actually check for GetGraphicsCaps().hasRenderTargetArrayIndexFromAnyShader...yet
+                    {
+                        bindTempRTCmd.GetTemporaryRTArray(intermediateRT, w, h, 2, 0, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
+                        bindTempRTCmd.GetTemporaryRTArray(intermediateDepthRT, w, h, 2, 24, FilterMode.Point, RenderTextureFormat.Depth);
+                    }
+                    else
+                    {
+                        bindTempRTCmd.GetTemporaryRT(intermediateRT, w, h, 0, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
+                        bindTempRTCmd.GetTemporaryRT(intermediateDepthRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Depth);
+                    }
+
+                    bindTempRTCmd.SetRenderTarget(intermediateRTID, intermediateDepthRTID);
+                    context.ExecuteCommandBuffer(bindTempRTCmd);
+                    bindTempRTCmd.Dispose();
+                }
+                else
+                {
+                    int w = camera.pixelWidth;
+                    int h = camera.pixelHeight;
+
+                    var aa = QualitySettings.antiAliasing;
+                    if (aa < 1)
+                        aa = 1;
+                    
+                    var bindTempRTCmd = new CommandBuffer() { name = "Bind intermediate RT" };
+                    
+                    // this does the combined color/depth RT
+                    bindTempRTCmd.GetTemporaryRT(intermediateRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
+                    bindTempRTCmd.SetRenderTarget(intermediateRTID);
+                    //bindTempRTCmd.GetTemporaryRT(intermediateDepthRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Depth);
+                    //bindTempRTCmd.SetRenderTarget(intermediateRTID, intermediateDepthRTID);
+                    context.ExecuteCommandBuffer(bindTempRTCmd);
+                    bindTempRTCmd.Dispose();
+                }
+
+                var cmd = new CommandBuffer() { name = "Clear" };
+                cmd.ClearRenderTarget(true, true, Color.black);
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Dispose();
 
                 // Setup light and shadow shader constants
                 SetupLightShaderVariables(cull.visibleLights, context);
@@ -93,6 +162,35 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
                 settings.sorting.flags = SortFlags.CommonTransparent;
                 settings.inputFilter.SetQueuesTransparent();
                 context.DrawRenderers(ref settings);
+
+                // ok, copy from temporary RT into the real RT
+                if (VRSettings.isDeviceActive)
+                {
+                    //context.StereoSetupCameraProperties(camera);
+
+                    var copyIntermediateRTToDefault = new CommandBuffer() { name = "Copy intermediate RT to default RT" };
+                    //copyIntermediateRTToDefault.Blit(intermediateRTID, BuiltinRenderTextureType.CurrentActive);
+                    copyIntermediateRTToDefault.Blit(intermediateRTID, BuiltinRenderTextureType.CameraTarget);
+                    context.ExecuteCommandBuffer(copyIntermediateRTToDefault);
+                    copyIntermediateRTToDefault.Dispose();
+                }
+                else
+                {
+                    //context.SetupCameraProperties(camera);
+
+                    var copyIntermediateRTToDefault = new CommandBuffer() { name = "Copy intermediate RT to default RT" };
+                    copyIntermediateRTToDefault.Blit(intermediateRTID, BuiltinRenderTextureType.CameraTarget); // this works, but barely
+                    //copyIntermediateRTToDefault.Blit(intermediateRTID, camera.targetTexture); // this won't work, target texture won't be right until SetupCameraProperties ACTUALLY executes
+                    //copyIntermediateRTToDefault.Blit(intermediateRTID, BuiltinRenderTextureType.CurrentActive);
+                    context.ExecuteCommandBuffer(copyIntermediateRTToDefault);
+                    copyIntermediateRTToDefault.Dispose();
+                }
+
+                if (VRSettings.isDeviceActive)
+                {
+                    context.StopMultiEye(camera);
+                    context.StereoEndRender(camera);
+                }
             }
 
             context.Submit();
