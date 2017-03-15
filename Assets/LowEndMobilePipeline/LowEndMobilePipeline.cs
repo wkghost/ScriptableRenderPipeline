@@ -46,6 +46,7 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
 
             foreach (Camera camera in cameras)
             {
+                context.ResetCameraProperties();
 
                 CullingParameters cullingParameters;
                 if (!CullResults.GetCullingParameters(camera, out cullingParameters))
@@ -175,6 +176,7 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
             }
 
             context.Submit();
+            context.ResetCameraProperties();
             Shader.globalRenderPipeline = prevPipe;
         }
 
