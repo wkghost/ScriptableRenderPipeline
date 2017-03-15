@@ -80,29 +80,12 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
 
                 if (VRSettings.isDeviceActive)
                 {
-                    int w = VRSettings.eyeTextureWidth;
-                    int h = VRSettings.eyeTextureHeight;
-
-                    var aa = QualitySettings.antiAliasing;
-                    if (aa < 1)
-                        aa = 1;
-
                     var bindTempRTCmd = new CommandBuffer() { name = "Bind intermediate RT" };
-
-                    // TODO: this won't work in...the Player
-                    var stereoPath = PlayerSettings.stereoRenderingPath;
-                    if (StereoRenderingPath.Instancing == stereoPath) // can't actually check for GetGraphicsCaps().hasRenderTargetArrayIndexFromAnyShader...yet
-                    {
-                        bindTempRTCmd.GetTemporaryRTArray(intermediateRT, w, h, 2, 0, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
-                        bindTempRTCmd.GetTemporaryRTArray(intermediateDepthRT, w, h, 2, 24, FilterMode.Point, RenderTextureFormat.Depth);
-                    }
-                    else
-                    {
-                        bindTempRTCmd.GetTemporaryRT(intermediateRT, w, h, 0, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
-                        bindTempRTCmd.GetTemporaryRT(intermediateDepthRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Depth);
-                    }
-
-                    bindTempRTCmd.SetRenderTarget(intermediateRTID, intermediateDepthRTID);
+                    RenderTextureDesc vrDesc = VRDevice.GetVREyeTextureDesc();
+                    vrDesc.depthBufferBits = 24;
+                    bindTempRTCmd.GetTemporaryRT(intermediateRT, vrDesc, FilterMode.Point);
+                    bindTempRTCmd.SetRenderTarget(intermediateRTID);
+                   
                     context.ExecuteCommandBuffer(bindTempRTCmd);
                     bindTempRTCmd.Dispose();
                 }
@@ -120,8 +103,6 @@ namespace UnityEngine.Experimental.Rendering.LowendMobile
                     // this does the combined color/depth RT
                     bindTempRTCmd.GetTemporaryRT(intermediateRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
                     bindTempRTCmd.SetRenderTarget(intermediateRTID);
-                    //bindTempRTCmd.GetTemporaryRT(intermediateDepthRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Depth);
-                    //bindTempRTCmd.SetRenderTarget(intermediateRTID, intermediateDepthRTID);
                     context.ExecuteCommandBuffer(bindTempRTCmd);
                     bindTempRTCmd.Dispose();
                 }
