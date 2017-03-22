@@ -2,6 +2,8 @@ using UnityEngine.Rendering;
 using System;
 using System.Collections.Generic;
 
+using UnityEngine.VR;
+
 namespace UnityEngine.Experimental.Rendering.Fptl
 {
     public class FptlLightingInstance : RenderPipeline
@@ -98,9 +100,10 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 		public bool enableReflectionProbeDebug = false;
         public bool enableComputeLightEvaluation = false;
         const bool k_UseDepthBuffer = true;//      // only has an impact when EnableClustered is true (requires a depth-prepass)
-        const bool k_UseAsyncCompute = true;        // should not use on mobile
+		//const bool k_UseAsyncCompute = true;        // should not use on mobile
+		const bool k_UseAsyncCompute = false;        // Easier for ordering for Stereo prototype
 
-        const int k_Log2NumClusters = 6;     // accepted range is from 0 to 6. NumClusters is 1<<g_iLog2NumClusters
+		const int k_Log2NumClusters = 6;     // accepted range is from 0 to 6. NumClusters is 1<<g_iLog2NumClusters
         const float k_ClustLogBase = 1.02f;     // each slice 2% bigger than the previous
         float m_ClustScale;
         private static ComputeBuffer s_PerVoxelLightLists;
@@ -111,6 +114,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
         private static int s_WidthOnRecord;
         private static int s_HeightOnRecord;
+		private static bool s_stereoDoublewideOnRecord = false;
 
         Matrix4x4[] m_MatWorldToShadow = new Matrix4x4[k_MaxLights * k_MaxShadowmapPerLights];
         Vector4[] m_DirShadowSplitSpheres = new Vector4[k_MaxDirectionalSplit];
@@ -141,6 +145,12 @@ namespace UnityEngine.Experimental.Rendering.Fptl
         private Texture2D m_NHxRoughnessTexture;
         private Texture2D m_LightAttentuationTexture;
         private int m_shadowBufferID;
+
+		// VR state bits
+		private bool stereoActive;
+		private bool stereoSinglePass;
+		private bool stereoDoublewide;
+		private RenderTextureDesc cachedStereoDesc;
 
         public void Cleanup()
         {
@@ -277,8 +287,9 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             m_shadowBufferID = Shader.PropertyToID("g_tShadowBuffer");
         }
         
-        static void SetupGBuffer(int width, int height, CommandBuffer cmd)
-        {
+        //static void SetupGBuffer(int width, int height, CommandBuffer cmd)
+		static void SetupGBuffer(RenderTextureDesc baseDesc, CommandBuffer cmd)
+		{
             var format10 = RenderTextureFormat.ARGB32;
             if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGB2101010))
                 format10 = RenderTextureFormat.ARGB2101010;
@@ -288,27 +299,48 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             // so we make it think we always render in HDR
             cmd.EnableShaderKeyword ("UNITY_HDR_ON");
 
-            //@TODO: GetGraphicsCaps().buggyMRTSRGBWriteFlag
-            cmd.GetTemporaryRT(s_GBufferAlbedo, width, height, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-            cmd.GetTemporaryRT(s_GBufferSpecRough, width, height, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-            cmd.GetTemporaryRT(s_GBufferNormal, width, height, 0, FilterMode.Point, format10, RenderTextureReadWrite.Linear);
-            cmd.GetTemporaryRT(s_GBufferEmission, width, height, 0, FilterMode.Point, formatHDR, RenderTextureReadWrite.Linear);
-            cmd.GetTemporaryRT(s_GBufferZ, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
-            cmd.GetTemporaryRT(s_CameraDepthTexture, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
-            cmd.GetTemporaryRT(s_CameraTarget, width, height, 0, FilterMode.Point, formatHDR, RenderTextureReadWrite.Default, 1, true); // rtv/uav
-            
-            var colorMRTs = new RenderTargetIdentifier[4] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission };
+
+			//@TODO: GetGraphicsCaps().buggyMRTSRGBWriteFlag
+			//cmd.GetTemporaryRT(s_GBufferAlbedo, width, height, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+			//cmd.GetTemporaryRT(s_GBufferSpecRough, width, height, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+			//cmd.GetTemporaryRT(s_GBufferNormal, width, height, 0, FilterMode.Point, format10, RenderTextureReadWrite.Linear);
+			//cmd.GetTemporaryRT(s_GBufferEmission, width, height, 0, FilterMode.Point, formatHDR, RenderTextureReadWrite.Linear);
+			//cmd.GetTemporaryRT(s_GBufferZ, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
+			//cmd.GetTemporaryRT(s_CameraDepthTexture, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
+			//cmd.GetTemporaryRT(s_CameraTarget, width, height, 0, FilterMode.Point, formatHDR, RenderTextureReadWrite.Default, 1, true); // rtv/uav
+
+			// finish this...
+			RenderTextureDesc modDesc = baseDesc;
+			modDesc.depthBufferBits = 0;
+			modDesc.colorFormat = RenderTextureFormat.ARGB32;
+			modDesc.flags &= RenderTextureCreationFlags.SRGB; // fix this...turn off the SRGB flag
+			
+			cmd.GetTemporaryRT()
+
+
+			var colorMRTs = new RenderTargetIdentifier[4] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission };
             cmd.SetRenderTarget(colorMRTs, new RenderTargetIdentifier(s_GBufferZ));
             cmd.ClearRenderTarget(true, true, new Color(0, 0, 0, 0));
 
             //@TODO: render VR occlusion mesh
         }
 
-        static void RenderGBuffer(CullResults cull, Camera camera, ScriptableRenderContext loop)
+        static void RenderGBuffer(CullResults cull, Camera camera, ScriptableRenderContext loop, bool stereoDw, RenderTextureDesc stereoDesc)
         {
             // setup GBuffer for rendering
             var cmd = new CommandBuffer { name = "Create G-Buffer" };
-            SetupGBuffer(camera.pixelWidth, camera.pixelHeight, cmd);
+			if (stereoDw)
+			{
+				//SetupGBuffer(stereoDesc.width, stereoDesc.height, cmd);
+				SetupGBuffer(stereoDesc, cmd);
+			}
+			else
+			{
+				//SetupGBuffer(camera.pixelWidth, camera.pixelHeight, cmd);
+				RenderTextureDesc baseDesc = new RenderTextureDesc(camera.pixelWidth, camera.pixelHeight);
+				SetupGBuffer(baseDesc, cmd);
+			}
+            
             loop.ExecuteCommandBuffer(cmd);
             cmd.Dispose();
 
@@ -1036,12 +1068,47 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             cmd.Dispose();
         }
 
+		void CheckVRState()
+		{
+			stereoActive = VRSettings.isDeviceActive;
+			if (stereoActive)
+			{
+				cachedStereoDesc = VRDevice.GetVREyeTextureDesc();
+				stereoDoublewide = (cachedStereoDesc.dimension == TextureDimension.Tex2D);
+			}
+			else
+			{
+				stereoDoublewide = false;
+			}
+	}
+
         void ExecuteRenderLoop(Camera camera, CullResults cullResults, ScriptableRenderContext loop)
         {
-            var w = camera.pixelWidth;
-            var h = camera.pixelHeight;
+			CheckVRState();
 
-            ResizeIfNecessary(w, h);
+			int w, h;
+			if (stereoDoublewide)
+			{
+				w = cachedStereoDesc.width;
+				h = cachedStereoDesc.height;
+			}
+			else
+			{
+				w = camera.pixelWidth;
+				h = camera.pixelHeight;
+			}
+
+			if (stereoDoublewide)
+			{
+				// VR - with double wide, our texture is double eye width
+				// That is the width we want to use for the light list generation...
+				ResizeIfNecessary(w/2, h, true);
+			}
+			else
+			{
+				ResizeIfNecessary(w, h, false);
+			}
+            
 
             // do anything we need to do upon a new frame.
             NewFrame ();
@@ -1051,13 +1118,26 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 #pragma warning restore 162
             // generate g-buffer before shadows to leverage async compute
             // forward opaques just write to depth.
-            loop.SetupCameraProperties(camera);
-            RenderGBuffer(cullResults, camera, loop);
+			if (stereoActive)
+			{
+				loop.StereoSetupCameraProperties(camera);
+				loop.StartMultiEye(camera);
+			}
+			else
+			{
+				loop.SetupCameraProperties(camera);
+			}
+            RenderGBuffer(cullResults, camera, loop, stereoDoublewide, cachedStereoDesc);
             DepthOnlyForForwardOpaques(cullResults, camera, loop);
             CopyDepthAfterGBuffer(loop);
 
-            // camera to screen matrix (and it's inverse)
-            var proj = CameraProjection(camera);
+			if (stereoActive)
+			{
+				loop.StopMultiEye(camera);
+			}
+
+			// camera to screen matrix (and it's inverse)
+			var proj = CameraProjection(camera);
             var temp = new Matrix4x4();
             temp.SetRow(0, new Vector4(0.5f * w, 0.0f, 0.0f, 0.5f * w));
             temp.SetRow(1, new Vector4(0.0f, 0.5f * h, 0.0f, 0.5f * h));
@@ -1083,8 +1163,13 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             var numDirLights = UpdateDirectionalLights(camera, cullResults.visibleLights);
             PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
 
-            // do deferred lighting
-            DoTiledDeferredLighting(camera, loop, numLights, numDirLights);
+			if (stereoActive)
+			{
+				loop.StartMultiEye(camera);
+			}
+
+			// do deferred lighting
+			DoTiledDeferredLighting(camera, loop, numLights, numDirLights);
 
             // render opaques using tiled forward
             RenderForward(cullResults, camera, loop, true);    // opaques only (requires a depth pre-pass)
@@ -1109,7 +1194,13 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 loop.ExecuteCommandBuffer(cmd);
                 cmd.Dispose();
             }
-            loop.Submit();
+
+			if (stereoActive)
+			{
+				loop.StopMultiEye(camera);
+				loop.StereoEndRender(camera);
+			}
+			loop.Submit();
 
         }
 
@@ -1137,20 +1228,29 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             UpdateShadowConstants (cullResults.visibleLights, ref shadows);
         }
 
-        void ResizeIfNecessary(int curWidth, int curHeight)
+        void ResizeIfNecessary(int curWidth, int curHeight, bool stereoDW)
         {
-            if (curWidth != s_WidthOnRecord || curHeight != s_HeightOnRecord || s_LightList == null ||
+            if (curWidth != s_WidthOnRecord || curHeight != s_HeightOnRecord || stereoDW != s_stereoDoublewideOnRecord  || s_LightList == null ||
                 (s_BigTileLightList==null && enableBigTilePrepass) || (s_PerVoxelLightLists==null && enableClustered) )
             {
                 if (s_WidthOnRecord > 0 && s_HeightOnRecord > 0)
                     ReleaseResolutionDependentBuffers();
 
-                AllocResolutionDependentBuffers(curWidth, curHeight);
+				if (stereoDW)
+				{
+					AllocResolutionDependentBuffers(curWidth, curHeight, 2);
+				}
+				else
+				{
+					AllocResolutionDependentBuffers(curWidth, curHeight, 1);
+				}
 
                 // update recorded window resolution
                 s_WidthOnRecord = curWidth;
                 s_HeightOnRecord = curHeight;
-            }
+				s_stereoDoublewideOnRecord = stereoDW;
+
+			}
         }
 
         void ReleaseResolutionDependentBuffers()
@@ -1181,7 +1281,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             return 8 * (1 << k_Log2NumClusters);       // total footprint for all layers of the tile (measured in light index entries)
         }
 
-        void AllocResolutionDependentBuffers(int width, int height)
+        void AllocResolutionDependentBuffers(int width, int height, int stereoMultiplier)
         {
             var nrTilesX = (width + 15) / 16;
             var nrTilesY = (height + 15) / 16;
@@ -1189,10 +1289,12 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             const int capacityUShortsPerTile = 32;
             const int dwordsPerTile = (capacityUShortsPerTile + 1) >> 1;        // room for 31 lights and a nrLights value.
 
-            s_LightList = new ComputeBuffer(LightDefinitions.NR_LIGHT_MODELS * dwordsPerTile * nrTiles, sizeof(uint));       // enough list memory for a 4k x 4k display
+            //s_LightList = new ComputeBuffer(LightDefinitions.NR_LIGHT_MODELS * dwordsPerTile * nrTiles, sizeof(uint));       // enough list memory for a 4k x 4k display
+			s_LightList = new ComputeBuffer(LightDefinitions.NR_LIGHT_MODELS * dwordsPerTile * nrTiles * stereoMultiplier, sizeof(uint));       // enough list memory for a 4k x 4k display
 
-            if (enableClustered)
+			if (enableClustered)
             {
+				// VR TODO - No stereo support yet...
                 var tileSizeClust = LightDefinitions.TILE_SIZE_CLUSTERED;
                 var nrTilesClustX = (width + (tileSizeClust-1)) / tileSizeClust;
                 var nrTilesClustY = (height + (tileSizeClust-1)) / tileSizeClust;
@@ -1212,8 +1314,9 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 var nrBigTilesX = (width + 63) / 64;
                 var nrBigTilesY = (height + 63) / 64;
                 var nrBigTiles = nrBigTilesX * nrBigTilesY;
-                s_BigTileLightList = new ComputeBuffer(LightDefinitions.MAX_NR_BIGTILE_LIGHTS_PLUSONE * nrBigTiles, sizeof(uint));
-            }
+                //s_BigTileLightList = new ComputeBuffer(LightDefinitions.MAX_NR_BIGTILE_LIGHTS_PLUSONE * nrBigTiles, sizeof(uint));
+				s_BigTileLightList = new ComputeBuffer(LightDefinitions.MAX_NR_BIGTILE_LIGHTS_PLUSONE * nrBigTiles * stereoMultiplier, sizeof(uint));
+			}
         }
 
         void VoxelLightListGeneration(CommandBuffer cmd, Camera camera, int numLights, Matrix4x4 projscr, Matrix4x4 invProjscr)
