@@ -311,14 +311,35 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
 			// finish this...
 			RenderTextureDesc modDesc = baseDesc;
-			modDesc.depthBufferBits = 0;
-			modDesc.colorFormat = RenderTextureFormat.ARGB32;
-			modDesc.flags &= RenderTextureCreationFlags.SRGB; // fix this...turn off the SRGB flag
-			
-			cmd.GetTemporaryRT()
+
+            // VR - do i need to set the AA value?
+            modDesc.depthBufferBits = 0;
+            modDesc.colorFormat = RenderTextureFormat.ARGB32;
+            modDesc.flags &= ~(RenderTextureCreationFlags.EnableRandomWrite);
+            modDesc.flags |= RenderTextureCreationFlags.SRGB;
+            cmd.GetTemporaryRT(s_GBufferAlbedo, modDesc, FilterMode.Point);
+            cmd.GetTemporaryRT(s_GBufferSpecRough, modDesc, FilterMode.Point);
+
+            modDesc.colorFormat = format10;
+            modDesc.flags &= ~(RenderTextureCreationFlags.SRGB);
+            cmd.GetTemporaryRT(s_GBufferNormal, modDesc, FilterMode.Point);
+
+            modDesc.colorFormat = formatHDR;
+            cmd.GetTemporaryRT(s_GBufferEmission, modDesc, FilterMode.Point);
+
+            modDesc.colorFormat = RenderTextureFormat.Depth;
+            modDesc.depthBufferBits = 24;
+            cmd.GetTemporaryRT(s_GBufferZ, modDesc, FilterMode.Point);
+            cmd.GetTemporaryRT(s_CameraDepthTexture, modDesc, FilterMode.Point);
+
+            modDesc.colorFormat = formatHDR;
+            modDesc.depthBufferBits = 0;
+            modDesc.flags |= RenderTextureCreationFlags.SRGB;
+            modDesc.flags |= RenderTextureCreationFlags.EnableRandomWrite;
+            cmd.GetTemporaryRT(s_CameraTarget, modDesc, FilterMode.Point);
 
 
-			var colorMRTs = new RenderTargetIdentifier[4] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission };
+            var colorMRTs = new RenderTargetIdentifier[4] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission };
             cmd.SetRenderTarget(colorMRTs, new RenderTargetIdentifier(s_GBufferZ));
             cmd.ClearRenderTarget(true, true, new Color(0, 0, 0, 0));
 
