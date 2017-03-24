@@ -88,6 +88,11 @@ namespace UnityEngine.Experimental.Rendering.Fptl
         private static ComputeBuffer s_LightList;
         private static ComputeBuffer s_DirLightList;
 
+		private static ComputeBuffer s_UnifiedLightDataBuffer;	// VR
+		private static int s_UnifiedLightDataEyeOffset;			// VR
+		private static ComputeBuffer s_UnifiedDirLightList;		// VR
+		private static int s_UnifiedDirLightListEyeOffset;		// VR
+
         private static ComputeBuffer s_BigTileLightList;        // used for pre-pass coarse culling on 64x64 tiles
         private static int s_GenListPerBigTileKernel;
 
@@ -621,7 +626,13 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             return GetFlipMatrix() * camera.worldToCameraMatrix;
         }
 
-        static Matrix4x4 CameraToWorld(Camera camera)
+		static Matrix4x4 StereoWorldToCamera(Camera camera, Camera.StereoscopicEye eye)
+		{
+			//return GetFlipMatrix() * camera.worldToCameraMatrix;
+			return GetFlipMatrix() * camera.GetStereoViewMatrix(eye);
+		}
+
+		static Matrix4x4 CameraToWorld(Camera camera)
         {
             return camera.cameraToWorldMatrix * GetFlipMatrix();
         }
@@ -631,7 +642,12 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             return camera.projectionMatrix * GetFlipMatrix();
         }
 
-        static int UpdateDirectionalLights(Camera camera, IList<VisibleLight> visibleLights)
+		static Matrix4x4 CameraStereoProjection(Camera camera, Camera.StereoscopicEye eye)
+		{
+			return (camera.GetStereoProjectionMatrix(eye) * GetFlipMatrix());
+		}
+
+		static int UpdateDirectionalLights(Camera camera, IList<VisibleLight> visibleLights)
         {
             var dirLightCount = 0;
             var lights = new List<DirectionalLight>();
@@ -767,7 +783,10 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             m_Shadow3X3PCFTerms[3] = new Vector4(-flTexelEpsilonX, -flTexelEpsilonY, 0.0f, 0.0f);
         }
 
-        int GenerateSourceLightBuffers(Camera camera, CullResults inputs)
+		// VR - since the final deferred pass needs to access the light lists per eye
+		// We need to output a combined two eye light list to source from
+		// along with an offset index into the right eye portion of the light list
+        int GenerateSourceLightBuffers(Camera camera, CullResults inputs, Camera.StereoscopicEye eye)
         {
             var probes = inputs.visibleReflectionProbes;
             //ReflectionProbe[] probes = Object.FindObjectsOfType<ReflectionProbe>();
@@ -808,7 +827,16 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
             var lightData = new SFiniteLightData[numVolumes];
             var boundData = new SFiniteLightBound[numVolumes];
-            var worldToView = WorldToCamera(camera);
+			//var worldToView = WorldToCamera(camera);
+			Matrix4x4 worldToView;
+			if (stereoDoublewide)
+			{
+				worldToView = StereoWorldToCamera(camera, eye);
+			}
+			else
+			{
+				worldToView = WorldToCamera(camera);
+			}
             bool isNegDeterminant = Vector3.Dot(worldToView.GetColumn(0), Vector3.Cross(worldToView.GetColumn(1), worldToView.GetColumn(2)))<0.0f;      // 3x3 Determinant.
 
             uint shadowLightIndex = 0;
@@ -1101,23 +1129,49 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 			{
 				stereoDoublewide = false;
 			}
-	}
+		}
+
+		void GetRTWH(Camera camera, out int width, out int height)
+		{
+			if (stereoDoublewide)
+			{
+				width = cachedStereoDesc.width;
+				height = cachedStereoDesc.height;
+			}
+			else
+			{
+				width = camera.pixelWidth;
+				height = camera.pixelHeight;
+			}
+		}
+
+		void GetEyeRTWH(Camera camera, out int width, out int height)
+		{
+
+			GetRTWH(camera, out width, out height);
+			if (stereoDoublewide)
+			{
+				width = width / 2;
+			}
+		}
 
         void ExecuteRenderLoop(Camera camera, CullResults cullResults, ScriptableRenderContext loop)
         {
 			CheckVRState();
 
 			int w, h;
-			if (stereoDoublewide)
-			{
-				w = cachedStereoDesc.width;
-				h = cachedStereoDesc.height;
-			}
-			else
-			{
-				w = camera.pixelWidth;
-				h = camera.pixelHeight;
-			}
+			// might be able to use GetEyeRTWH
+			GetRTWH(camera, out w, out h);
+			//if (stereoDoublewide)
+			//{
+			//	w = cachedStereoDesc.width;
+			//	h = cachedStereoDesc.height;
+			//}
+			//else
+			//{
+			//	w = camera.pixelWidth;
+			//	h = camera.pixelHeight;
+			//}
 
 			if (stereoDoublewide)
 			{
@@ -1157,32 +1211,83 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 				loop.StopMultiEye(camera);
 			}
 
-			// camera to screen matrix (and it's inverse)
-			var proj = CameraProjection(camera);
-            var temp = new Matrix4x4();
-            temp.SetRow(0, new Vector4(0.5f * w, 0.0f, 0.0f, 0.5f * w));
-            temp.SetRow(1, new Vector4(0.0f, 0.5f * h, 0.0f, 0.5f * h));
-            temp.SetRow(2, new Vector4(0.0f, 0.0f, 0.5f, 0.5f));
-            temp.SetRow(3, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
-            var projscr = temp * proj;
-            var invProjscr = projscr.inverse;
+			int numLights = 0, numDirLights = 0;
+			if (stereoDoublewide)
+			{
+				var unifiedLightData = new List<SFiniteLightData>();
+				
+
+				for (int eye = 0; eye < 2; eye++)
+				{
+					// camera to screen matrix (and it's inverse)
+					var proj = CameraStereoProjection(camera, (Camera.StereoscopicEye)eye);
+					int eyeWidth = w / 2;
+					var temp = new Matrix4x4();
+					// VR - I don't think I need to offset this because we are just trying to get
+					// working with an eye texture sized projection here, not the eye texture itself
+					temp.SetRow(0, new Vector4(0.5f * eyeWidth, 0.0f, 0.0f, 0.5f * eyeWidth));
+					temp.SetRow(1, new Vector4(0.0f, 0.5f * h, 0.0f, 0.5f * h));
+					temp.SetRow(2, new Vector4(0.0f, 0.0f, 0.5f, 0.5f));
+					temp.SetRow(3, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+					var projscr = temp * proj;
+					var invProjscr = projscr.inverse;
+
+					// build per tile light lists
+					// VR - we gotta stash out each eye's light list!
+					numLights = GenerateSourceLightBuffers(camera, cullResults, (Camera.StereoscopicEye)eye);
+					var generatedLightData = new SFiniteLightData[numLights];
+					s_LightDataBuffer.GetData(generatedLightData);
+					unifiedLightData.AddRange(generatedLightData);
+
+					if (0 == eye)
+					{
+						// this is the offset point in the final combined light data buffer
+						s_UnifiedLightDataEyeOffset = numLights; 
+					}
+
+					BuildPerTileLightLists(camera, loop, numLights, projscr, invProjscr, (Camera.StereoscopicEye)eye);
+
+					// VR - same here, we need to double up the directional light lists
+					numDirLights = UpdateDirectionalLights(camera, cullResults.visibleLights);
+				}
+
+				s_UnifiedLightDataBuffer.SetData(unifiedLightData.ToArray());
+
+				// VR - make this VR aware of course!
+				// Push all global params
+				PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
+
+				// pulled out async shadow maps (for now)
+			}
+			else
+			{
+				// camera to screen matrix (and it's inverse)
+				var proj = CameraProjection(camera);
+				var temp = new Matrix4x4();
+				temp.SetRow(0, new Vector4(0.5f * w, 0.0f, 0.0f, 0.5f * w));
+				temp.SetRow(1, new Vector4(0.0f, 0.5f * h, 0.0f, 0.5f * h));
+				temp.SetRow(2, new Vector4(0.0f, 0.0f, 0.5f, 0.5f));
+				temp.SetRow(3, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+				var projscr = temp * proj;
+				var invProjscr = projscr.inverse;
 
 
-            // build per tile light lists
-            var numLights = GenerateSourceLightBuffers(camera, cullResults);
-            BuildPerTileLightLists(camera, loop, numLights, projscr, invProjscr);
+				// build per tile light lists
+				numLights = GenerateSourceLightBuffers(camera, cullResults, Camera.StereoscopicEye.Left);
+				BuildPerTileLightLists(camera, loop, numLights, projscr, invProjscr, Camera.StereoscopicEye.Left);
 
-            // render shadow maps (for mobile shadow map rendering should happen before we render g-buffer).
-            // on GCN it needs to be after to leverage async compute since we need the depth-buffer for optimal light list building.
-            if(k_UseAsyncCompute) 
-            {
-                RenderShadowMaps(cullResults, loop);
-                loop.SetupCameraProperties(camera);
-            }
+				// render shadow maps (for mobile shadow map rendering should happen before we render g-buffer).
+				// on GCN it needs to be after to leverage async compute since we need the depth-buffer for optimal light list building.
+				if (k_UseAsyncCompute)
+				{
+					RenderShadowMaps(cullResults, loop);
+					loop.SetupCameraProperties(camera);
+				}
 
-            // Push all global params
-            var numDirLights = UpdateDirectionalLights(camera, cullResults.visibleLights);
-            PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
+				// Push all global params
+				numDirLights = UpdateDirectionalLights(camera, cullResults.visibleLights);
+				PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
+			}
 
 			if (stereoActive)
 			{
@@ -1192,6 +1297,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 			// do deferred lighting
 			DoTiledDeferredLighting(camera, loop, numLights, numDirLights);
 
+			// VR - no forward in the test scene
             // render opaques using tiled forward
             RenderForward(cullResults, camera, loop, true);    // opaques only (requires a depth pre-pass)
 
@@ -1386,10 +1492,12 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             cmd.DispatchCompute(buildPerVoxelLightListShader, s_GenListPerVoxelKernel, nrTilesClustX, nrTilesClustY, 1);
         }
 
-        void BuildPerTileLightLists(Camera camera, ScriptableRenderContext loop, int numLights, Matrix4x4 projscr, Matrix4x4 invProjscr)
+        void BuildPerTileLightLists(Camera camera, ScriptableRenderContext loop, int numLights, Matrix4x4 projscr, Matrix4x4 invProjscr, Camera.StereoscopicEye eye)
         {
-            var w = camera.pixelWidth;
-            var h = camera.pixelHeight;
+			//var w = camera.pixelWidth;
+			//var h = camera.pixelHeight;
+			int w, h;
+			GetEyeRTWH(camera, out w, out h);
             var numTilesX = (w + 15) / 16;
             var numTilesY = (h + 15) / 16;
             var numBigTilesX = (w + 63) / 64;
@@ -1400,7 +1508,16 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             // generate screen-space AABBs (used for both fptl and clustered).
             if (numLights != 0)
             {
-                var proj = CameraProjection(camera);
+				//var proj = CameraProjection(camera);
+				Matrix4x4 proj;
+				if (stereoDoublewide)
+				{
+					proj = CameraStereoProjection(camera, eye);
+				}
+				else
+				{
+					proj = CameraProjection(camera);
+				}
                 var temp = new Matrix4x4();
                 temp.SetRow(0, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
                 temp.SetRow(1, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
@@ -1416,6 +1533,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 cmd.DispatchCompute(buildScreenAABBShader, s_GenAABBKernel, (numLights + 7) / 8, 1, 1);
             }
 
+			// VR - Ok, for VR, we can do this work just fine, but we need to make sure we offset into the correct spot in the light list!
             // enable coarse 2D pass on 64x64 tiles (used for both fptl and clustered).
             if(enableBigTilePrepass)
             {
@@ -1425,17 +1543,22 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 SetMatrixCS(cmd, buildPerBigTileLightListShader, "g_mInvScrProjection", invProjscr);
                 cmd.SetComputeFloatParam(buildPerBigTileLightListShader, "g_fNearPlane", camera.nearClipPlane);
                 cmd.SetComputeFloatParam(buildPerBigTileLightListShader, "g_fFarPlane", camera.farClipPlane);
-                cmd.SetComputeBufferParam(buildPerBigTileLightListShader, s_GenListPerBigTileKernel, "g_vLightList", s_BigTileLightList);
+				cmd.SetComputeIntParam(buildPerBigTileLightListShader, "g_iEye", (int)eye);
+				cmd.SetComputeBufferParam(buildPerBigTileLightListShader, s_GenListPerBigTileKernel, "g_vLightList", s_BigTileLightList);
                 cmd.DispatchCompute(buildPerBigTileLightListShader, s_GenListPerBigTileKernel, numBigTilesX, numBigTilesY, 1);
             }
 
+			// VR - Here, we need to do a couple other things
+			// We need to make sure we land in the right spot for the light list gen
+			// and we also need to sample from the depth texture correctly
             if( usingFptl )       // optimized for opaques only
             {
                 cmd.SetComputeIntParams(buildPerTileLightListShader, "g_viDimensions", new int[2] { w, h });
                 cmd.SetComputeIntParam(buildPerTileLightListShader, "g_iNrVisibLights", numLights);
                 SetMatrixCS(cmd, buildPerTileLightListShader, "g_mScrProjection", projscr);
                 SetMatrixCS(cmd, buildPerTileLightListShader, "g_mInvScrProjection", invProjscr);
-                cmd.SetComputeTextureParam(buildPerTileLightListShader, s_GenListPerTileKernel, "g_depth_tex", new RenderTargetIdentifier(s_CameraDepthTexture));
+				cmd.SetComputeIntParam(buildPerTileLightListShader, "g_iEye", (int)eye);
+				cmd.SetComputeTextureParam(buildPerTileLightListShader, s_GenListPerTileKernel, "g_depth_tex", new RenderTargetIdentifier(s_CameraDepthTexture));
                 cmd.SetComputeBufferParam(buildPerTileLightListShader, s_GenListPerTileKernel, "g_vLightList", s_LightList);
                 if(enableBigTilePrepass) cmd.SetComputeBufferParam(buildPerTileLightListShader, s_GenListPerTileKernel, "g_vBigTileLightList", s_BigTileLightList);
                 cmd.DispatchCompute(buildPerTileLightListShader, s_GenListPerTileKernel, numTilesX, numTilesY, 1);
@@ -1457,11 +1580,13 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             cmd.SetGlobalFloat("g_widthRT", (float)camera.pixelWidth);
             cmd.SetGlobalFloat("g_heightRT", (float)camera.pixelHeight);
 
+			// VR - turn these into VR enabled arrays
             cmd.SetGlobalMatrix("g_mViewToWorld", viewToWorld);
             cmd.SetGlobalMatrix("g_mWorldToView", viewToWorld.inverse);
             cmd.SetGlobalMatrix("g_mScrProjection", scrProj);
             cmd.SetGlobalMatrix("g_mInvScrProjection", incScrProj);
 
+			// VR - make sure this list is the unified light data list
             cmd.SetGlobalBuffer("g_vLightData", s_LightDataBuffer);
 
             cmd.SetGlobalTexture("_spotCookieTextures", m_CookieTexArray.GetTexCache());
@@ -1474,6 +1599,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             cmd.SetGlobalFloat("_reflRootHdrDecodeMult", defdecode.x);
             cmd.SetGlobalFloat("_reflRootHdrDecodeExp", defdecode.y);
 
+			// VR- is this even needed anymore?
             if(enableBigTilePrepass)
                 cmd.SetGlobalBuffer("g_vBigTileLightList", s_BigTileLightList);
 
@@ -1495,6 +1621,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 }
             }
 
+			// VR - these needs to be VR adjusted
             cmd.SetGlobalFloat("g_nNumDirLights", numDirLights);
             cmd.SetGlobalBuffer("g_dirLightData", s_DirLightList);
 

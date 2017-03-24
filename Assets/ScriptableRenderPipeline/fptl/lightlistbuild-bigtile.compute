@@ -18,6 +18,7 @@ uniform float4x4 g_mInvScrProjection;
 uniform float4x4 g_mScrProjection;
 uniform float g_fNearPlane;
 uniform float g_fFarPlane;
+uniform int g_iEye;
 
 StructuredBuffer<float3> g_vBoundsBuffer : register( t1 );
 StructuredBuffer<SFiniteLightData> g_vLightData : register( t2 );
@@ -141,7 +142,10 @@ void BigTileLightListGen(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_Gro
 	GroupMemoryBarrierWithGroupSync();
 	iNrCoarseLights = lightOffs;
 
-	int offs = tileIDX.y*nrBigTilesX + tileIDX.x;
+	// VR - adjust this to offset into the correct portion of the light list
+	// right eye will get second half
+	//int offs = tileIDX.y*nrBigTilesX + tileIDX.x;
+	int offs = tileIDX.y*nrBigTilesX + tileIDX.x + (eye * nrBigTilesX * nrBigTilesY);
 
 	for(i=t; i<(iNrCoarseLights+1); i+=NR_THREADS)
 		g_vLightList[MAX_NR_BIGTILE_LIGHTS_PLUSONE*offs + i] = i==0 ? iNrCoarseLights : lightsListLDS[i-1];
