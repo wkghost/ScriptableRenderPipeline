@@ -6,11 +6,15 @@
 #include "LightDefinitions.cs.hlsl"
 
 
-uniform float4x4 g_mViewToWorld;
-uniform float4x4 g_mWorldToView;        // used for reflection only
-uniform float4x4 g_mScrProjection;
-uniform float4x4 g_mInvScrProjection;
+//uniform float4x4 g_mViewToWorld;
+//uniform float4x4 g_mWorldToView;        // used for reflection only
+//uniform float4x4 g_mScrProjection;
+//uniform float4x4 g_mInvScrProjection;
 
+uniform float4x4 g_mViewToWorldArr[2];
+uniform float4x4 g_mWorldToViewArr[2];        // used for reflection only
+uniform float4x4 g_mScrProjectionArr[2];
+uniform float4x4 g_mInvScrProjectionArr[2];
 
 uniform uint g_widthRT;
 uniform uint g_heightRT;
@@ -18,12 +22,16 @@ uniform uint g_heightRT;
 
 float3 GetViewPosFromLinDepth(float2 v2ScrPos, float fLinDepth)
 {
-    float fSx = g_mScrProjection[0].x;
-    //float fCx = g_mScrProjection[2].x;
-    float fCx = g_mScrProjection[0].z;
-    float fSy = g_mScrProjection[1].y;
-    //float fCy = g_mScrProjection[2].y;
-    float fCy = g_mScrProjection[1].z;
+    //float fSx = g_mScrProjection[0].x;
+    ////float fCx = g_mScrProjection[2].x;
+    //float fCx = g_mScrProjection[0].z;
+    //float fSy = g_mScrProjection[1].y;
+    ////float fCy = g_mScrProjection[2].y;
+    //float fCy = g_mScrProjection[1].z;
+	float fSx = g_mScrProjectionArr[unity_StereoEyeIndex][0].x;
+	float fCx = g_mScrProjectionArr[unity_StereoEyeIndex][0].z;
+	float fSy = g_mScrProjectionArr[unity_StereoEyeIndex][1].y;
+	float fCy = g_mScrProjectionArr[unity_StereoEyeIndex][1].z;
 
 #if USE_LEFTHAND_CAMERASPACE
     return fLinDepth*float3( ((v2ScrPos.x-fCx)/fSx), ((v2ScrPos.y-fCy)/fSy), 1.0 );
@@ -46,8 +54,10 @@ float GetLinearZFromSVPosW(float posW)
 float GetLinearDepth(float zDptBufSpace)    // 0 is near 1 is far
 {
     // todo (simplify): m22 is zero and m23 is +1/-1 (depends on left/right hand proj)
-    float m22 = g_mInvScrProjection[2].z, m23 = g_mInvScrProjection[2].w;
-    float m32 = g_mInvScrProjection[3].z, m33 = g_mInvScrProjection[3].w;
+    //float m22 = g_mInvScrProjection[2].z, m23 = g_mInvScrProjection[2].w;
+    //float m32 = g_mInvScrProjection[3].z, m33 = g_mInvScrProjection[3].w;
+	float m22 = g_mInvScrProjectionArr[unity_StereoEyeIndex][2].z, m23 = g_mInvScrProjectionArr[unity_StereoEyeIndex][2].w;
+	float m32 = g_mInvScrProjectionArr[unity_StereoEyeIndex][3].z, m33 = g_mInvScrProjectionArr[unity_StereoEyeIndex][3].w;
 
     return (m22*zDptBufSpace+m23) / (m32*zDptBufSpace+m33);
 

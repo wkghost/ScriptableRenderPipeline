@@ -9,7 +9,7 @@
 
 
 uniform uint g_nNumDirLights;
-
+uniform int g_UnifiedDirLightListBaseCount[4];
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
 // TODO:  clean up.. -va
 #define MAX_SHADOW_LIGHTS 10
@@ -156,7 +156,11 @@ float3 ExecuteLightList(uint start, uint numLights, float3 vP, float3 vPw, float
 
     float3 ints = 0;
 
-    for (int i = 0; i < g_nNumDirLights; i++)
+	int dirBase = g_UnifiedDirLightListBaseCount[unity_StereoEyeIndex * 2 + 0];
+	int dirCount = g_UnifiedDirLightListBaseCount[unity_StereoEyeIndex * 2 + 1];
+
+    //for (int i = 0; i < g_nNumDirLights; i++)
+	for (int i = dirBase; i < dirCount; i++)
     {
         DirectionalLight lightData = g_dirLightData[i];
         float atten = 1;
@@ -170,7 +174,8 @@ float3 ExecuteLightList(uint start, uint numLights, float3 vP, float3 vPw, float
 
         UnityLight light;
         light.color.xyz = lightData.color.xyz * atten;
-        light.dir.xyz = mul((float3x3) g_mViewToWorld, -lightData.lightAxisZ).xyz;
+        //light.dir.xyz = mul((float3x3) g_mViewToWorld, -lightData.lightAxisZ).xyz;
+		light.dir.xyz = mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], -lightData.lightAxisZ).xyz;
 
         ints += EvalMaterial(light, ind);
     }
@@ -219,7 +224,8 @@ float3 ExecuteLightList(uint start, uint numLights, float3 vP, float3 vPw, float
 
             UnityLight light;
             light.color.xyz = lgtDat.color.xyz*atten*angularAtt.xyz;
-            light.dir.xyz = mul((float3x3) g_mViewToWorld, vL).xyz;     //unity_CameraToWorld
+            //light.dir.xyz = mul((float3x3) g_mViewToWorld, vL).xyz;     //unity_CameraToWorld
+			light.dir.xyz = mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], vL).xyz;     //unity_CameraToWorld
 
             ints += EvalMaterial(light, ind);
 
@@ -236,7 +242,9 @@ float3 ExecuteLightList(uint start, uint numLights, float3 vP, float3 vPw, float
             float3 toLight  = vLp - vP;
             float dist = length(toLight);
             float3 vL = toLight / dist;
-            float3 vLw = mul((float3x3) g_mViewToWorld, vL).xyz;        //unity_CameraToWorld
+            //float3 vLw = mul((float3x3) g_mViewToWorld, vL).xyz;        //unity_CameraToWorld
+			float3 vLw = mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], vL).xyz;        //unity_CameraToWorld
+
 
             float attLookUp = dist*lgtDat.recipRange; attLookUp *= attLookUp;
             float atten = tex2Dlod(_LightTextureB0, float4(attLookUp.rr, 0.0, 0.0)).UNITY_ATTEN_CHANNEL;

@@ -21,11 +21,15 @@ uniform uint g_isOpaquesOnlyEnabled;
 StructuredBuffer<SFiniteLightData> g_vLightData;
 StructuredBuffer<uint> g_vLightListGlobal;		// don't support Buffer yet in unity
 
+uniform float g_lightDataEyeOffset;
+
 
 void GetCountAndStartOpaque(out uint uStart, out uint uNrLights, uint2 pixCoord, float linDepth, uint model)
 {
 	uint tileSize = 16;
-	uint nrTilesX = ((uint) (g_widthRT+(tileSize-1)))/tileSize; uint nrTilesY = ((uint) (g_heightRT+(tileSize-1)))/tileSize;
+	uint nrTilesX = ((uint) (g_widthRT+(tileSize-1)))/tileSize; 
+	uint nrTilesY = ((uint) (g_heightRT+(tileSize-1)))/tileSize;
+	
 	uint2 tileIDX = pixCoord / tileSize;
     const int tileOffs = (tileIDX.y+model*nrTilesY)*nrTilesX+tileIDX.x;
 

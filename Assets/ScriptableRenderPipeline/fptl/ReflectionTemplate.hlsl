@@ -26,7 +26,8 @@ float3 ExecuteReflectionList(uint start, uint numReflProbes, float3 vP, float3 v
 {
     float3 worldNormalRefl = reflect(-Vworld, vNw);
 
-    float3 vspaceRefl = mul((float3x3) g_mWorldToView, worldNormalRefl).xyz;
+    //float3 vspaceRefl = mul((float3x3) g_mWorldToView, worldNormalRefl).xyz;
+	float3 vspaceRefl = mul((float3x3) g_mWorldToViewArr[unity_StereoEyeIndex], worldNormalRefl).xyz;
 
     float percRoughness = SmoothnessToPerceptualRoughness(smoothness);
 
@@ -87,7 +88,8 @@ float3 ExecuteReflectionList(uint start, uint numReflProbes, float3 vP, float3 v
 #else
                 float3 volumeSpaceRefl = float3( dot(vspaceRefl, lgtDat.lightAxisX), dot(vspaceRefl, lgtDat.lightAxisY), dot(vspaceRefl, lgtDat.lightAxisZ) );
                 float3 vPR = BoxProjectedCubemapDirection(volumeSpaceRefl, posInReflVolumeSpace, float4(lgtDat.localCubeCapturePoint, 1.0), -boxOuterDistance, boxOuterDistance);    // Volume space corrected reflection vector
-                sampleDir = mul( (float3x3) g_mViewToWorld, vPR.x*lgtDat.lightAxisX + vPR.y*lgtDat.lightAxisY + vPR.z*lgtDat.lightAxisZ );
+                //sampleDir = mul( (float3x3) g_mViewToWorld, vPR.x*lgtDat.lightAxisX + vPR.y*lgtDat.lightAxisY + vPR.z*lgtDat.lightAxisZ );
+				sampleDir = mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], vPR.x*lgtDat.lightAxisX + vPR.y*lgtDat.lightAxisY + vPR.z*lgtDat.lightAxisZ);
 #endif
             }
             else

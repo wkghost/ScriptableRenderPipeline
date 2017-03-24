@@ -91,7 +91,8 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 		private static ComputeBuffer s_UnifiedLightDataBuffer;	// VR
 		private static int s_UnifiedLightDataEyeOffset;			// VR
 		private static ComputeBuffer s_UnifiedDirLightList;		// VR
-		private static int s_UnifiedDirLightListEyeOffset;		// VR
+		//private static int s_UnifiedDirLightListEyeOffset;		// VR
+        private static float[] s_UnifiedDirLightListBaseCount;  //VR
 
         private static ComputeBuffer s_BigTileLightList;        // used for pre-pass coarse culling on 64x64 tiles
         private static int s_GenListPerBigTileKernel;
@@ -290,6 +291,8 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             s_BigTileLightList = null;
 
             m_shadowBufferID = Shader.PropertyToID("g_tShadowBuffer");
+
+            s_UnifiedDirLightListBaseCount = new float[4];
         }
         
         //static void SetupGBuffer(int width, int height, CommandBuffer cmd)
@@ -478,6 +481,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
             if (enableComputeLightEvaluation)  //TODO: temporary workaround for "All kernels must use same constant buffer layouts"
             {
+                // VR - none of this will work in VR...
                 var w = camera.pixelWidth;
                 var h = camera.pixelHeight;
                 var numTilesX = (w + 7) / 8;
@@ -635,6 +639,11 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 		static Matrix4x4 CameraToWorld(Camera camera)
         {
             return camera.cameraToWorldMatrix * GetFlipMatrix();
+        }
+
+        static Matrix4x4 StereoCameraToWorld(Camera camera, Camera.StereoscopicEye eye)
+        {
+            return camera.GetStereoViewMatrix(eye).inverse * GetFlipMatrix();
         }
 
         static Matrix4x4 CameraProjection(Camera camera)
@@ -1210,14 +1219,19 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 			{
 				loop.StopMultiEye(camera);
 			}
+			
+            var projScrArr = new Matrix4x4[2];
+            var invProjScrArr = new Matrix4x4[2];
+            var viewToWorldArr = new Matrix4x4[2];
 
-			int numLights = 0, numDirLights = 0;
-			if (stereoDoublewide)
+            int numLights = 0, numDirLights = 0;
+            if (stereoDoublewide)
 			{
 				var unifiedLightData = new List<SFiniteLightData>();
-				
+                var unifiedDirLightData = new List<DirectionalLight>();
 
-				for (int eye = 0; eye < 2; eye++)
+
+                for (int eye = 0; eye < 2; eye++)
 				{
 					// camera to screen matrix (and it's inverse)
 					var proj = CameraStereoProjection(camera, (Camera.StereoscopicEye)eye);
@@ -1232,9 +1246,14 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 					var projscr = temp * proj;
 					var invProjscr = projscr.inverse;
 
-					// build per tile light lists
-					// VR - we gotta stash out each eye's light list!
-					numLights = GenerateSourceLightBuffers(camera, cullResults, (Camera.StereoscopicEye)eye);
+                    projScrArr[eye] = projscr;
+                    invProjScrArr[eye] = invProjscr;
+                    viewToWorldArr[eye] = StereoCameraToWorld(camera, (Camera.StereoscopicEye)eye);
+
+                    // build per tile light lists
+                    // VR - we gotta stash out each eye's light list!
+                    numLights = GenerateSourceLightBuffers(camera, cullResults, (Camera.StereoscopicEye)eye);
+
 					var generatedLightData = new SFiniteLightData[numLights];
 					s_LightDataBuffer.GetData(generatedLightData);
 					unifiedLightData.AddRange(generatedLightData);
@@ -1249,17 +1268,31 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
 					// VR - same here, we need to double up the directional light lists
 					numDirLights = UpdateDirectionalLights(camera, cullResults.visibleLights);
-				}
+
+                    var generatedDirLightData = new DirectionalLight[numDirLights];
+                    s_DirLightList.GetData(generatedDirLightData);
+                    unifiedDirLightData.AddRange(generatedDirLightData);
+
+                    //if (0 == eye)
+                    //{
+                    //    s_UnifiedDirLightListEyeOffset = numDirLights;
+                    //}
+                    s_UnifiedDirLightListBaseCount[eye * 2 + 0] = eye * s_UnifiedDirLightListBaseCount[1]; // 0 for eye=0, previous numdir for eye=1
+                    s_UnifiedDirLightListBaseCount[eye * 2 + 1] = numDirLights;
+
+                }
 
 				s_UnifiedLightDataBuffer.SetData(unifiedLightData.ToArray());
+                s_UnifiedDirLightList.SetData(unifiedDirLightData.ToArray());
 
-				// VR - make this VR aware of course!
-				// Push all global params
-				PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
+                // VR - make this VR aware of course!
+                // Push all global params
+                //PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
+                PushGlobalParams(camera, loop, viewToWorldArr, projScrArr, invProjScrArr, numDirLights);
 
-				// pulled out async shadow maps (for now)
-			}
-			else
+                // pulled out async shadow maps (for now)
+            }
+            else
 			{
 				// camera to screen matrix (and it's inverse)
 				var proj = CameraProjection(camera);
@@ -1286,10 +1319,18 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
 				// Push all global params
 				numDirLights = UpdateDirectionalLights(camera, cullResults.visibleLights);
-				PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
-			}
+                s_UnifiedDirLightListBaseCount[0] = s_UnifiedDirLightListBaseCount[2] = 0;
+                s_UnifiedDirLightListBaseCount[1] = s_UnifiedDirLightListBaseCount[3] = numDirLights;
 
-			if (stereoActive)
+                projScrArr[0] = projScrArr[1] = projscr;
+                invProjScrArr[0] = invProjScrArr[1]= invProjscr;
+                viewToWorldArr[0] = viewToWorldArr[1] = CameraToWorld(camera);
+
+                //PushGlobalParams(camera, loop, CameraToWorld(camera), projscr, invProjscr, numDirLights);
+                PushGlobalParams(camera, loop, viewToWorldArr, projScrArr, invProjScrArr, numDirLights);
+            }
+
+            if (stereoActive)
 			{
 				loop.StartMultiEye(camera);
 			}
@@ -1573,21 +1614,40 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             cmd.Dispose();
         }
 
-        void PushGlobalParams(Camera camera, ScriptableRenderContext loop, Matrix4x4 viewToWorld, Matrix4x4 scrProj, Matrix4x4 incScrProj, int numDirLights)
+        //void PushGlobalParams(Camera camera, ScriptableRenderContext loop, Matrix4x4 viewToWorld, Matrix4x4 scrProj, Matrix4x4 incScrProj, int numDirLights)
+        void PushGlobalParams(Camera camera, ScriptableRenderContext loop, Matrix4x4[] viewToWorld, Matrix4x4[] scrProj, Matrix4x4[] incScrProj, int numDirLights)
         {
             var cmd = new CommandBuffer { name = "Push Global Parameters" };
 
+            // VR - this is fine, but I should make this 'correct'
             cmd.SetGlobalFloat("g_widthRT", (float)camera.pixelWidth);
             cmd.SetGlobalFloat("g_heightRT", (float)camera.pixelHeight);
 
-			// VR - turn these into VR enabled arrays
-            cmd.SetGlobalMatrix("g_mViewToWorld", viewToWorld);
-            cmd.SetGlobalMatrix("g_mWorldToView", viewToWorld.inverse);
-            cmd.SetGlobalMatrix("g_mScrProjection", scrProj);
-            cmd.SetGlobalMatrix("g_mInvScrProjection", incScrProj);
+            // VR - turn these into VR enabled arrays
+            //cmd.SetGlobalMatrix("g_mViewToWorld", viewToWorld);
+            //cmd.SetGlobalMatrix("g_mWorldToView", viewToWorld.inverse);
+            //cmd.SetGlobalMatrix("g_mScrProjection", scrProj);
+            //cmd.SetGlobalMatrix("g_mInvScrProjection", incScrProj);
+            var worldToView = new Matrix4x4[2];
+            worldToView[0] = viewToWorld[0].inverse;
+            worldToView[1] = viewToWorld[1].inverse;
+            cmd.SetGlobalMatrixArray("g_mViewToWorldArr", viewToWorld);
+            cmd.SetGlobalMatrixArray("g_mWorldToViewArr", worldToView);
+            cmd.SetGlobalMatrixArray("g_mScrProjectionArr", scrProj);
+            cmd.SetGlobalMatrixArray("g_mInvScrProjectionArr", incScrProj);
 
-			// VR - make sure this list is the unified light data list
-            cmd.SetGlobalBuffer("g_vLightData", s_LightDataBuffer);
+            // VR - make sure this list is the unified light data list
+            //cmd.SetGlobalBuffer("g_vLightData", s_LightDataBuffer);
+            if (stereoDoublewide)
+            {
+                cmd.SetGlobalBuffer("g_vLightData", s_UnifiedLightDataBuffer);
+                cmd.SetGlobalFloat("g_lightDataEyeOffset", (float)s_UnifiedLightDataEyeOffset);
+            }
+            else
+            {
+                cmd.SetGlobalBuffer("g_vLightData", s_LightDataBuffer);
+                cmd.SetGlobalFloat("g_lightDataEyeOffset", (float)0);
+            }
 
             cmd.SetGlobalTexture("_spotCookieTextures", m_CookieTexArray.GetTexCache());
             cmd.SetGlobalTexture("_pointCookieTextures", m_CubeCookieTexArray.GetTexCache());
@@ -1622,8 +1682,19 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             }
 
 			// VR - these needs to be VR adjusted
-            cmd.SetGlobalFloat("g_nNumDirLights", numDirLights);
-            cmd.SetGlobalBuffer("g_dirLightData", s_DirLightList);
+            //cmd.SetGlobalFloat("g_nNumDirLights", numDirLights);
+            //cmd.SetGlobalBuffer("g_dirLightData", s_DirLightList);
+            cmd.SetGlobalFloat("g_nNumDirLights", numDirLights); // not needed anymore
+            if (stereoDoublewide)
+            {
+                cmd.SetGlobalBuffer("g_dirLightData", s_UnifiedDirLightList);
+            }
+            else
+            {
+                cmd.SetGlobalBuffer("g_dirLightData", s_DirLightList);
+            }
+            cmd.SetGlobalFloatArray("g_UnifiedDirLightListBaseCount", s_UnifiedDirLightListBaseCount); // new dir light bounds
+
 
             // Shadow constants
             cmd.SetGlobalMatrixArray("g_matWorldToShadow", m_MatWorldToShadow);

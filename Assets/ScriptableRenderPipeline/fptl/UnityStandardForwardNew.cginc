@@ -65,8 +65,10 @@ half4 fragNoLight(VertexOutputForwardNew i) : SV_Target
 {
     float linZ = GetLinearZFromSVPosW(i.pos.w);                 // matching script side where camera space is right handed.
     float3 vP = GetViewPosFromLinDepth(i.pos.xy, linZ);
-    float3 vPw = mul(g_mViewToWorld, float4(vP,1.0)).xyz;
-    float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     // not same as unity_CameraToWorld
+    //float3 vPw = mul(g_mViewToWorld, float4(vP,1.0)).xyz;
+    //float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     // not same as unity_CameraToWorld
+	float3 vPw = mul(g_mViewToWorldArr[unity_StereoEyeIndex], float4(vP, 1.0)).xyz;
+	float3 Vworld = normalize(mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], -vP).xyz);     // not same as unity_CameraToWorld
 
 #ifdef _PARALLAXMAP
     half3 tangent = i.tangentToWorldAndParallax[0].xyz;
@@ -112,8 +114,10 @@ half4 fragForward(VertexOutputForwardNew i) : SV_Target
 {
     float linZ = GetLinearZFromSVPosW(i.pos.w);                 // matching script side where camera space is right handed.
     float3 vP = GetViewPosFromLinDepth(i.pos.xy, linZ);
-    float3 vPw = mul(g_mViewToWorld, float4(vP,1.0)).xyz;
-    float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     // not same as unity_CameraToWorld
+    //float3 vPw = mul(g_mViewToWorld, float4(vP,1.0)).xyz;
+    //float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     // not same as unity_CameraToWorld
+	float3 vPw = mul(g_mViewToWorldArr[unity_StereoEyeIndex], float4(vP, 1.0)).xyz;
+	float3 Vworld = normalize(mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], -vP).xyz);     // not same as unity_CameraToWorld
 
 #ifdef _PARALLAXMAP
     half3 tangent = i.tangentToWorldAndParallax[0].xyz;

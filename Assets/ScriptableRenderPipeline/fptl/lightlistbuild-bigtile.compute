@@ -15,7 +15,7 @@
 uniform int g_iNrVisibLights;
 uniform uint2 g_viDimensions;
 uniform float4x4 g_mInvScrProjection;
-uniform float4x4 g_mScrProjection;
+uniform float4x4 g_mScrProjection; // uh, I hope this doesn't conflict with LightingUtils.hlsl
 uniform float g_fNearPlane;
 uniform float g_fFarPlane;
 uniform int g_iEye;
@@ -144,8 +144,9 @@ void BigTileLightListGen(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_Gro
 
 	// VR - adjust this to offset into the correct portion of the light list
 	// right eye will get second half
+	// might not actually need to do this due to auto-sync between dispatches
 	//int offs = tileIDX.y*nrBigTilesX + tileIDX.x;
-	int offs = tileIDX.y*nrBigTilesX + tileIDX.x + (eye * nrBigTilesX * nrBigTilesY);
+	int offs = tileIDX.y*nrBigTilesX + tileIDX.x + (g_iEye * nrBigTilesX * nrBigTilesY);
 
 	for(i=t; i<(iNrCoarseLights+1); i+=NR_THREADS)
 		g_vLightList[MAX_NR_BIGTILE_LIGHTS_PLUSONE*offs + i] = i==0 ? iNrCoarseLights : lightsListLDS[i-1];

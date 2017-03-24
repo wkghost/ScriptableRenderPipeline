@@ -113,8 +113,11 @@ half4 frag (v2f i) : SV_Target
     float linDepth = GetLinearDepth(zbufDpth);
 
     float3 vP = GetViewPosFromLinDepth(i.vertex.xy, linDepth);
-    float3 vPw = mul(g_mViewToWorld, float4(vP, 1)).xyz;
-    float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     //unity_CameraToWorld
+    //float3 vPw = mul(g_mViewToWorld, float4(vP, 1)).xyz;
+    //float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     //unity_CameraToWorld
+	float3 vPw = mul(g_mViewToWorldArr[unity_StereoEyeIndex], float4(vP, 1)).xyz;
+	float3 Vworld = normalize(mul((float3x3) g_mViewToWorldArr[unity_StereoEyeIndex], -vP).xyz);     //unity_CameraToWorld
+
 
     float4 gbuffer0 = _CameraGBufferTexture0.Load( uint3(pixCoord.xy, 0) );
     float4 gbuffer1 = _CameraGBufferTexture1.Load( uint3(pixCoord.xy, 0) );
