@@ -68,22 +68,23 @@ public class Scatterer
                     int r = Random.Range(0, 3 + 1);
 
                     GameObject obj = GameObject.Instantiate(m_ObjectsPrefab[Random.Range(0, 4)], vPos, Quaternion.identity) as GameObject;
+/*
+                                                            Renderer renderer = obj.GetComponent<Renderer>();
 
-                    Renderer renderer = obj.GetComponent<Renderer>();
+                                                             int matN = 0; // Random.Range(0, 4)
+                                                             Material mat = Material.Instantiate(m_MaterialPrefab[matN]);
 
-                     int matN = 0; // Random.Range(0, 4)
-                     Material mat = Material.Instantiate(m_MaterialPrefab[matN]);
+                                        //                    Material mat = Material.Instantiate(chromeMat);
 
-//                    Material mat = Material.Instantiate(chromeMat);
+                                                             Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
+                                                             mat.SetColor("_BaseColor", oColor);
 
-                     Color oColor = new Color(Random.value, Random.value, Random.value, 1.0f);
-                     mat.SetColor("_BaseColor", oColor);
-
-                    mat.SetTexture("_BaseColorMap", m_TexturesPrefab[Random.Range(0, 4)]);
+                                                            mat.SetTexture("_BaseColorMap", m_TexturesPrefab[Random.Range(0, 4)]);
 
 
-                    renderer.material = mat;
-//                    renderer.material.InitUniformBuffers();
+                                                            renderer.material = mat;
+                                        //                    renderer.material.InitUniformBuffers();
+                                        */
                 }
             }
         }

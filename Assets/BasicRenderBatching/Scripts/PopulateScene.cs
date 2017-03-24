@@ -19,8 +19,8 @@ public class PopulateScene : MonoBehaviour {
 
     public static bool m_Use8Textures = false;
 
-    private GameObject[] m_Objects;               // 
-    private Material[] m_Materials;               // 
+    private GameObject[] m_Objects;               //
+    private Material[] m_Materials;               //
 
     // Use this for initialization
     void Start()
@@ -53,6 +53,7 @@ public class PopulateScene : MonoBehaviour {
 
                     m_Objects[iIndex] = Instantiate(m_ObjectsPrefab[r], vPos, m_CenterPoint.rotation) as GameObject;
 
+/*
                     Renderer renderer = m_Objects[iIndex].GetComponent<Renderer>();
                     Material mat;
                     if ( m_Use8Textures )
@@ -78,6 +79,7 @@ public class PopulateScene : MonoBehaviour {
                     renderer.material = mat;
 //                    renderer.material.InitUniformBuffers();
                     m_Materials[iIndex] = renderer.material;
+*/
 
                     iIndex++;
                 }

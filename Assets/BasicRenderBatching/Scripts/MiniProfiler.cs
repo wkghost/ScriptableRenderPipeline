@@ -30,27 +30,36 @@ public class MiniProfiler : MonoBehaviour {
         new RecorderEntry() { name="RenderLoop.Draw" },
 //        new RecorderEntry() { name="BatchRenderer.Flush" },
         new RecorderEntry() { name="Shadows.Draw" },
-        new RecorderEntry() { name="BatchRenderer.RenderBatch" },
-
-        new RecorderEntry() { name="Map_PerDraw_Buffer" },
-        new RecorderEntry() { name="Unmap_PerDraw_Buffer" },
-        new RecorderEntry() { name="DrawBuffersBatchMode" },
-        new RecorderEntry() { name="DrawBatchIndexed" },
         new RecorderEntry() { name="BatchRenderer.ApplyShaderPass" },
-        new RecorderEntry() { name="PerformFlushProperties" },
 
-        
 /*
-        new RecorderEntry() { name="Camera.Render" },
-        new RecorderEntry() { name="GUI.Repaint" },
-        new RecorderEntry() { name="PrepareValues" },
-        new RecorderEntry() { name="ApplyGpuProgram" },
-        new RecorderEntry() { name="WriteParameters" },
-        new RecorderEntry() { name="FlushBuffers" },
-        new RecorderEntry() { name="BindBuffers" },
-		new RecorderEntry() { name="Gfx.ProcessCommand" },
+        new RecorderEntry() { name="gBatchGBufferObj" },
+        new RecorderEntry() { name="gBatchGBufferBatch" },
+        new RecorderEntry() { name="gBatchShadowObj" },
+        new RecorderEntry() { name="gBatchShadowBatch" },
 */
-	};
+
+    /*
+            new RecorderEntry() { name="Map_PerDraw_Buffer" },
+            new RecorderEntry() { name="Unmap_PerDraw_Buffer" },
+            new RecorderEntry() { name="DrawBuffersBatchMode" },
+            new RecorderEntry() { name="DrawBatchIndexed" },
+            new RecorderEntry() { name="BatchRenderer.ApplyShaderPass" },
+            new RecorderEntry() { name="PerformFlushProperties" },
+    */
+
+
+    /*
+            new RecorderEntry() { name="Camera.Render" },
+            new RecorderEntry() { name="GUI.Repaint" },
+            new RecorderEntry() { name="PrepareValues" },
+            new RecorderEntry() { name="ApplyGpuProgram" },
+            new RecorderEntry() { name="WriteParameters" },
+            new RecorderEntry() { name="FlushBuffers" },
+            new RecorderEntry() { name="BindBuffers" },
+            new RecorderEntry() { name="Gfx.ProcessCommand" },
+    */
+};
 
     void Awake()
     {
