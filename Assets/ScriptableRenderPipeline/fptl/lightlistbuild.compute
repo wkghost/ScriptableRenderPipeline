@@ -258,6 +258,11 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
 	//int offs = tileIDX.y*nrTilesX + tileIDX.x;
 	int offs = tileIDX.y*nrTilesX + tileIDX.x + (g_iEye * nrTilesX * nrTilesY * NR_LIGHT_MODELS);
 
+	// VR TODO: It could be interesting to just generate the list list indices to point
+	// directly into the shared light data.  For eye=1, the entirety of g_vLightData
+	// will be copied into the second part of the shared list.
+	// so to generate new indices, we'd simply just add that offset...
+
 	for(int category=0; category<NR_LIGHT_MODELS; category++)
 	{
 		int nrLightsFinal = ldsModelListCount[category];

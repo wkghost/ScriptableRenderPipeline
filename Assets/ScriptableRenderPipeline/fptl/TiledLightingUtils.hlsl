@@ -30,17 +30,28 @@ void GetCountAndStartOpaque(out uint uStart, out uint uNrLights, uint2 pixCoord,
 	uint nrTilesX = ((uint) (g_widthRT+(tileSize-1)))/tileSize; 
 	uint nrTilesY = ((uint) (g_heightRT+(tileSize-1)))/tileSize;
 	
-	uint2 tileIDX = pixCoord / tileSize;
-    const int tileOffs = (tileIDX.y+model*nrTilesY)*nrTilesX+tileIDX.x;
+	uint2 modPixCoord = pixCoord;
+	// g_widthRT should be the 'eye' width, so we need to generate the tile index based
+	// on the eye texture info, then offset into the appropriate half of the tile list
+	modPixCoord.x = modPixCoord.x - (unity_StereoEyeIndex * g_widthRT);
 
-    uNrLights = g_vLightListGlobal[ 16*tileOffs + 0]&0xffff;
-    uStart = tileOffs;
+	//uint2 tileIDX = pixCoord / tileSize;
+	uint2 tileIDX = modPixCoord / tileSize;
+	const int tileOffs = (tileIDX.y+model*nrTilesY)*nrTilesX+tileIDX.x;
+	const int modTileOffs = tileOffs + (unity_StereoEyeIndex * nrTilesY * nrTilesX * NR_LIGHT_MODELS);
+
+ //   uNrLights = g_vLightListGlobal[ 16*tileOffs + 0]&0xffff;
+	//uStart = tileOffs;
+	uNrLights = g_vLightListGlobal[16 * modTileOffs + 0] & 0xffff;
+    uStart = modTileOffs;
 }
 
 uint FetchIndexOpaque(const uint tileOffs, const uint l)
 {
     const uint l1 = l+1;
-    return (g_vLightListGlobal[ 16*tileOffs + (l1>>1)]>>((l1&1)*16))&0xffff;
+    //return (g_vLightListGlobal[ 16*tileOffs + (l1>>1)]>>((l1&1)*16))&0xffff;
+	// VR FIX - revert this once we have the light list stuff sorted
+	return ((g_vLightListGlobal[16 * tileOffs + (l1 >> 1)] >> ((l1 & 1) * 16)) & 0xffff) + (unity_StereoEyeIndex * g_lightDataEyeOffset);
 }
 
 #ifdef OPAQUES_ONLY

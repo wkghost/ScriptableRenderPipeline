@@ -27,6 +27,8 @@ CGPROGRAM
 #pragma multi_compile USE_FPTL_LIGHTLIST    USE_CLUSTERED_LIGHTLIST
 #pragma multi_compile __ ENABLE_DEBUG
 
+#pragma enable_d3d11_debug_symbols
+
 #include "UnityLightingCommon.cginc"
 
 float3 EvalMaterial(UnityLight light, UnityIndirect ind);
@@ -108,7 +110,11 @@ half4 frag (v2f i) : SV_Target
     float zbufDpth = FetchDepth(_CameraDepthTexture, pixCoord.xy).x;
     float linDepth = GetLinearDepth(zbufDpth);
 
-    float3 vP = GetViewPosFromLinDepth(i.vertex.xy, linDepth);
+	float2 eyeScrPos = i.vertex.xy;
+	eyeScrPos.x -= unity_StereoEyeIndex * g_widthRT;
+
+    //float3 vP = GetViewPosFromLinDepth(i.vertex.xy, linDepth);
+	float3 vP = GetViewPosFromLinDepth(eyeScrPos, linDepth);
     //float3 vPw = mul(g_mViewToWorld, float4(vP, 1)).xyz;
     //float3 Vworld = normalize(mul((float3x3) g_mViewToWorld, -vP).xyz);     //unity_CameraToWorld
 	float3 vPw = mul(g_mViewToWorldArr[unity_StereoEyeIndex], float4(vP, 1)).xyz;
@@ -127,6 +133,7 @@ half4 frag (v2f i) : SV_Target
 
     uint numLightsProcessed = 0;
     float3 c = data.emission + ExecuteLightList(numLightsProcessed, pixCoord, vP, vPw, Vworld);
+	//c = (1-unity_StereoEyeIndex)*c + (unity_StereoEyeIndex * data.specularColor);
 
 #if ENABLE_DEBUG
     c = OverlayHeatMap(pixCoord & 15, numLightsProcessed, c);

@@ -5,6 +5,7 @@
 #include "UnityStandardBRDF.cginc"
 #include "UnityStandardUtils.cginc"
 #include "UnityPBSLighting.cginc"
+//#include "..\common\ShaderBase.h"
 
 
 UNITY_DECLARE_ABSTRACT_CUBE_ARRAY(_reflCubeTextures);

@@ -88,10 +88,10 @@ namespace UnityEngine.Experimental.Rendering.Fptl
         private static ComputeBuffer s_LightList;
         private static ComputeBuffer s_DirLightList;
 
+		//private static int s_UnifiedDirLightListEyeOffset;	// VR
 		private static ComputeBuffer s_UnifiedLightDataBuffer;	// VR
 		private static int s_UnifiedLightDataEyeOffset;			// VR
 		private static ComputeBuffer s_UnifiedDirLightList;		// VR
-		//private static int s_UnifiedDirLightListEyeOffset;		// VR
         private static float[] s_UnifiedDirLightListBaseCount;  //VR
 
         private static ComputeBuffer s_BigTileLightList;        // used for pre-pass coarse culling on 64x64 tiles
@@ -177,7 +177,10 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             ReleaseResolutionDependentBuffers();
             s_DirLightList.Release();
 
-            if (enableClustered)
+			s_UnifiedLightDataBuffer.Release();
+			s_UnifiedDirLightList.Release();
+
+			if (enableClustered)
             {
 				if (s_GlobalLightListAtomic != null)
                 	s_GlobalLightListAtomic.Release();
@@ -202,7 +205,12 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             if (s_DirLightList != null)
                 s_DirLightList.Release();
 
-            if (enableClustered)
+			if (s_UnifiedLightDataBuffer != null)
+				s_UnifiedLightDataBuffer.Release();
+			if (s_UnifiedDirLightList != null)
+				s_UnifiedDirLightList.Release();
+
+			if (enableClustered)
             {
                 if (s_GlobalLightListAtomic != null)
                     s_GlobalLightListAtomic.Release();
@@ -231,7 +239,10 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             s_LightDataBuffer = new ComputeBuffer(MaxNumLights, System.Runtime.InteropServices.Marshal.SizeOf(typeof(SFiniteLightData)));
             s_DirLightList = new ComputeBuffer(MaxNumDirLights, System.Runtime.InteropServices.Marshal.SizeOf(typeof(DirectionalLight)));
 
-            buildScreenAABBShader.SetBuffer(s_GenAABBKernel, "g_data", s_ConvexBoundsBuffer);
+			s_UnifiedLightDataBuffer = new ComputeBuffer(MaxNumLights*2, System.Runtime.InteropServices.Marshal.SizeOf(typeof(SFiniteLightData)));
+			s_UnifiedDirLightList = new ComputeBuffer(MaxNumDirLights*2, System.Runtime.InteropServices.Marshal.SizeOf(typeof(DirectionalLight)));
+
+			buildScreenAABBShader.SetBuffer(s_GenAABBKernel, "g_data", s_ConvexBoundsBuffer);
             //m_BuildScreenAABBShader.SetBuffer(kGenAABBKernel, "g_vBoundsBuffer", m_aabbBoundsBuffer);
             m_DeferredMaterial.SetBuffer("g_vLightData", s_LightDataBuffer);
             m_DeferredMaterial.SetBuffer("g_dirLightData", s_DirLightList);
@@ -474,7 +485,22 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 cmd.SetGlobalFloat("g_isOpaquesOnlyEnabled", 0);
             }
 
-            cmd.name = "DoTiledDeferredLighting";
+			// VR - There is a problem here with the deferred material overriding the light data list!
+			// we push the global param, but the material smooshes it!
+			if (stereoDoublewide)
+			{
+				m_DeferredMaterial.SetBuffer("g_vLightData", s_UnifiedLightDataBuffer);
+				m_DeferredMaterial.SetBuffer("g_dirLightData", s_UnifiedDirLightList);
+				m_DeferredReflectionMaterial.SetBuffer("g_vLightData", s_UnifiedLightDataBuffer);
+			}
+			else
+			{
+				m_DeferredMaterial.SetBuffer("g_vLightData", s_LightDataBuffer);
+				m_DeferredMaterial.SetBuffer("g_dirLightData", s_DirLightList);
+				m_DeferredReflectionMaterial.SetBuffer("g_vLightData", s_LightDataBuffer);
+			}
+
+			cmd.name = "DoTiledDeferredLighting";
 
             //cmd.SetRenderTarget(new RenderTargetIdentifier(kGBufferEmission), new RenderTargetIdentifier(kGBufferZ));
             //cmd.Blit (kGBufferNormal, (RenderTexture)null); // debug: display normals
@@ -570,8 +596,8 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             else
             {
                 cmd.Blit(BuiltinRenderTextureType.CameraTarget, s_CameraTarget, m_DeferredMaterial, 0);
-                cmd.Blit(BuiltinRenderTextureType.CameraTarget, s_CameraTarget, m_DeferredReflectionMaterial, 0);
-            }
+				cmd.Blit(BuiltinRenderTextureType.CameraTarget, s_CameraTarget, m_DeferredReflectionMaterial, 0);
+			}
 
 
             // Set the intermediate target for compositing (skybox, etc)
@@ -1282,6 +1308,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
                 }
 
+				// these are not allocated!
 				s_UnifiedLightDataBuffer.SetData(unifiedLightData.ToArray());
                 s_UnifiedDirLightList.SetData(unifiedDirLightData.ToArray());
 
@@ -1340,13 +1367,13 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
 			// VR - no forward in the test scene
             // render opaques using tiled forward
-            RenderForward(cullResults, camera, loop, true);    // opaques only (requires a depth pre-pass)
+            //RenderForward(cullResults, camera, loop, true);    // opaques only (requires a depth pre-pass)
 
             // render the backdrop/canvas
-            m_SkyboxHelper.Draw(loop, camera);
+            //m_SkyboxHelper.Draw(loop, camera);
 
             // transparencies atm. requires clustered until we get traditional forward
-            if(enableClustered) RenderForward(cullResults, camera, loop, false);
+            //if(enableClustered) RenderForward(cullResults, camera, loop, false);
 
             // debug views.
             if (enableDrawLightBoundsDebug) DrawLightBoundsDebug(loop, cullResults.visibleLights.Length);
@@ -1354,14 +1381,14 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             // present frame buffer.
             FinalPass(loop);
 
-            // bind depth surface for editor grid/gizmo/selection rendering
-            if (camera.cameraType == CameraType.SceneView)
-            {
-                var cmd = new CommandBuffer();
-                cmd.SetRenderTarget(BuiltinRenderTextureType.CameraTarget, new RenderTargetIdentifier(s_CameraDepthTexture));
-                loop.ExecuteCommandBuffer(cmd);
-                cmd.Dispose();
-            }
+            //// bind depth surface for editor grid/gizmo/selection rendering
+            //if (camera.cameraType == CameraType.SceneView)
+            //{
+            //    var cmd = new CommandBuffer();
+            //    cmd.SetRenderTarget(BuiltinRenderTextureType.CameraTarget, new RenderTargetIdentifier(s_CameraDepthTexture));
+            //    loop.ExecuteCommandBuffer(cmd);
+            //    cmd.Dispose();
+            //}
 
 			if (stereoActive)
 			{

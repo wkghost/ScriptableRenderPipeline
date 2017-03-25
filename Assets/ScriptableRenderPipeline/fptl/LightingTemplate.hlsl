@@ -6,6 +6,7 @@
 #include "UnityStandardBRDF.cginc"
 #include "UnityStandardUtils.cginc"
 #include "UnityPBSLighting.cginc"
+//#include "..\common\ShaderBase.h"
 
 
 uniform uint g_nNumDirLights;
@@ -156,11 +157,12 @@ float3 ExecuteLightList(uint start, uint numLights, float3 vP, float3 vPw, float
 
     float3 ints = 0;
 
+	// VR adjustment for two dir light lists
 	int dirBase = g_UnifiedDirLightListBaseCount[unity_StereoEyeIndex * 2 + 0];
 	int dirCount = g_UnifiedDirLightListBaseCount[unity_StereoEyeIndex * 2 + 1];
 
-    //for (int i = 0; i < g_nNumDirLights; i++)
-	for (int i = dirBase; i < dirCount; i++)
+    for (int i = 0; i < g_nNumDirLights; i++)
+	//for (int i = dirBase; i < dirBase + dirCount; i++)
     {
         DirectionalLight lightData = g_dirLightData[i];
         float atten = 1;
@@ -179,6 +181,8 @@ float3 ExecuteLightList(uint start, uint numLights, float3 vP, float3 vPw, float
 
         ints += EvalMaterial(light, ind);
     }
+
+	//return ints;
 
     uint l=0;
 	// don't need the outer loop since the lights are sorted by volume type

@@ -1,8 +1,10 @@
 #ifndef __TILEDLIGHTINGTEMPLATE_H__
 #define __TILEDLIGHTINGTEMPLATE_H__
 
-#include "LightingTemplate.hlsl" // change order to get access to unity_StereoEyeIndex
+#include "UnityCG.cginc"
 #include "TiledLightingUtils.hlsl"
+#include "LightingTemplate.hlsl" // change order to get access to unity_StereoEyeIndex
+//#include "TiledLightingUtils.hlsl"
 
 
 
