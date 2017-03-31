@@ -96,10 +96,15 @@ CBUFFER_START(UnityPerDraw : register(b0))
 	float4 unity_LODFade; // x is the fade value ranging within [0,1]. y is x quantized into 16 levels
 	float4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
 
-	// light maps
+//#if defined(NO_NEED_LIGHTING)
+
+
+#if (defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON))
+    // light maps
 	float4 unity_LightmapST;
 	float4 unity_DynamicLightmapST;
-	// SH lighting environment
+#endif
+    // SH lighting environment
 	float4 unity_SHAr;
 	float4 unity_SHAg;
 	float4 unity_SHAb;
@@ -107,11 +112,17 @@ CBUFFER_START(UnityPerDraw : register(b0))
 	float4 unity_SHBg;
 	float4 unity_SHBb;
 	float4 unity_SHC;
-	// probe volumes
+
+    // probe volumes
 	float4 unity_ProbeVolumeParams;
 	float4x4 unity_ProbeVolumeWorldToObject;
 	float3 unity_ProbeVolumeSizeInv;
 	float3 unity_ProbeVolumeMin;
+//#endif
+
+    #if defined(NO_NEED_LIGHTING)
+    float4x4 unity_arnaud;
+    #endif
 
 CBUFFER_END
 
