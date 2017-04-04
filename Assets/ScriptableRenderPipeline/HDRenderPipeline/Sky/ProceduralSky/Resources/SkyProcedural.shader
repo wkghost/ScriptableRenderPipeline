@@ -19,9 +19,9 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
             #pragma multi_compile _ ATMOSPHERICS_DEBUG
             #pragma multi_compile _ PERFORM_SKY_OCCLUSION_TEST
 
-            #include "ShaderLibrary/Color.hlsl"
-            #include "ShaderLibrary/Common.hlsl"
-            #include "ShaderLibrary/CommonLighting.hlsl"
+            #include "../../../../ShaderLibrary/Color.hlsl"
+            #include "../../../../ShaderLibrary/Common.hlsl"
+            #include "../../../../ShaderLibrary/CommonLighting.hlsl"
 
             TEXTURECUBE(_Cubemap);
             SAMPLERCUBE(sampler_Cubemap);
@@ -78,7 +78,7 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
                 float3 rotatedDir = float3(dot(rotDirX, dir), dir.y, dot(rotDirY, dir));
 
                 // input.positionCS is SV_Position
-                PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw);
+                PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, uint2(0,0));
 
                 // An arbitrary value attempting to match the size of the sky mesh from the Blacksmith demo.
                 const float skyDepth = 0.00025;

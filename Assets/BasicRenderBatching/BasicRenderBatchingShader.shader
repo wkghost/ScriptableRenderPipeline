@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Upgrade NOTE: replaced 'glstate_matrix_invtrans_modelview0' with 'UNITY_MATRIX_IT_MV'
 // Upgrade NOTE: replaced 'glstate_matrix_modelview0' with 'UNITY_MATRIX_MV'
 // Upgrade NOTE: replaced 'glstate_matrix_mvp' with 'UNITY_MATRIX_MVP'
@@ -126,7 +128,7 @@ v2f vert(s2v v)
 {
     v2f o;
 	o.uv = v.texcoord.xy;
-    o.hpos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.hpos = UnityObjectToClipPos(v.vertex);
     o.positionWS = mul(unity_ObjectToWorld, v.vertex).xyz;
 	o.normalWS = normalize(mul((float3x3)unity_WorldToObject, v.normal));
     return o;

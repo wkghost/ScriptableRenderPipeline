@@ -38,6 +38,13 @@ Shader "HDRenderPipeline/Lit"
         _Thickness("Thickness", Range(0.004, 1.0)) = 1.0
         _ThicknessMap("Thickness Map", 2D) = "white" {}
 
+        // Wind
+        [ToggleOff]  _EnableWind("Enable Wind", Float) = 0.0
+        _InitialBend("Initial Bend", float) = 1.0
+        _Stiffness("Stiffness", float) = 1.0
+        _Drag("Drag", float) = 1.0
+        _ShiverDrag("Shiver Drag", float) = 0.2
+
         //_CoatCoverage("CoatCoverage", Range(0.0, 1.0)) = 0
         //_CoatCoverageMap("CoatCoverageMapMap", 2D) = "white" {}
 
@@ -105,7 +112,7 @@ Shader "HDRenderPipeline/Lit"
 
     #pragma target 4.5
     #pragma only_renderers d3d11 ps4 metal // TEMP: until we go futher in dev
-	#pragma enable_d3d11_debug_symbols
+    // #pragma enable_d3d11_debug_symbols
 
     //-------------------------------------------------------------------------------------
     // Variant
@@ -122,7 +129,7 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _ _REQUIRE_UV2 _REQUIRE_UV3
     #pragma shader_feature _EMISSIVE_COLOR
 
-    #pragma shader_feature _NORMALMAP  
+    #pragma shader_feature _NORMALMAP
     #pragma shader_feature _MASKMAP
     #pragma shader_feature _SPECULAROCCLUSIONMAP
     #pragma shader_feature _EMISSIVE_COLOR_MAP
@@ -133,10 +140,13 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _SUBSURFACE_RADIUS_MAP
     #pragma shader_feature _THICKNESS_MAP
     #pragma shader_feature _SUBSURFACE_SCATTERING
+    #pragma shader_feature _VERTEX_WIND
 
     #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
     #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
     #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+    // enable dithering LOD crossfade
+    #pragma multi_compile _ LOD_FADE_CROSSFADE
     // TODO: We should have this keyword only if VelocityInGBuffer is enable, how to do that ?
     //#pragma multi_compile VELOCITYOUTPUT_OFF VELOCITYOUTPUT_ON
 
@@ -152,11 +162,18 @@ Shader "HDRenderPipeline/Lit"
     // Include
     //-------------------------------------------------------------------------------------
 
+    #include "../../../ShaderLibrary/common.hlsl"
+    #include "../../../ShaderLibrary/Wind.hlsl"
+    #include "../../ShaderConfig.cs.hlsl"
+    #include "../../ShaderVariables.hlsl"
+    #include "../../ShaderPass/FragInputs.hlsl"
+    #include "../../ShaderPass/ShaderPass.cs.hlsl"
 
     //-------------------------------------------------------------------------------------
     // variable declaration
     //-------------------------------------------------------------------------------------
 
+    #include "../../Material/Lit/LitProperties.hlsl"
 
     // All our shaders use same name for entry point
     #pragma vertex Vert
@@ -184,12 +201,6 @@ Shader "HDRenderPipeline/Lit"
             }
 
             HLSLPROGRAM
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_GBUFFER
             #include "../../Material/Material.hlsl"
@@ -215,17 +226,11 @@ Shader "HDRenderPipeline/Lit"
             }
 
             HLSLPROGRAM
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define LIGHTING_DEBUG
             #define SHADERPASS SHADERPASS_GBUFFER
-            #include "HDRenderPipeline/Debug/HDRenderPipelineDebug.cs.hlsl"
-            #include "HDRenderPipeline/Debug/DebugLighting.hlsl"
+            #include "../../Debug/HDRenderPipelineDebug.cs.hlsl"
+            #include "../../Debug/DebugLighting.hlsl"
             #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitSharePass.hlsl"
             #include "LitData.hlsl"
@@ -242,12 +247,6 @@ Shader "HDRenderPipeline/Lit"
             Cull[_CullMode]
 
             HLSLPROGRAM
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_DEBUG_VIEW_MATERIAL
             #include "../../Material/Material.hlsl"
@@ -268,15 +267,9 @@ Shader "HDRenderPipeline/Lit"
             Cull Off
 
             HLSLPROGRAM
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             // Lightmap memo
-            // DYNAMICLIGHTMAP_ON is used when we have an "enlighten lightmap" ie a lightmap updated at runtime by enlighten.This lightmap contain indirect lighting from realtime lights and realtime emissive material.Offline baked lighting(from baked material / light, 
+            // DYNAMICLIGHTMAP_ON is used when we have an "enlighten lightmap" ie a lightmap updated at runtime by enlighten.This lightmap contain indirect lighting from realtime lights and realtime emissive material.Offline baked lighting(from baked material / light,
             // both direct and indirect lighting) will hand up in the "regular" lightmap->LIGHTMAP_ON.
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
@@ -299,16 +292,9 @@ Shader "HDRenderPipeline/Lit"
             ZTest LEqual
 
             HLSLPROGRAM
-#define NO_NEED_LIGHTING
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
-            #include "../../Material/Material.hlsl"            
+            #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitDepthPass.hlsl"
             #include "LitData.hlsl"
             #include "../../ShaderPass/ShaderPassDepthOnly.hlsl"
@@ -326,13 +312,6 @@ Shader "HDRenderPipeline/Lit"
             ZWrite On
 
             HLSLPROGRAM
-#define NO_NEED_LIGHTING
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
             #include "../../Material/Material.hlsl"
@@ -353,13 +332,6 @@ Shader "HDRenderPipeline/Lit"
             ZWrite Off // TODO: Test Z equal here.
 
             HLSLPROGRAM
-#define NO_NEED_LIGHTING
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_VELOCITY
             #include "../../Material/Material.hlsl"
@@ -381,20 +353,12 @@ Shader "HDRenderPipeline/Lit"
             Cull [_CullMode]
 
             HLSLPROGRAM
-#define NO_NEED_LIGHTING
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_DISTORTION
             #include "../../Material/Material.hlsl"
             #include "ShaderPass/LitDistortionPass.hlsl"
             #include "LitData.hlsl"
             #include "../../ShaderPass/ShaderPassDistortion.hlsl"
-
 
             ENDHLSL
         }
@@ -409,12 +373,6 @@ Shader "HDRenderPipeline/Lit"
             Cull [_CullMode]
 
             HLSLPROGRAM
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define SHADERPASS SHADERPASS_FORWARD
             #include "../../Lighting/Forward.hlsl"
@@ -439,18 +397,12 @@ Shader "HDRenderPipeline/Lit"
             Cull[_CullMode]
 
             HLSLPROGRAM
-#include "ShaderLibrary/common.hlsl"
-#include "HDRenderPipeline/ShaderConfig.cs.hlsl"
-#include "HDRenderPipeline/ShaderVariables.hlsl"
-#include "HDRenderPipeline/ShaderPass/FragInputs.hlsl"
-#include "HDRenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/LitProperties.hlsl"
 
             #define LIGHTING_DEBUG
             #define SHADERPASS SHADERPASS_FORWARD
             #include "../../Lighting/Forward.hlsl"
-            #include "HDRenderPipeline/Debug/HDRenderPipelineDebug.cs.hlsl"
-            #include "HDRenderPipeline/Debug/DebugLighting.hlsl"
+            #include "../../Debug/HDRenderPipelineDebug.cs.hlsl"
+            #include "../../Debug/DebugLighting.hlsl"
 
             // TEMP until pragma work in include
             #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS

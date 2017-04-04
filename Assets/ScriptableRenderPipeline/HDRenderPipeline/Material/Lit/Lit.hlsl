@@ -3,9 +3,7 @@
 //-----------------------------------------------------------------------------
 
 // SurfaceData is define in Lit.cs which generate Lit.cs.hlsl
-//TODO: return this original relative path include after fixing a bug in Unity side
-//#include "Lit.cs.hlsl"
-#include "HDRenderPipeline/Material/Lit/Lit.cs.hlsl"
+#include "Lit.cs.hlsl"
 
 // In case we pack data uint16 buffer we need to change the output render target format to uint16
 // TODO: Is there a way to automate these output type based on the format declare in lit.cs ?
@@ -29,8 +27,8 @@
 
 // Reference Lambert diffuse / GGX Specular for IBL and area lights
 #ifdef HAS_LIGHTLOOP // Both reference define below need to be define only if LightLoop is present, else we get a compile error
-// #define LIT_DISPLAY_REFERENCE_AREA
-// #define LIT_DISPLAY_REFERENCE_IBL
+//#define LIT_DISPLAY_REFERENCE_AREA
+//#define LIT_DISPLAY_REFERENCE_IBL
 #endif
 // Use Lambert diffuse instead of Disney diffuse
 // #define LIT_DIFFUSE_LAMBERT_BRDF
@@ -40,22 +38,21 @@
 // TODO: Check if anisotropy with a dynamic if on anisotropy > 0 is performant. Because it may mean we always calculate both isotropy and anisotropy case.
 // Maybe we should always calculate anisotropy in case of standard ? Don't think the compile can optimize correctly.
 
+SamplerState ltc_linear_clamp_sampler;
 // TODO: This one should be set into a constant Buffer at pass frequency (with _Screensize)
-// TODO: we can share the sampler here and name it SRL_BilinearSampler. However Unity currently doesn't support to set sampler in C#
-// + to avoid the message Fragment program 'Frag' : sampler 'sampler_PreIntegratedFGD' has no matching texture and will be undefined.
 TEXTURE2D(_PreIntegratedFGD);
-SAMPLER2D(sampler_PreIntegratedFGD);
 TEXTURE2D_ARRAY(_LtcData); // We pack the 3 Ltc data inside a texture array
-SAMPLER2D(sampler_LtcData);
 #define LTC_GGX_MATRIX_INDEX 0 // RGBA
 #define LTC_DISNEY_DIFFUSE_MATRIX_INDEX 1 // RGBA
 #define LTC_MULTI_GGX_FRESNEL_DISNEY_DIFFUSE_INDEX 2 // RGB, A unused
 
 // SSS parameters
-#define N_PROFILES 8
-uint   _TransmissionFlags;                             // One bit per profile; 1 = enabled
-float  _ThicknessRemaps[N_PROFILES][2];                // Remap: 0 = start, 1 = end - start
-float4 _HalfRcpVariancesAndLerpWeights[N_PROFILES][2]; // 2x Gaussians per color channel, A is the the associated interpolation weight
+#define SSS_N_PROFILES 8
+#define SSS_UNIT_CONVERSION (1.0 / 300.0)                  // From meters to 1/3 centimeters
+uint   _TransmissionFlags;                                 // 1 bit/profile; 0 = inf. thick, 1 = supports transmission
+uint   _TexturingModeFlags;                                // 1 bit/profile; 0 = PreAndPostScatter, 1 = PostScatter
+float  _ThicknessRemaps[SSS_N_PROFILES][2];                // Remap: 0 = start, 1 = end - start
+float4 _HalfRcpVariancesAndLerpWeights[SSS_N_PROFILES][2]; // 2x Gaussians per color channel, A is the the associated interpolation weight
 
 //-----------------------------------------------------------------------------
 // Helper functions/variable specific to this material
@@ -80,7 +77,7 @@ void GetPreIntegratedFGD(float NdotV, float perceptualRoughness, float3 fresnel0
     //  _PreIntegratedFGD.y = Gv * Fc
     // Pre integrate DisneyDiffuse FGD:
     // _PreIntegratedFGD.z = DisneyDiffuse
-    float3 preFGD = SAMPLE_TEXTURE2D_LOD(_PreIntegratedFGD, sampler_PreIntegratedFGD, float2(NdotV, perceptualRoughness), 0).xyz;
+    float3 preFGD = SAMPLE_TEXTURE2D_LOD(_PreIntegratedFGD, ltc_linear_clamp_sampler, float2(NdotV, perceptualRoughness), 0).xyz;
 
     // f0 * Gv * (1 - Fc) + Gv * Fc
     specularFGD = fresnel0 * preFGD.x + preFGD.y;
@@ -116,13 +113,11 @@ void ApplyDebugToBSDFData(inout BSDFData bsdfData)
 
 void ConfigureTexturingForSSS(inout BSDFData bsdfData)
 {
-#ifdef SSS_PRE_SCATTER_TEXTURING
-    bsdfData.diffuseColor = bsdfData.diffuseColor;
-#elif SSS_POST_SCATTER_TEXTURING
-    bsdfData.diffuseColor = float3(1, 1, 1);
-#else // combine pre-scatter and post-scatter texturing
-    bsdfData.diffuseColor = sqrt(bsdfData.diffuseColor);
-#endif
+    bool performPostScatterTexturing = IsBitSet(_TexturingModeFlags, bsdfData.subsurfaceProfile);
+
+    // It's either post-scatter, or pre- and post-scatter texturing.
+    bsdfData.diffuseColor = performPostScatterTexturing ? float3(1, 1, 1)
+                                                        : sqrt(bsdfData.diffuseColor);
 }
 
 // Evaluates transmittance for a linear combination of two normalized 2D Gaussians.
@@ -136,7 +131,7 @@ float3 ComputeTransmittance(float3 halfRcpVariance1, float lerpWeight1,
     // Thickness and SSS radius are decoupled for artists.
     // In theory, we should modify the thickness by the inverse of the radius scale of the profile.
     // thickness /= radiusScale;
-    thickness *= 100;
+    thickness /= SSS_UNIT_CONVERSION;
 
     float t2 = thickness * thickness;
 
@@ -177,10 +172,11 @@ BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
         bsdfData.diffuseColor = surfaceData.baseColor;
         bsdfData.fresnel0 = 0.028; // TODO take from subsurfaceProfile
         bsdfData.subsurfaceProfile = surfaceData.subsurfaceProfile;
-        bsdfData.subsurfaceRadius  = 0.01 * surfaceData.subsurfaceRadius;
-        bsdfData.thickness         = 0.01 * (_ThicknessRemaps[bsdfData.subsurfaceProfile][0] +
-                                             _ThicknessRemaps[bsdfData.subsurfaceProfile][1] * surfaceData.thickness);
-        bsdfData.enableTransmission = (1 << bsdfData.subsurfaceProfile) & _TransmissionFlags;
+        // Make the Std. Dev. of 1 correspond to the effective radius of 1 cm (three-sigma rule).
+        bsdfData.subsurfaceRadius  = SSS_UNIT_CONVERSION * surfaceData.subsurfaceRadius;
+        bsdfData.thickness         = SSS_UNIT_CONVERSION * (_ThicknessRemaps[bsdfData.subsurfaceProfile][0] +
+                                                            _ThicknessRemaps[bsdfData.subsurfaceProfile][1] * surfaceData.thickness);
+        bsdfData.enableTransmission = IsBitSet(_TransmissionFlags, bsdfData.subsurfaceProfile);
         if (bsdfData.enableTransmission)
         {
             bsdfData.transmittance = ComputeTransmittance(_HalfRcpVariancesAndLerpWeights[bsdfData.subsurfaceProfile][0].xyz,
@@ -255,7 +251,7 @@ void EncodeIntoGBuffer( SurfaceData surfaceData,
     }
     else if (surfaceData.materialId == MATERIALID_LIT_SSS)
     {
-        outGBuffer2 = float4(surfaceData.subsurfaceRadius, surfaceData.thickness, 0.0, surfaceData.subsurfaceProfile / 8.0); // Number of profile not define yet
+        outGBuffer2 = float4(surfaceData.subsurfaceRadius, surfaceData.thickness, 0.0, surfaceData.subsurfaceProfile * rcp(SSS_N_PROFILES - 1));
     }
     else if (surfaceData.materialId == MATERIALID_LIT_CLEAR_COAT)
     {
@@ -373,11 +369,12 @@ void DecodeFromGBuffer(
     {
         bsdfData.diffuseColor = baseColor;
         bsdfData.fresnel0 = 0.028; // TODO take from subsurfaceProfile
-        bsdfData.subsurfaceProfile = 8.00 * inGBuffer2.a;
-        bsdfData.subsurfaceRadius  = 0.01 * inGBuffer2.r;
-        bsdfData.thickness         = 0.01 * (_ThicknessRemaps[bsdfData.subsurfaceProfile][0] +
-                                             _ThicknessRemaps[bsdfData.subsurfaceProfile][1] * inGBuffer2.g);
-        bsdfData.enableTransmission = (1 << bsdfData.subsurfaceProfile) & _TransmissionFlags;
+        bsdfData.subsurfaceProfile = (SSS_N_PROFILES - 1) * inGBuffer2.a;
+        // Make the Std. Dev. of 1 correspond to the effective radius of 1 cm (three-sigma rule).
+        bsdfData.subsurfaceRadius  = SSS_UNIT_CONVERSION * inGBuffer2.r;
+        bsdfData.thickness         = SSS_UNIT_CONVERSION * (_ThicknessRemaps[bsdfData.subsurfaceProfile][0] +
+                                                            _ThicknessRemaps[bsdfData.subsurfaceProfile][1] * inGBuffer2.g);
+        bsdfData.enableTransmission = IsBitSet(_TransmissionFlags, bsdfData.subsurfaceProfile);
         if (bsdfData.enableTransmission)
         {
             bsdfData.transmittance = ComputeTransmittance(_HalfRcpVariancesAndLerpWeights[bsdfData.subsurfaceProfile][0].xyz,
@@ -606,15 +603,15 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, BSDFData bsdfDat
     // Note we load the matrix transpose (avoid to have to transpose it in shader)
     preLightData.ltcXformGGX      = 0.0;
     preLightData.ltcXformGGX._m22 = 1.0;
-    preLightData.ltcXformGGX._m00_m02_m11_m20 = SAMPLE_TEXTURE2D_ARRAY_LOD(_LtcData, sampler_LtcData, uv, LTC_GGX_MATRIX_INDEX, 0);
+    preLightData.ltcXformGGX._m00_m02_m11_m20 = SAMPLE_TEXTURE2D_ARRAY_LOD(_LtcData, ltc_linear_clamp_sampler, uv, LTC_GGX_MATRIX_INDEX, 0);
 
     // Get the inverse LTC matrix for Disney Diffuse
     // Note we load the matrix transpose (avoid to have to transpose it in shader)
     preLightData.ltcXformDisneyDiffuse      = 0.0;
     preLightData.ltcXformDisneyDiffuse._m22 = 1.0;
-    preLightData.ltcXformDisneyDiffuse._m00_m02_m11_m20 = SAMPLE_TEXTURE2D_ARRAY_LOD(_LtcData, sampler_LtcData, uv, LTC_DISNEY_DIFFUSE_MATRIX_INDEX, 0);
+    preLightData.ltcXformDisneyDiffuse._m00_m02_m11_m20 = SAMPLE_TEXTURE2D_ARRAY_LOD(_LtcData, ltc_linear_clamp_sampler, uv, LTC_DISNEY_DIFFUSE_MATRIX_INDEX, 0);
 
-    float3 ltcMagnitude = SAMPLE_TEXTURE2D_ARRAY_LOD(_LtcData, sampler_LtcData, uv, LTC_MULTI_GGX_FRESNEL_DISNEY_DIFFUSE_INDEX, 0).rgb;
+    float3 ltcMagnitude = SAMPLE_TEXTURE2D_ARRAY_LOD(_LtcData, ltc_linear_clamp_sampler, uv, LTC_MULTI_GGX_FRESNEL_DISNEY_DIFFUSE_INDEX, 0).rgb;
     preLightData.ltcGGXFresnelMagnitudeDiff = ltcMagnitude.r;
     preLightData.ltcGGXFresnelMagnitude     = ltcMagnitude.g;
     preLightData.ltcDisneyDiffuseMagnitude  = ltcMagnitude.b;
@@ -741,7 +738,7 @@ void EvaluateBSDF_Directional(  LightLoopContext lightLoopContext,
     [branch] if (lightData.shadowIndex >= 0 && illuminance > 0.0)
     {
 #ifdef SHADOWS_USE_SHADOWCTXT
-		float shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, positionWS, lightData.shadowIndex, L, posInput.unPositionSS);
+        float shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, positionWS, lightData.shadowIndex, L, posInput.unPositionSS);
 #else
         float shadow = GetDirectionalShadowAttenuation(lightLoopContext, positionWS, lightData.shadowIndex, L, posInput.unPositionSS);
 #endif
@@ -790,9 +787,9 @@ void EvaluateBSDF_Directional(  LightLoopContext lightLoopContext,
             // TODO: factor out the biased position?
             float3 biasedPositionWS = positionWS + bsdfData.normalWS * bsdfData.thickness;
 #ifdef SHADOWS_USE_SHADOWCTXT
-			float shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, biasedPositionWS, lightData.shadowIndex, L, posInput.unPositionSS);
+            float shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, biasedPositionWS, lightData.shadowIndex, L, posInput.unPositionSS);
 #else
-			float shadow = GetDirectionalShadowAttenuation(lightLoopContext, biasedPositionWS, lightData.shadowIndex, L, posInput.unPositionSS);
+            float shadow = GetDirectionalShadowAttenuation(lightLoopContext, biasedPositionWS, lightData.shadowIndex, L, posInput.unPositionSS);
 #endif
 
             illuminance *= shadow;
@@ -851,9 +848,9 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
     {
         float3 offset = float3(0.0, 0.0, 0.0); // GetShadowPosOffset(nDotL, normal);
 #ifdef SHADOWS_USE_SHADOWCTXT
-		float shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
+        float shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
 #else
-		float shadow = GetPunctualShadowAttenuation(lightLoopContext, lightData.lightType, positionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
+        float shadow = GetPunctualShadowAttenuation(lightLoopContext, lightData.lightType, positionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
 #endif
         shadow = lerp(1.0, shadow, lightData.shadowDimmer);
 
@@ -909,9 +906,9 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
             float3 biasedPositionWS = positionWS + bsdfData.normalWS * bsdfData.thickness;
             float3 offset = float3(0.0, 0.0, 0.0); // GetShadowPosOffset(nDotL, normal);
 #ifdef SHADOWS_USE_SHADOWCTXT
-			float shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, biasedPositionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
+            float shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, biasedPositionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
 #else
-			float shadow = GetPunctualShadowAttenuation(lightLoopContext, lightData.lightType, biasedPositionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
+            float shadow = GetPunctualShadowAttenuation(lightLoopContext, lightData.lightType, biasedPositionWS + offset, lightData.shadowIndex, L, posInput.unPositionSS);
 #endif
             shadow = lerp(1.0, shadow, lightData.shadowDimmer);
 
@@ -1174,7 +1171,7 @@ void EvaluateBSDF_Area(LightLoopContext lightLoopContext,
 #ifdef LIT_DISPLAY_REFERENCE_AREA
     IntegrateBSDF_AreaRef(V, positionWS, preLightData, lightData, bsdfData,
                           diffuseLighting, specularLighting);
-#else    
+#else
     diffuseLighting  = float3(0.0, 0.0, 0.0);
     specularLighting = float3(0.0, 0.0, 0.0);
 
@@ -1409,7 +1406,7 @@ void EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
     weight = float2(0.0, 1.0);
 
 #else
-    // TODO: factor this code in common, so other material authoring don't require to rewrite everything, 
+    // TODO: factor this code in common, so other material authoring don't require to rewrite everything,
     // also think about how such a loop can handle 2 cubemap at the same time as old unity. Macro can allow to do that
     // but we need to have UNITY_SAMPLE_ENV_LOD replace by a true function instead that is define by the lighting arcitecture.
     // Also not sure how to deal with 2 intersection....

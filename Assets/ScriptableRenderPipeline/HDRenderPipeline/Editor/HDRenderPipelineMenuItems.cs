@@ -26,7 +26,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void RemoveMaterialKeywords(Material material)
         {
             string[] keywordsToRemove = material.shaderKeywords;
-            foreach (var keyword in keywordsToRemove) 
+            foreach (var keyword in keywordsToRemove)
             {
                 material.DisableKeyword(keyword);
             }
@@ -71,12 +71,42 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         RemoveMaterialKeywords(mat);
                         UnlitGUI.SetupMaterialKeywordsAndPass(mat);
                         EditorUtility.SetDirty(mat);
-                    }                    
+                    }
                 }
             }
             finally
             {
                 EditorUtility.ClearProgressBar();
+            }
+        }
+
+        [MenuItem("HDRenderPipeline/Debug/Remove tessellation materials (not reversible)")]
+        static void RemoveTessellationMaterials()
+        {
+            Object[] materials = Resources.FindObjectsOfTypeAll<Material>();
+
+            Shader litShader = Shader.Find("HDRenderPipeline/Lit");
+            Shader layeredLitShader = Shader.Find("HDRenderPipeline/LayeredLit");
+
+            foreach (Object obj in materials)
+            {
+                Material mat = obj as Material;
+                if (mat.shader.name == "HDRenderPipeline/LitTessellation")
+                {
+                    mat.shader = litShader;
+                    // We remove all keyword already present
+                    RemoveMaterialKeywords(mat);
+                    LitGUI.SetupMaterialKeywordsAndPass(mat);
+                    EditorUtility.SetDirty(mat);
+                }
+                else if (mat.shader.name == "HDRenderPipeline/LayeredLitTessellation")
+                {
+                    mat.shader = layeredLitShader;
+                    // We remove all keyword already present
+                    RemoveMaterialKeywords(mat);
+                    LayeredLitGUI.SetupMaterialKeywordsAndPass(mat);
+                    EditorUtility.SetDirty(mat);
+                }
             }
         }
     }
