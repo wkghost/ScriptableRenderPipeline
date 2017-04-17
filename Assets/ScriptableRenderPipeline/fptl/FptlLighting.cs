@@ -724,7 +724,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
         int GenerateSourceLightBuffers(Camera camera, CullResults inputs)
         {
             var probes = inputs.visibleReflectionProbes;
-            //ReflectionProbe[] probes = Object.FindObjectsOfType<ReflectionProbe>();
+            var lights = inputs.visibleLights;
 
             var numModels = (int)LightDefinitions.NR_LIGHT_MODELS;
             var numVolTypes = (int)LightDefinitions.MAX_TYPES;
@@ -732,41 +732,52 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             var offsets = new int[numModels, numVolTypes];
             var numEntries2nd = new int[numModels, numVolTypes];
 
-            // first pass. Figure out how much we have of each and establish offsets
-            foreach (var cl in inputs.visibleLights)
+            // Figure out how much we have of each lights/probes and establish offsets
+            foreach (var cl in lights)
             {
-                var volType = cl.lightType == LightType.Spot ? LightDefinitions.SPOT_LIGHT : (cl.lightType == LightType.Point ? LightDefinitions.SPHERE_LIGHT : -1);
-                if (volType >= 0) ++numEntries[LightDefinitions.DIRECT_LIGHT, volType];
+                var volType = -1;
+                if (cl.lightType == LightType.Spot)
+                    volType = LightDefinitions.SPOT_LIGHT;
+                else if (cl.lightType == LightType.Point)
+                    volType = LightDefinitions.SPHERE_LIGHT;
+
+                if (volType >= 0)
+                    ++numEntries[LightDefinitions.DIRECT_LIGHT, volType];
             }
 
             foreach (var rl in probes)
             {
-                var volType = LightDefinitions.BOX_LIGHT;       // always a box for now
-                if (rl.texture != null) ++numEntries[LightDefinitions.REFLECTION_LIGHT, volType];
+                // always a box for now
+                var volType = LightDefinitions.BOX_LIGHT;
+                if (rl.texture != null)
+                    ++numEntries[LightDefinitions.REFLECTION_LIGHT, volType];
             }
 
             // add decals here too similar to the above
 
             // establish offsets
+            offsets[0, 0] = 0;
             for (var m = 0; m < numModels; m++)
             {
-                offsets[m, 0] = m == 0 ? 0 : (numEntries[m - 1, numVolTypes - 1] + offsets[m - 1, numVolTypes - 1]);
-                for (var v = 1; v < numVolTypes; v++) offsets[m, v] = numEntries[m, v - 1] + offsets[m, v - 1];
+                if (m > 0)
+                    offsets[m, 0] = offsets[m - 1, numVolTypes - 1] + numEntries[m - 1, numVolTypes - 1];
+
+                for (var v = 1; v < numVolTypes; v++)
+                    offsets[m, v] = offsets[m, v - 1] + numEntries[m, v - 1];
             }
 
 
-            var numLights = inputs.visibleLights.Length;
+            var numLights = lights.Length;
             var numProbes = probes.Length;
             var numVolumes = numLights + numProbes;
-
-
             var lightData = new SFiniteLightData[numVolumes];
             var boundData = new SFiniteLightBound[numVolumes];
+
             var worldToView = WorldToCamera(camera);
             bool isNegDeterminant = Vector3.Dot(worldToView.GetColumn(0), Vector3.Cross(worldToView.GetColumn(1), worldToView.GetColumn(2))) < 0.0f;      // 3x3 Determinant.
 
             uint shadowLightIndex = 0;
-            foreach (var cl in inputs.visibleLights)
+            foreach (var cl in lights)
             {
                 var range = cl.range;
 
@@ -794,22 +805,25 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 var bHasCookie = cl.light.cookie != null;
                 var bHasShadow = cl.light.shadows != LightShadows.None;
 
+                light.flags |= (bHasCookie ? LightDefinitions.HAS_COOKIE_TEXTURE : 0);
+                light.flags |= (bHasShadow ? LightDefinitions.HAS_SHADOW : 0);
+
                 var idxOut = 0;
 
                 if (cl.lightType == LightType.Spot)
                 {
+                    // square spots always have cookie
                     var isCircularSpot = !bHasCookie;
-                    if (!isCircularSpot)    // square spots always have cookie
+                    if (bHasCookie)    
                     {
                         light.sliceIndex = m_CookieTexArray.FetchSlice(cl.light.cookie);
                     }
 
-                    Vector3 lightDir = lightToWorld.GetColumn(2);   // Z axis in world space
-
                     // represents a left hand coordinate system in world space
                     Vector3 vx = lightToWorld.GetColumn(0);     // X axis in world space
                     Vector3 vy = lightToWorld.GetColumn(1);     // Y axis in world space
-                    var vz = lightDir;                      // Z axis in world space
+                    Vector3 vz = lightToWorld.GetColumn(2);     // Z axis in world space
+                    var lightDir = vz;
 
                     // transform to camera space (becomes a left hand coordinate frame in Unity since Determinant(worldToView)<0)
                     vx = worldToView.MultiplyVector(vx);
@@ -829,16 +843,11 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
                     var cota = si > 0.0f ? (cs / si) : FltMax;
 
-                    //const float cotasa = l.GetCotanHalfSpotAngle();
+                    bound.center = worldToView.MultiplyPoint(lightPos + ((0.5f * range) * lightDir));    // use mid point of the spot as the center of the bounding volume for building screen-space AABB for tiled lighting.
 
                     // apply nonuniform scale to OBB of spot light
                     var squeeze = true;//sa < 0.7f * 90.0f;      // arb heuristic
                     var fS = squeeze ? ta : si;
-                    bound.center = worldToView.MultiplyPoint(lightPos + ((0.5f * range) * lightDir));    // use mid point of the spot as the center of the bounding volume for building screen-space AABB for tiled lighting.
-
-                    light.lightAxisX = vx;
-                    light.lightAxisY = vy;
-                    light.lightAxisZ = vz;
 
                     // scale axis to match box or base of pyramid
                     bound.boxAxisX = (fS * range) * vx;
@@ -857,16 +866,15 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                     bound.radius = altDist > (0.5f * range) ? altDist : (0.5f * range);       // will always pick fAltDist
                     bound.scaleXY = squeeze ? new Vector2(0.01f, 0.01f) : new Vector2(1.0f, 1.0f);
 
-                    // fill up ldata
+                    light.lightAxisX = vx;
+                    light.lightAxisY = vy;
+                    light.lightAxisZ = vz;
                     light.lightType = (uint)LightDefinitions.SPOT_LIGHT;
                     light.lightPos = worldToView.MultiplyPoint(lightPos);
                     light.radiusSq = range * range;
                     light.penumbra = cs;
                     light.cotan = cota;
                     light.flags |= (isCircularSpot ? LightDefinitions.IS_CIRCULAR_SPOT_SHAPE : 0);
-
-                    light.flags |= (bHasCookie ? LightDefinitions.HAS_COOKIE_TEXTURE : 0);
-                    light.flags |= (bHasShadow ? LightDefinitions.HAS_SHADOW : 0);
 
                     int i = LightDefinitions.DIRECT_LIGHT, j = LightDefinitions.SPOT_LIGHT;
                     idxOut = numEntries2nd[i, j] + offsets[i, j]; ++numEntries2nd[i, j];
@@ -899,9 +907,6 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                     light.lightAxisX = vx;
                     light.lightAxisY = vy;
                     light.lightAxisZ = vz;
-
-                    light.flags |= (bHasCookie ? LightDefinitions.HAS_COOKIE_TEXTURE : 0);
-                    light.flags |= (bHasShadow ? LightDefinitions.HAS_SHADOW : 0);
 
                     int i = LightDefinitions.DIRECT_LIGHT, j = LightDefinitions.SPHERE_LIGHT;
                     idxOut = numEntries2nd[i, j] + offsets[i, j]; ++numEntries2nd[i, j];
@@ -948,7 +953,6 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 // implicit in CalculateHDRDecodeValues() --> float ints = rl.intensity;
                 var boxProj = (rl.boxProjection != 0);
                 var decodeVals = rl.hdr;
-                //Vector4 decodeVals = rl.CalculateHDRDecodeValues();
 
                 // C is reflection volume center in world space (NOT same as cube map capture point)
                 var e = bnds.extents;       // 0.5f * Vector3.Max(-boxSizes[p], boxSizes[p]);
@@ -982,9 +986,8 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
                 lgtData.sliceIndex = m_CubeReflTexArray.FetchSlice(cubemap);
 
-                var delta = combinedExtent - e;
                 lgtData.boxInnerDist = e;
-                lgtData.boxInvRange.Set(1.0f / delta.x, 1.0f / delta.y, 1.0f / delta.z);
+                lgtData.boxInvRange.Set(1.0f / blendDistance, 1.0f / blendDistance, 1.0f / blendDistance);
 
                 bndData.center = Cw;
                 bndData.boxAxisX = combinedExtent.x * vx;
@@ -1004,7 +1007,10 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 lightData[idxOut] = lgtData;
             }
 
-            var numProbesOut = offsets[LightDefinitions.REFLECTION_LIGHT, numVolTypes - 1] + numEntries[LightDefinitions.REFLECTION_LIGHT, numVolTypes - 1];
+            var probesStartIndex = offsets[LightDefinitions.REFLECTION_LIGHT, 0];
+            var probesEndIndex = offsets[LightDefinitions.REFLECTION_LIGHT, numVolTypes - 1] + numEntries[LightDefinitions.REFLECTION_LIGHT, numVolTypes - 1];
+            var numProbesOut = probesEndIndex - probesStartIndex;
+
             for (var m = 0; m < numModels; m++)
             {
                 for (var v = 0; v < numVolTypes; v++)
