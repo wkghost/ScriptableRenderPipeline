@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.VR;
 
 // Very basic scriptable rendering loop example:
 // - Use with BasicRenderPipelineShader.shader (the loop expects "BasicPass" pass type to exist)
@@ -47,15 +48,50 @@ public static class BasicRendering
     {
         foreach (var camera in cameras)
         {
+            bool stereoEnabled = VRSettings.isDeviceActive;
+
             // Culling
             CullingParameters cullingParams;
-            if (!CullResults.GetCullingParameters(camera, out cullingParams))
+            if (!CullResults.GetCullingParameters(camera, stereoEnabled, out cullingParams))
                 continue;
             CullResults cull = CullResults.Cull(ref cullingParams, context);
 
             // Setup camera for rendering (sets render target, view/projection matrices and other
             // per-camera built-in shader variables).
-            context.SetupCameraProperties(camera);
+            // If stereo is enabled, we also configure stereo matrices, viewports, and device render targets
+            context.SetupCameraProperties(camera, stereoEnabled);
+
+            // Draws in-between [Start|Stop]MultiEye are stereo-ized by engine
+            if (stereoEnabled)
+                context.StartMultiEye(camera);
+
+            // This is an example of how to create/use an intermediate VR rendertexture
+            var intermediateRT = Shader.PropertyToID("_IntermediateTarget");
+            var intermediateRTID = new RenderTargetIdentifier(intermediateRT);
+            {
+                var bindTempRTCmd = new CommandBuffer() { name = "Bind intermediate RT" };
+
+                if (stereoEnabled)
+                {
+                    RenderTextureDescriptor vrDesc = VRSettings.GetVREyeTextureDesc();
+                    vrDesc.depthBufferBits = 24;
+                    bindTempRTCmd.GetTemporaryRT(intermediateRT, vrDesc, FilterMode.Point);
+                }
+                else
+                {
+                    int w = camera.pixelWidth;
+                    int h = camera.pixelHeight;
+                    var aa = QualitySettings.antiAliasing;
+                    if (aa < 1)
+                        aa = 1;
+
+                    bindTempRTCmd.GetTemporaryRT(intermediateRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, aa, true);
+                }
+
+                bindTempRTCmd.SetRenderTarget(intermediateRTID);
+                context.ExecuteCommandBuffer(bindTempRTCmd);
+                bindTempRTCmd.Dispose();
+            }
 
             // clear depth buffer
             var cmd = new CommandBuffer();
@@ -79,6 +115,20 @@ public static class BasicRendering
             settings.sorting.flags = SortFlags.CommonTransparent;
             settings.inputFilter.SetQueuesTransparent();
             context.DrawRenderers(ref settings);
+
+            // Copy from intermediate texture to camera target (back buffer or VR device texture)
+            var copyIntermediateRTToDefault = new CommandBuffer() { name = "Copy intermediate RT to default RT" };
+            copyIntermediateRTToDefault.Blit(intermediateRTID, BuiltinRenderTextureType.CameraTarget);
+            context.ExecuteCommandBuffer(copyIntermediateRTToDefault);
+            copyIntermediateRTToDefault.Dispose();
+
+            if (stereoEnabled)
+                context.StopMultiEye(camera);
+
+            // In order to reset state on the camera to pre-Stereo settings, and to invoke
+            // VR based events/callbacks, we need to call StereoEndRender.
+            if (stereoEnabled)
+                context.StereoEndRender(camera);
 
             context.Submit();
         }
