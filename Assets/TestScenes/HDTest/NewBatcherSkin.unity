@@ -1,0 +1,3761 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!29 &1
+OcclusionCullingSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_OcclusionBakeSettings:
+    smallestOccluder: 5
+    smallestHole: 0.25
+    backfaceThreshold: 100
+  m_SceneGUID: 00000000000000000000000000000000
+  m_OcclusionCullingData: {fileID: 0}
+--- !u!104 &2
+RenderSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 8
+  m_Fog: 0
+  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_FogMode: 3
+  m_FogDensity: 0.01
+  m_LinearFogStart: 0
+  m_LinearFogEnd: 300
+  m_AmbientSkyColor: {r: 0.2, g: 0.2, b: 0.2, a: 0}
+  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientIntensity: 1
+  m_AmbientMode: 0
+  m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
+  m_SkyboxMaterial: {fileID: 0}
+  m_HaloStrength: 0.5
+  m_FlareStrength: 1
+  m_FlareFadeSpeed: 3
+  m_HaloTexture: {fileID: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
+  m_DefaultReflectionMode: 0
+  m_DefaultReflectionResolution: 128
+  m_ReflectionBounces: 1
+  m_ReflectionIntensity: 1
+  m_CustomReflection: {fileID: 0}
+  m_Sun: {fileID: 0}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+--- !u!157 &3
+LightmapSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 11
+  m_GIWorkflowMode: 0
+  m_GISettings:
+    serializedVersion: 2
+    m_BounceScale: 1
+    m_IndirectOutputScale: 1
+    m_AlbedoBoost: 1
+    m_TemporalCoherenceThreshold: 1
+    m_EnvironmentLightingMode: 0
+    m_EnableBakedLightmaps: 1
+    m_EnableRealtimeLightmaps: 1
+  m_LightmapEditorSettings:
+    serializedVersion: 9
+    m_Resolution: 2
+    m_BakeResolution: 40
+    m_TextureWidth: 1024
+    m_TextureHeight: 1024
+    m_AO: 0
+    m_AOMaxDistance: 1
+    m_CompAOExponent: 1
+    m_CompAOExponentDirect: 0
+    m_Padding: 2
+    m_LightmapParameters: {fileID: 0}
+    m_LightmapsBakeMode: 1
+    m_TextureCompression: 1
+    m_FinalGather: 0
+    m_FinalGatherFiltering: 1
+    m_FinalGatherRayCount: 256
+    m_ReflectionCompression: 2
+    m_MixedBakeMode: 2
+    m_BakeBackend: 0
+    m_PVRSampling: 1
+    m_PVRDirectSampleCount: 32
+    m_PVRSampleCount: 500
+    m_PVRBounces: 2
+    m_PVRFiltering: 0
+    m_PVRFilteringMode: 1
+    m_PVRCulling: 1
+    m_PVRFilteringGaussRadiusDirect: 1
+    m_PVRFilteringGaussRadiusIndirect: 5
+    m_PVRFilteringGaussRadiusAO: 2
+    m_PVRFilteringAtrousColorSigma: 1
+    m_PVRFilteringAtrousNormalSigma: 1
+    m_PVRFilteringAtrousPositionSigma: 1
+  m_LightingDataAsset: {fileID: 112002050, guid: 77003cf1586b69441899ca0ad45a0363,
+    type: 2}
+  m_UseShadowmask: 1
+--- !u!196 &4
+NavMeshSettings:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_BuildSettings:
+    serializedVersion: 2
+    agentTypeID: 0
+    agentRadius: 0.5
+    agentHeight: 2
+    agentSlope: 45
+    agentClimb: 0.4
+    ledgeDropHeight: 0
+    maxJumpAcrossDistance: 0
+    minRegionArea: 2
+    manualCellSize: 0
+    cellSize: 0.16666667
+    manualTileSize: 0
+    tileSize: 256
+    accuratePlacement: 0
+    debug:
+      m_Flags: 0
+  m_NavMeshData: {fileID: 0}
+--- !u!1001 &74435917
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (37)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &173655917
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 29
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (27)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &229692510
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (63)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &242284016
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (51)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &285952015
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (22)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &350560613
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (34)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &363754573
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 48
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (46)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &412741514
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 54
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (52)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &418899937
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 42
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (40)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &419769073
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 47
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (45)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &449940510
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (53)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &462142398
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (23)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &468831421
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (62)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &544840233
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &594241367
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (39)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &595655374
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 38
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (36)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &621008028
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (43)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &675061438
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 59
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (57)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &729213305
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (13)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &748958609
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (3)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &750861355
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &763023678
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (7)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &772551167
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (38)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &804337739
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (14)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &823689508
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 49
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (47)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &861756545
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (19)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &944647336
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (48)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &964614437
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (5)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1043559873
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (15)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1094202182
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (21)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1127603573
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 63
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (61)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1139392621
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 44
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (42)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1167011087
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (58)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1256735382
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 34
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (32)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1318685284
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 58
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (56)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1341512991
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (9)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1343129495
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 61
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (59)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1348955669
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (44)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1358527517
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (12)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1398070061
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (10)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1425496424
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (8)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1439653666
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (28)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1448354052
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 56
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (54)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1470950267
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (4)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1484974607
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (6)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1523626797
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 33
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (31)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1529438262
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 37
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (35)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1536670367
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 62
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (60)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1564170977
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 31
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (29)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1605205385
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 26
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (24)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1 &1612142864
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1612142869}
+  - component: {fileID: 1612142868}
+  - component: {fileID: 1612142867}
+  - component: {fileID: 1612142866}
+  - component: {fileID: 1612142865}
+  - component: {fileID: 1612142870}
+  - component: {fileID: 1612142871}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!81 &1612142865
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_Enabled: 1
+--- !u!124 &1612142866
+Behaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_Enabled: 1
+--- !u!92 &1612142867
+Behaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_Enabled: 1
+--- !u!20 &1612142868
+Camera:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: -1
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+  m_StereoMirrorMode: 0
+--- !u!4 &1612142869
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_LocalRotation: {x: -0.045453988, y: -0.9543385, z: 0.19832538, w: -0.21872146}
+  m_LocalPosition: {x: -13.594228, y: 5.3873105, z: 5.793599}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1612142870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dc6eb1c59f1c9745b732f87dafd16f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Enable: 1
+--- !u!114 &1612142871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1612142864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dc6eb1c59f1c9745b732f87dafd16f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Enable: 1
+--- !u!1001 &1664706200
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (2)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1728274203
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 32
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (30)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1741919470
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (16)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1779404319
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -20.46
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 57
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (55)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1847231249
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -4.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -14.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (33)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1878817634
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 51
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (49)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1890847474
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 27
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (25)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1938499651
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -12.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -11.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 43
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (41)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1968005085
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -10.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 22
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (20)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1975617214
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -8.64
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -3.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (11)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &2011146938
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -14.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -8.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 28
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (26)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &2019373525
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (18)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &2030014363
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -2.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -5.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 19
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (17)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &2044438843
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: -6.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: -17.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_RootOrder
+      value: 52
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499581811603716, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_Name
+      value: Scientist@TposeGeo (50)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1048184170882528, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 84c264c38d3760b45b9489dab25b580a, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1 &2074196558
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 2074196560}
+  - component: {fileID: 2074196559}
+  - component: {fileID: 2074196561}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &2074196559
+Light:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2074196558}
+  m_Enabled: 1
+  serializedVersion: 8
+  m_Type: 1
+  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Intensity: 3.19
+  m_Range: 10
+  m_SpotAngle: 30
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 1
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_Lightmapping: 4
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_FalloffTable:
+    m_Table[0]: 0
+    m_Table[1]: 0
+    m_Table[2]: 0
+    m_Table[3]: 0
+    m_Table[4]: 0
+    m_Table[5]: 0
+    m_Table[6]: 0
+    m_Table[7]: 0
+    m_Table[8]: 0
+    m_Table[9]: 0
+    m_Table[10]: 0
+    m_Table[11]: 0
+    m_Table[12]: 0
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &2074196560
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2074196558}
+  m_LocalRotation: {x: -0.21337067, y: 0.9002262, z: 0.08753766, w: 0.36932772}
+  m_LocalPosition: {x: -1.07, y: 2.17, z: 2.29}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: -18.374, y: 138.6, z: -19.674002}
+--- !u!114 &2074196561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2074196558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shadowResolution: 512
+  m_innerSpotPercent: 0
+  shadowDimmer: 1
+  lightDimmer: 1
+  fadeDistance: 10000
+  shadowFadeDistance: 10000
+  affectDiffuse: 1
+  affectSpecular: 1
+  archetype: 0
+  lightLength: 0
+  lightWidth: 0
+  shadowAlgorithm: 0
+  shadowVariant: 4
+  shadowPrecision: 0
+  shadowData:
+    format: 4
+    data: 0bd7a33b0000803f
+  shadowDatas:
+  - format: 0
+    data: 0bd7a33b0000803f
+  - format: 4
+    data: 0bd7a33b0000803f

@@ -35,6 +35,9 @@ public class MiniProfiler : MonoBehaviour {
         new RecorderEntry() { name="RenderBatch.Count" },
         new RecorderEntry() { name="ApplyGpuProgram.Count" },
 
+        new RecorderEntry() { name="UpdateBuiltinCBMainThread" },
+
+
     };
 
     void Awake()
