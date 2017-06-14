@@ -1,92 +1,157 @@
 using System;
 #if UNITY_EDITOR
-using UnityEditor;
+    using UnityEditor;
 #endif
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [GenerateHLSL]
-    public class SSSConstants
+    public class SssConstants
     {
-        public const int SSS_PROFILES_MAX = 8;
+        public const int SSS_N_PROFILES           = 8;  // Max. number of profiles, including the slot taken by the neutral profile
+        public const int SSS_NEUTRAL_PROFILE_ID   = SSS_N_PROFILES - 1; // Does not result in blurring
+        public const int SSS_N_SAMPLES_NEAR_FIELD = 55; // Used for extreme close ups; must be a Fibonacci number
+        public const int SSS_N_SAMPLES_FAR_FIELD  = 21; // Used at a regular distance; must be a Fibonacci number
+        public const int SSS_LOD_THRESHOLD        = 4;  // The LoD threshold of the near-field kernel (in pixels)
+        public const int SSS_TRSM_MODE_NONE       = 0;
+        public const int SSS_TRSM_MODE_THIN       = 1;
+        // Old SSS Model >>>
+        public const int SSS_BASIC_N_SAMPLES      = 11; // Must be an odd number
+        public const int SSS_BASIC_DISTANCE_SCALE = 3;  // SSS distance units per centimeter
+        // <<< Old SSS Model
     }
 
     [Serializable]
     public class SubsurfaceScatteringProfile : ScriptableObject
     {
-        public enum TexturingMode : int { PreAndPostScatter = 0, PostScatter = 1 };
+        public enum TexturingMode    : uint { PreAndPostScatter = 0, PostScatter = 1 };
+        public enum TransmissionMode : uint { None = SssConstants.SSS_TRSM_MODE_NONE, ThinObject = SssConstants.SSS_TRSM_MODE_THIN, Regular };
 
-        public const int numSamples = 11; // Must be an odd number
-
-        [ColorUsage(false, true, 0.05f, 2.0f, 1.0f, 1.0f)]
-        public Color            scatterDistance1;
-        [ColorUsage(false, true, 0.05f, 2.0f, 1.0f, 1.0f)]
-        public Color            scatterDistance2;
-        public float            lerpWeight;
+        [ColorUsage(false, true, 0f, 8f, 0.125f, 3f)]
+        public Color            scatteringDistance;         // Per color channel (no meaningful units)
+        [ColorUsage(false)]
+        public Color            transmissionTint;           // Color, 0 to 1
         public TexturingMode    texturingMode;
-        public bool             enableTransmission;
-        public bool             enableThinObject;
-        public Color            tintColor;
-        public Vector2          thicknessRemap;
+        public TransmissionMode transmissionMode;
+        public Vector2          thicknessRemap;             // X = min, Y = max (in millimeters)
+        public float            worldScale;                 // Size of the world unit in meters
         [HideInInspector]
-        public int              settingsIndex;
+        public int              settingsIndex;              // SubsurfaceScatteringSettings.profiles[i]
         [SerializeField]
-        Vector4[]               m_FilterKernel;
+        Vector3                 m_ShapeParam;               // RGB = shape parameter: S = 1 / D
         [SerializeField]
-        Vector3[]               m_HalfRcpVariances;
+        float                   m_MaxRadius;                // In millimeters
+        [SerializeField]
+        Vector2[]               m_FilterKernelNearField;    // X = radius, Y = reciprocal of the PDF
+        [SerializeField]
+        Vector2[]               m_FilterKernelFarField;     // X = radius, Y = reciprocal of the PDF
+        // Old SSS Model >>>
+        [ColorUsage(false, true, 0f, 8f, 0.125f, 3f)]
+        public Color            scatterDistance1;
+        [ColorUsage(false, true, 0f, 8f, 0.125f, 3f)]
+        public Color            scatterDistance2;
+        [Range(0f, 1f)]
+        public float            lerpWeight;
         [SerializeField]
         Vector4                 m_HalfRcpWeightedVariances;
+        [SerializeField]
+        Vector4[]               m_FilterKernelBasic;
+        // <<< Old SSS Model
 
         // --- Public Methods ---
 
         public SubsurfaceScatteringProfile()
         {
-            scatterDistance1    = new Color(0.3f, 0.3f, 0.3f, 0.0f);
-            scatterDistance2    = new Color(0.6f, 0.6f, 0.6f, 0.0f);
-            lerpWeight          = 0.5f;
-            texturingMode       = TexturingMode.PreAndPostScatter;
-            enableTransmission  = false;
-            enableThinObject  = false;
-            tintColor           = Color.white;
-            thicknessRemap      = new Vector2(0, 1);
-            settingsIndex       = SubsurfaceScatteringSettings.neutralProfileID; // Updated by SubsurfaceScatteringSettings.OnValidate() once assigned
+            scatteringDistance = Color.grey;
+            transmissionTint   = Color.white;
+            texturingMode      = TexturingMode.PreAndPostScatter;
+            transmissionMode   = TransmissionMode.None;
+            thicknessRemap     = new Vector2(0.0f, 5.0f);
+            worldScale         = 1.0f;
+            settingsIndex      = SssConstants.SSS_NEUTRAL_PROFILE_ID; // Updated by SubsurfaceScatteringSettings.OnValidate() once assigned
+            // Old SSS Model >>>
+            scatterDistance1   = new Color(0.3f, 0.3f, 0.3f, 0.0f);
+            scatterDistance2   = new Color(0.5f, 0.5f, 0.5f, 0.0f);
+            lerpWeight         = 1.0f;
+            // <<< Old SSS Model
 
+            BuildKernel();
+        }
+
+        // Ref: Approximate Reflectance Profiles for Efficient Subsurface Scattering by Pixar.
+        public void BuildKernel()
+        {
+            if (m_FilterKernelNearField == null || m_FilterKernelNearField.Length != SssConstants.SSS_N_SAMPLES_NEAR_FIELD)
+            {
+                m_FilterKernelNearField = new Vector2[SssConstants.SSS_N_SAMPLES_NEAR_FIELD];
+            }
+
+            if (m_FilterKernelFarField == null || m_FilterKernelFarField.Length != SssConstants.SSS_N_SAMPLES_FAR_FIELD)
+            {
+                m_FilterKernelFarField = new Vector2[SssConstants.SSS_N_SAMPLES_FAR_FIELD];
+            }
+
+            // Clamp to avoid artifacts.
+            m_ShapeParam   = new Vector3();
+            m_ShapeParam.x = Mathf.Min(1000f, 1.0f / scatteringDistance.r);
+            m_ShapeParam.y = Mathf.Min(1000f, 1.0f / scatteringDistance.g);
+            m_ShapeParam.z = Mathf.Min(1000f, 1.0f / scatteringDistance.b);
+
+            // We importance sample the color channel with the widest scattering distance.
+            float s = Mathf.Min(m_ShapeParam.x, m_ShapeParam.y, m_ShapeParam.z);
+
+            // Importance sample the normalized diffusion profile for the computed value of 's'.
+            // ------------------------------------------------------------------------------------
+            // R(r, s)   = s * (Exp[-r * s] + Exp[-r * s / 3]) / (8 * Pi * r)
+            // PDF(r, s) = s * (Exp[-r * s] + Exp[-r * s / 3]) / 4
+            // CDF(r, s) = 1 - 1/4 * Exp[-r * s] - 3/4 * Exp[-r * s / 3]
+            // ------------------------------------------------------------------------------------
+            
+            // Importance sample the near field kernel.
+            for (int i = 0; i < SssConstants.SSS_N_SAMPLES_NEAR_FIELD; i++)
+            {
+                float p = i * (1.0f / SssConstants.SSS_N_SAMPLES_NEAR_FIELD);
+                float r = KernelCdfInverse(p, s);
+                
+                // N.b.: computation of normalized weights, and multiplication by the surface albedo
+                // of the actual geometry is performed at runtime (in the shader).
+                m_FilterKernelNearField[i].x = r;
+                m_FilterKernelNearField[i].y = 1.0f / KernelPdf(r, s);
+            }
+
+            m_MaxRadius = m_FilterKernelNearField[SssConstants.SSS_N_SAMPLES_NEAR_FIELD - 1].x;
+
+            // Importance sample the far field kernel.
+            for (int i = 0; i < SssConstants.SSS_N_SAMPLES_FAR_FIELD; i++)
+            {
+                float p = i * (1.0f / SssConstants.SSS_N_SAMPLES_FAR_FIELD);
+                float r = KernelCdfInverse(p, s);
+
+                // N.b.: computation of normalized weights, and multiplication by the surface albedo
+                // of the actual geometry is performed at runtime (in the shader).
+                m_FilterKernelFarField[i].x = r;
+                m_FilterKernelFarField[i].y = 1.0f / KernelPdf(r, s);
+            }
+
+            // Old SSS Model >>>
             UpdateKernelAndVarianceData();
+            // <<< Old SSS Model
         }
 
-        public Vector4[] filterKernel
-        {
-            // Set via UpdateKernelAndVarianceData().
-            get { return m_FilterKernel; }
-        }
-
-        public Vector3[] halfRcpVariances
-        {
-            // Set via UpdateKernelAndVarianceData().
-            get { return m_HalfRcpVariances; }
-        }
-
-        public Vector4 halfRcpWeightedVariances
-        {
-            // Set via UpdateKernelAndVarianceData().
-            get { return m_HalfRcpWeightedVariances; }
-        }
-
+        // Old SSS Model >>>
         public void UpdateKernelAndVarianceData()
         {
-            if (m_FilterKernel == null || m_FilterKernel.Length != numSamples)
+            const int numSamples    = SssConstants.SSS_BASIC_N_SAMPLES;
+            const int distanceScale = SssConstants.SSS_BASIC_DISTANCE_SCALE;
+
+            if (m_FilterKernelBasic == null || m_FilterKernelBasic.Length != numSamples)
             {
-                m_FilterKernel = new Vector4[numSamples];
+                m_FilterKernelBasic = new Vector4[numSamples];
             }
 
-            if (m_HalfRcpVariances == null)
-            {
-                m_HalfRcpVariances = new Vector3[2];
-            }
-
-            // Apply the three-sigma rule.
-            Color stdDev1 = scatterDistance1 * (1.0f / 3.0f);
-            Color stdDev2 = scatterDistance2 * (1.0f / 3.0f);
+            // Apply the three-sigma rule, and rescale.
+            Color stdDev1 = ((1.0f / 3.0f) * distanceScale) * scatterDistance1;
+            Color stdDev2 = ((1.0f / 3.0f) * distanceScale) * scatterDistance2;
 
             // Our goal is to blur the image using a filter which is represented
             // as a product of a linear combination of two normalized 1D Gaussians
@@ -100,19 +165,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // The resulting filter function is a non-Gaussian PDF.
             // It is separable by design, but generally not radially symmetric.
 
+            // N.b.: our scattering distance is rather limited. Therefore, in order to allow
+            // for a greater range of standard deviation values for flatter profiles,
+            // we rescale the world using 'distanceScale', effectively reducing the SSS
+            // distance units from centimeters to (1 / distanceScale).
+
             // Find the widest Gaussian across 3 color channels.
             float maxStdDev1 = Mathf.Max(stdDev1.r, stdDev1.g, stdDev1.b);
             float maxStdDev2 = Mathf.Max(stdDev2.r, stdDev2.g, stdDev2.b);
 
             Vector3 weightSum = new Vector3(0, 0, 0);
 
-            float rcpNumSamples = 1.0f / numSamples;
+            float step = 1.0f / (numSamples - 1);
 
             // Importance sample the linear combination of two Gaussians.
-            for (uint i = 0; i < numSamples; i++)
+            for (int i = 0; i < numSamples; i++)
             {
-                float u = (i <= numSamples / 2) ? 0.5f - i * rcpNumSamples    // The center and to the left
-                                                : (i + 0.5f) * rcpNumSamples; // From the center to the right
+                // Generate 'u' on (0, 0.5] and (0.5, 1).
+                float u = (i <= numSamples / 2) ? 0.5f - i * step // The center and to the left
+                                                : i * step;       // From the center to the right
+
+                u = Mathf.Clamp(u, 0.001f, 0.999f);
 
                 float pos = GaussianCombinationCdfInverse(u, maxStdDev1, maxStdDev2, lerpWeight);
                 float pdf = GaussianCombination(pos, maxStdDev1, maxStdDev2, lerpWeight);
@@ -123,31 +196,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 val.z = GaussianCombination(pos, stdDev1.b, stdDev2.b, lerpWeight);
 
                 // We do not divide by 'numSamples' since we will renormalize, anyway.
-                m_FilterKernel[i].x = val.x * (1 / pdf);
-                m_FilterKernel[i].y = val.y * (1 / pdf);
-                m_FilterKernel[i].z = val.z * (1 / pdf);
-                m_FilterKernel[i].w = pos;
+                m_FilterKernelBasic[i].x = val.x * (1 / pdf);
+                m_FilterKernelBasic[i].y = val.y * (1 / pdf);
+                m_FilterKernelBasic[i].z = val.z * (1 / pdf);
+                m_FilterKernelBasic[i].w = pos;
 
-                weightSum.x += m_FilterKernel[i].x;
-                weightSum.y += m_FilterKernel[i].y;
-                weightSum.z += m_FilterKernel[i].z;
+                weightSum.x += m_FilterKernelBasic[i].x;
+                weightSum.y += m_FilterKernelBasic[i].y;
+                weightSum.z += m_FilterKernelBasic[i].z;
             }
 
             // Renormalize the weights to conserve energy.
-            for (uint i = 0; i < numSamples; i++)
+            for (int i = 0; i < numSamples; i++)
             {
-                m_FilterKernel[i].x *= 1 / weightSum.x;
-                m_FilterKernel[i].y *= 1 / weightSum.y;
-                m_FilterKernel[i].z *= 1 / weightSum.z;
+                m_FilterKernelBasic[i].x *= 1 / weightSum.x;
+                m_FilterKernelBasic[i].y *= 1 / weightSum.y;
+                m_FilterKernelBasic[i].z *= 1 / weightSum.z;
             }
-
-            // Store (1 / (2 * Variance)) per color channel per Gaussian.
-            m_HalfRcpVariances[0].x = 0.5f / (stdDev1.r * stdDev1.r);
-            m_HalfRcpVariances[0].y = 0.5f / (stdDev1.g * stdDev1.g);
-            m_HalfRcpVariances[0].z = 0.5f / (stdDev1.b * stdDev1.b);
-            m_HalfRcpVariances[1].x = 0.5f / (stdDev2.r * stdDev2.r);
-            m_HalfRcpVariances[1].y = 0.5f / (stdDev2.g * stdDev2.g);
-            m_HalfRcpVariances[1].z = 0.5f / (stdDev2.b * stdDev2.b);
 
             Vector4 weightedStdDev;
             weightedStdDev.x = Mathf.Lerp(stdDev1.r,  stdDev2.r,  lerpWeight);
@@ -161,9 +226,110 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_HalfRcpWeightedVariances.z = 0.5f / (weightedStdDev.z * weightedStdDev.z);
             m_HalfRcpWeightedVariances.w = 0.5f / (weightedStdDev.w * weightedStdDev.w);
         }
+        // <<< Old SSS Model
+
+        public Vector3 shapeParameter
+        {
+            // Set in BuildKernel().
+            get { return m_ShapeParam; }
+        }
+
+        public float maxRadius
+        {
+            // Set in BuildKernel().
+            get { return m_MaxRadius; }
+        }
+
+        public Vector2[] filterKernelNearField
+        {
+            // Set in BuildKernel().
+            get { return m_FilterKernelNearField; }
+        }
+        
+        public Vector2[] filterKernelFarField
+        {
+            // Set in BuildKernel().
+            get { return m_FilterKernelFarField; }
+        }
+
+        // Old SSS Model >>>
+        public Vector4[] filterKernelBasic
+        {
+            // Set via UpdateKernelAndVarianceData().
+            get { return m_FilterKernelBasic; }
+        }
+
+        public Vector4 halfRcpWeightedVariances
+        {
+            // Set via UpdateKernelAndVarianceData().
+            get { return m_HalfRcpWeightedVariances; }
+        }
+        // <<< Old SSS Model
 
         // --- Private Methods ---
 
+        static float KernelVal(float r, float s)
+        {
+            return s * (Mathf.Exp(-r * s) + Mathf.Exp(-r * s * (1.0f / 3.0f))) / (8.0f * Mathf.PI * r);
+        }
+
+        // Computes the value of the integrand over a disk: (2 * PI * r) * KernelVal().
+        static float KernelValCircle(float r, float s)
+        {
+            return 0.25f * s * (Mathf.Exp(-r * s) + Mathf.Exp(-r * s * (1.0f / 3.0f)));
+        }
+
+        static float KernelPdf(float r, float s)
+        {
+            return KernelValCircle(r, s);
+        }
+
+        static float KernelCdf(float r, float s)
+        {
+            return 1.0f - 0.25f * Mathf.Exp(-r * s) - 0.75f * Mathf.Exp(-r * s * (1.0f / 3.0f));
+        }
+
+        static float KernelCdfDerivative1(float r, float s)
+        {
+            return 0.25f * s * Mathf.Exp(-r * s) * (1.0f + Mathf.Exp(r * s * (2.0f / 3.0f)));
+        }
+
+        static float KernelCdfDerivative2(float r, float s)
+        {
+            return (-1.0f / 12.0f) * s * s * Mathf.Exp(-r * s) * (3.0f + Mathf.Exp(r * s * (2.0f / 3.0f)));
+        }
+
+        // The CDF is not analytically invertible, so we use Halley's Method of root finding.
+        // { f(r, s, p) = CDF(r, s) - p = 0 } with the initial guess { r = (10^p - 1) / s }.
+        static float KernelCdfInverse(float p, float s)
+        {
+            // Supply the initial guess.
+            float r = (Mathf.Pow(10.0f, p) - 1.0f) / s;
+            float t = float.MaxValue;
+
+            while (true)
+            {
+                float f0 = KernelCdf(r, s) - p;
+                float f1 = KernelCdfDerivative1(r, s);
+                float f2 = KernelCdfDerivative2(r, s);
+                float dr = f0 / (f1 * (1.0f - f0 * f2 / (2.0f * f1 * f1)));
+
+                if (Mathf.Abs(dr) < t)
+                {
+                    r = r - dr;
+                    t = Mathf.Abs(dr);
+                }
+                else
+                {
+                    // Converged to the best result.
+                    break;
+                }
+            }
+
+            return r;
+        }
+
+        // Old SSS Model >>>
         static float Gaussian(float x, float stdDev)
         {
             float variance = stdDev * stdDev;
@@ -207,38 +373,49 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             return Mathf.Lerp(NormalCdfInverse(p, stdDev1), NormalCdfInverse(p, stdDev2), lerpWeight);
         }
+        // <<< Old SSS Model
     }
 
     [Serializable]
     public class SubsurfaceScatteringSettings : ISerializationCallbackReceiver
     {
-        public const int neutralProfileID = SSSConstants.SSS_PROFILES_MAX - 1;
-
-        public int                           numProfiles;
+        public int                           numProfiles;               // Excluding the neutral profile
         public SubsurfaceScatteringProfile[] profiles;
-        // Below is the cache filled during OnValidate().
-        [NonSerialized] public int           texturingModeFlags;    // 1 bit/profile; 0 = PreAndPostScatter, 1 = PostScatter
-        [NonSerialized] public float[]       transmissionType;      // TODO: no int array suppport in shader in Unity :(
-        [NonSerialized] public Vector4[]     tintColors;            // For transmission; alpha is unused
-        [NonSerialized] public float[]       thicknessRemaps;       // Remap: 0 = start, 1 = end - start
-        [NonSerialized] public Vector4[]     halfRcpVariancesAndLerpWeights;
+        // Below are the cached values.
+        [NonSerialized] public uint          texturingModeFlags;        // 1 bit/profile; 0 = PreAndPostScatter, 1 = PostScatter
+        [NonSerialized] public uint          transmissionFlags;         // 2 bit/profile; 0 = inf. thick, 1 = thin, 2 = regular
+        [NonSerialized] public float[]       thicknessRemaps;           // Remap: 0 = start, 1 = end - start
+        [NonSerialized] public float[]       worldScales;               // Size of the world unit in meters
+        [NonSerialized] public Vector4[]     shapeParams;               // RGB = S = 1 / D, A = filter radius
+        [NonSerialized] public Vector4[]     transmissionTints;         // RGB = color, A = unused
+        [NonSerialized] public float[]       filterKernelsNearField;    // 0 = radius, 1 = reciprocal of the PDF
+        [NonSerialized] public float[]       filterKernelsFarField;     // 0 = radius, 1 = reciprocal of the PDF
+        // Old SSS Model >>>
+        public bool                          useDisneySSS;
         [NonSerialized] public Vector4[]     halfRcpWeightedVariances;
-        [NonSerialized] public Vector4[]     filterKernels;
+        [NonSerialized] public Vector4[]     filterKernelsBasic;
+        // <<< Old SSS Model
 
         // --- Public Methods ---
 
         public SubsurfaceScatteringSettings()
         {
-            numProfiles                    = 1;
-            profiles                       = new SubsurfaceScatteringProfile[numProfiles];
-            profiles[0]                    = null;
-            transmissionType                = null;
-            texturingModeFlags             = 0;
-            tintColors                     = null;
-            thicknessRemaps                = null;
-            halfRcpVariancesAndLerpWeights = null;
-            halfRcpWeightedVariances       = null;
-            filterKernels                  = null;
+            numProfiles            = 1;
+            profiles               = new SubsurfaceScatteringProfile[numProfiles];
+            profiles[0]            = null;
+            texturingModeFlags     = 0;
+            transmissionFlags      = 0;
+            thicknessRemaps        = null;
+            worldScales            = null;
+            shapeParams            = null;
+            transmissionTints      = null;
+            filterKernelsNearField = null;
+            filterKernelsFarField  = null;
+            // Old SSS Model >>>
+            useDisneySSS             = true;
+            halfRcpWeightedVariances = null;
+            filterKernelsBasic       = null;
+            // <<< Old SSS Model
 
             UpdateCache();
         }
@@ -246,7 +423,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void OnValidate()
         {
             // Reserve one slot for the neutral profile.
-            numProfiles = Math.Min(profiles.Length, SSSConstants.SSS_PROFILES_MAX - 1);
+            numProfiles = Math.Min(profiles.Length, SssConstants.SSS_N_PROFILES - 1);
 
             if (profiles.Length != numProfiles)
             {
@@ -262,38 +439,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
-            Color c = new Color();
-
             for (int i = 0; i < numProfiles; i++)
             {
                 // Skip unassigned profiles.
                 if (profiles[i] == null) continue;
 
-                c.r = Mathf.Clamp(profiles[i].scatterDistance1.r, 0.05f, 2.0f);
-                c.g = Mathf.Clamp(profiles[i].scatterDistance1.g, 0.05f, 2.0f);
-                c.b = Mathf.Clamp(profiles[i].scatterDistance1.b, 0.05f, 2.0f);
+                profiles[i].thicknessRemap.y = Mathf.Max(profiles[i].thicknessRemap.y, 0);
+                profiles[i].thicknessRemap.x = Mathf.Clamp(profiles[i].thicknessRemap.x, 0, profiles[i].thicknessRemap.y);
+                profiles[i].worldScale       = Mathf.Max(profiles[i].worldScale, 0.001f);
+
+                // Old SSS Model >>>
+                Color c = new Color();
+
+                c.r = Mathf.Max(0.05f, profiles[i].scatterDistance1.r);
+                c.g = Mathf.Max(0.05f, profiles[i].scatterDistance1.g);
+                c.b = Mathf.Max(0.05f, profiles[i].scatterDistance1.b);
                 c.a = 0.0f;
 
                 profiles[i].scatterDistance1 = c;
 
-                c.r = Mathf.Clamp(profiles[i].scatterDistance2.r, 0.05f, 2.0f);
-                c.g = Mathf.Clamp(profiles[i].scatterDistance2.g, 0.05f, 2.0f);
-                c.b = Mathf.Clamp(profiles[i].scatterDistance2.b, 0.05f, 2.0f);
+                c.r = Mathf.Max(0.05f, profiles[i].scatterDistance2.r);
+                c.g = Mathf.Max(0.05f, profiles[i].scatterDistance2.g);
+                c.b = Mathf.Max(0.05f, profiles[i].scatterDistance2.b);
                 c.a = 0.0f;
 
                 profiles[i].scatterDistance2 = c;
+                // <<< Old SSS Model
 
-                profiles[i].lerpWeight = Mathf.Clamp01(profiles[i].lerpWeight);
-
-                profiles[i].tintColor.r = Mathf.Clamp01(profiles[i].tintColor.r);
-                profiles[i].tintColor.g = Mathf.Clamp01(profiles[i].tintColor.g);
-                profiles[i].tintColor.b = Mathf.Clamp01(profiles[i].tintColor.b);
-                profiles[i].tintColor.a = 1.0f;
-
-                profiles[i].thicknessRemap.x = Mathf.Clamp(profiles[i].thicknessRemap.x, 0, profiles[i].thicknessRemap.y);
-                profiles[i].thicknessRemap.y = Mathf.Max(profiles[i].thicknessRemap.x, profiles[i].thicknessRemap.y);
-
-                profiles[i].UpdateKernelAndVarianceData();
+                profiles[i].BuildKernel();
             }
 
             UpdateCache();
@@ -301,79 +474,121 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void UpdateCache()
         {
-            texturingModeFlags  = 0;
+            texturingModeFlags = transmissionFlags = 0;
 
-            if (transmissionType == null || transmissionType.Length != (SSSConstants.SSS_PROFILES_MAX))
+            const int thicknessRemapsLen = SssConstants.SSS_N_PROFILES * 2;
+            if (thicknessRemaps == null || thicknessRemaps.Length != thicknessRemapsLen)
             {
-                transmissionType = new float[SSSConstants.SSS_PROFILES_MAX];
+                thicknessRemaps = new float[thicknessRemapsLen];
             }
 
-            if (tintColors == null || tintColors.Length != SSSConstants.SSS_PROFILES_MAX)
+            if (worldScales == null || worldScales.Length != SssConstants.SSS_N_PROFILES)
             {
-                tintColors = new Vector4[SSSConstants.SSS_PROFILES_MAX];
+                worldScales = new float[SssConstants.SSS_N_PROFILES];
             }
 
-            if (thicknessRemaps == null || thicknessRemaps.Length != (SSSConstants.SSS_PROFILES_MAX * 2))
+            if (shapeParams == null || shapeParams.Length != SssConstants.SSS_N_PROFILES)
             {
-                thicknessRemaps = new float[SSSConstants.SSS_PROFILES_MAX * 2];
+                shapeParams = new Vector4[SssConstants.SSS_N_PROFILES];
             }
 
-            if (halfRcpVariancesAndLerpWeights == null || halfRcpVariancesAndLerpWeights.Length != (SSSConstants.SSS_PROFILES_MAX * 2))
+            if (transmissionTints == null || transmissionTints.Length != SssConstants.SSS_N_PROFILES)
             {
-                halfRcpVariancesAndLerpWeights = new Vector4[SSSConstants.SSS_PROFILES_MAX * 2];
+                transmissionTints = new Vector4[SssConstants.SSS_N_PROFILES];
             }
 
-            if (halfRcpWeightedVariances == null || halfRcpWeightedVariances.Length != SSSConstants.SSS_PROFILES_MAX)
+            const int filterKernelsNearFieldLen = 2 * SssConstants.SSS_N_PROFILES * SssConstants.SSS_N_SAMPLES_NEAR_FIELD;
+            if (filterKernelsNearField == null || filterKernelsNearField.Length != filterKernelsNearFieldLen)
             {
-                halfRcpWeightedVariances = new Vector4[SSSConstants.SSS_PROFILES_MAX];
+                filterKernelsNearField = new float[filterKernelsNearFieldLen];
             }
 
-            if (filterKernels == null || filterKernels.Length != (SSSConstants.SSS_PROFILES_MAX * SubsurfaceScatteringProfile.numSamples))
+            const int filterKernelsFarFieldLen = 2 * SssConstants.SSS_N_PROFILES * SssConstants.SSS_N_SAMPLES_FAR_FIELD;
+            if (filterKernelsFarField == null || filterKernelsFarField.Length != filterKernelsFarFieldLen)
             {
-                filterKernels = new Vector4[SSSConstants.SSS_PROFILES_MAX * SubsurfaceScatteringProfile.numSamples];
+                filterKernelsFarField = new float[filterKernelsFarFieldLen];
             }
+
+            // Old SSS Model >>>
+            if (halfRcpWeightedVariances == null || halfRcpWeightedVariances.Length != SssConstants.SSS_N_PROFILES)
+            {
+                halfRcpWeightedVariances = new Vector4[SssConstants.SSS_N_PROFILES];
+            }
+
+            const int filterKernelsLen = SssConstants.SSS_N_PROFILES * SssConstants.SSS_BASIC_N_SAMPLES;
+            if (filterKernelsBasic == null || filterKernelsBasic.Length != filterKernelsLen)
+            {
+                filterKernelsBasic = new Vector4[filterKernelsLen];
+            }
+            // <<< Old SSS Model
 
             for (int i = 0; i < numProfiles; i++)
             {
                 // Skip unassigned profiles.
                 if (profiles[i] == null) continue;
 
-                texturingModeFlags |= ((int)profiles[i].texturingMode) << i;
-                if (profiles[i].enableTransmission)
+                Debug.Assert(numProfiles < 16, "Transmission flags (32-bit integer) cannot support more than 16 profiles.");
+
+                texturingModeFlags |= (uint)profiles[i].texturingMode    << i;
+                transmissionFlags  |= (uint)profiles[i].transmissionMode << i * 2;
+
+                thicknessRemaps[2 * i]     = profiles[i].thicknessRemap.x;
+                thicknessRemaps[2 * i + 1] = profiles[i].thicknessRemap.y - profiles[i].thicknessRemap.x;
+                worldScales[i]             = profiles[i].worldScale;
+                shapeParams[i]             = profiles[i].shapeParameter;
+                shapeParams[i].w           = profiles[i].maxRadius;
+                transmissionTints[i]       = profiles[i].transmissionTint;
+
+                for (int j = 0, n = SssConstants.SSS_N_SAMPLES_NEAR_FIELD; j < n; j++)
                 {
-                    transmissionType[i] = (float)(profiles[i].enableThinObject ? Lit.TransmissionType.ThinObject :Lit.TransmissionType.Regular);
-                }
-                else
-                {
-                    transmissionType[i] = (float)Lit.TransmissionType.None;
+                    filterKernelsNearField[2 * (n * i + j) + 0] = profiles[i].filterKernelNearField[j].x;
+                    filterKernelsNearField[2 * (n * i + j) + 1] = profiles[i].filterKernelNearField[j].y;
                 }
 
-                tintColors[i]                               = profiles[i].tintColor;
-                thicknessRemaps[2 * i]                      = profiles[i].thicknessRemap.x;
-                thicknessRemaps[2 * i + 1]                  = profiles[i].thicknessRemap.y - profiles[i].thicknessRemap.x;
-                halfRcpVariancesAndLerpWeights[2 * i]       = profiles[i].halfRcpVariances[0];
-                halfRcpVariancesAndLerpWeights[2 * i].w     = 1.0f - profiles[i].lerpWeight;
-                halfRcpVariancesAndLerpWeights[2 * i + 1]   = profiles[i].halfRcpVariances[1];
-                halfRcpVariancesAndLerpWeights[2 * i + 1].w = profiles[i].lerpWeight;
-                halfRcpWeightedVariances[i]                 = profiles[i].halfRcpWeightedVariances;
-
-                for (int j = 0, n = SubsurfaceScatteringProfile.numSamples; j < n; j++)
+                for (int j = 0, n = SssConstants.SSS_N_SAMPLES_FAR_FIELD; j < n; j++)
                 {
-                    filterKernels[n * i + j] = profiles[i].filterKernel[j];
+                    filterKernelsFarField[2 * (n * i + j) + 0] = profiles[i].filterKernelFarField[j].x;
+                    filterKernelsFarField[2 * (n * i + j) + 1] = profiles[i].filterKernelFarField[j].y;
                 }
+
+                // Old SSS Model >>>
+                halfRcpWeightedVariances[i] = profiles[i].halfRcpWeightedVariances;
+
+                for (int j = 0, n = SssConstants.SSS_BASIC_N_SAMPLES; j < n; j++)
+                {
+                    filterKernelsBasic[n * i + j] = profiles[i].filterKernelBasic[j];
+                }
+                // <<< Old SSS Model
             }
 
             // Fill the neutral profile.
             {
-                int i = neutralProfileID;
+                int i = SssConstants.SSS_NEUTRAL_PROFILE_ID;
 
+                worldScales[i] = 1.0f;
+                shapeParams[i] = Vector4.zero;
+
+                for (int j = 0, n = SssConstants.SSS_N_SAMPLES_NEAR_FIELD; j < n; j++)
+                {
+                    filterKernelsNearField[2 * (n * i + j) + 0] = 0.0f;
+                    filterKernelsNearField[2 * (n * i + j) + 1] = 1.0f;
+                }
+
+                for (int j = 0, n = SssConstants.SSS_N_SAMPLES_FAR_FIELD; j < n; j++)
+                {
+                    filterKernelsFarField[2 * (n * i + j) + 0] = 0.0f;
+                    filterKernelsFarField[2 * (n * i + j) + 1] = 1.0f;
+                }
+
+                // Old SSS Model >>>
                 halfRcpWeightedVariances[i] = Vector4.one;
 
-                for (int j = 0, n = SubsurfaceScatteringProfile.numSamples; j < n; j++)
+                for (int j = 0, n = SssConstants.SSS_BASIC_N_SAMPLES; j < n; j++)
                 {
-                    filterKernels[n * i + j]   = Vector4.one;
-                    filterKernels[n * i + j].w = 0.0f;
+                    filterKernelsBasic[n * i + j]   = Vector4.one;
+                    filterKernelsBasic[n * i + j].w = 0.0f;
                 }
+                // <<< Old SSS Model
             }
         }
 
@@ -391,7 +606,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if UNITY_EDITOR
     public class SubsurfaceScatteringProfileFactory
     {
-        [MenuItem("Assets/Create/Subsurface Scattering Profile", priority = 666)]
+        [MenuItem("Assets/Create/HDRenderPipeline/Subsurface Scattering Profile", priority = 666)]
         static void MenuCreateSubsurfaceScatteringProfile()
         {
             Texture2D icon = EditorGUIUtility.FindTexture("ScriptableObject Icon");
@@ -423,27 +638,37 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         private class Styles
         {
-            public readonly GUIContent   sssProfilePreview0         = new GUIContent("Profile Preview");
-            public readonly GUIContent   sssProfilePreview1         = new GUIContent("Shows the fraction of light scattered from the source as the radius increases to 1.");
-            public readonly GUIContent   sssProfilePreview2         = new GUIContent("Note that the intensity of the region in the center may be clamped.");
-            public readonly GUIContent   sssTransmittancePreview0   = new GUIContent("Transmittance Preview");
-            public readonly GUIContent   sssTransmittancePreview1   = new GUIContent("Shows the fraction of light passing through the object for thickness values from the remap.");
-            public readonly GUIContent   sssTransmittancePreview2   = new GUIContent("Can be thought of as a cross section of a slab of material illuminated by a white light from the left.");
-            public readonly GUIContent   sssProfileScatterDistance1 = new GUIContent("Scatter Distance #1", "The radius (in centimeters) of the 1st Gaussian filter, one per color channel. Alpha is ignored. The blur is energy-preserving, so a wide filter results in a large area with small contributions of individual samples. Smaller values increase the sharpness.");
-            public readonly GUIContent   sssProfileScatterDistance2 = new GUIContent("Scatter Distance #2", "The radius (in centimeters) of the 2nd Gaussian filter, one per color channel. Alpha is ignored. The blur is energy-preserving, so a wide filter results in a large area with small contributions of individual samples. Smaller values increase the sharpness.");
-            public readonly GUIContent   sssProfileLerpWeight       = new GUIContent("Filter Interpolation", "Controls linear interpolation between the two Gaussian filters.");
-            public readonly GUIContent   sssTexturingMode           = new GUIContent("Texturing Mode", "Specifies when the diffuse texture should be applied.");
-            public readonly GUIContent[] sssTexturingModeOptions    = new GUIContent[2]
+            public readonly GUIContent   sssProfilePreview0           = new GUIContent("Profile Preview");
+            public readonly GUIContent   sssProfilePreview1           = new GUIContent("Shows the fraction of light scattered from the source (center).");
+            public readonly GUIContent   sssProfilePreview2           = new GUIContent("The distance to the boundary of the image corresponds to the Max Radius.");
+            public readonly GUIContent   sssProfilePreview3           = new GUIContent("Note that the intensity of pixels around the center may be clipped.");
+            public readonly GUIContent   sssTransmittancePreview0     = new GUIContent("Transmittance Preview");
+            public readonly GUIContent   sssTransmittancePreview1     = new GUIContent("Shows the fraction of light passing through the object for thickness values from the remap.");
+            public readonly GUIContent   sssTransmittancePreview2     = new GUIContent("Can be viewed as a cross section of a slab of material illuminated by white light from the left.");
+            public readonly GUIContent   sssProfileScatteringDistance = new GUIContent("Scattering Distance", "Determines the shape of the profile, and the blur radius of the filter per color channel. Alpha is ignored.");
+            public readonly GUIContent   sssProfileTransmissionTint   = new GUIContent("Transmission tint", "Color which tints transmitted light. Alpha is ignored.");
+            public readonly GUIContent   sssProfileMaxRadius          = new GUIContent("Max Radius", "Effective radius of the filter (in millimeters). The blur is energy-preserving, so a wide filter results in a large area with small contributions of individual samples. Reducing the distance increases the sharpness of the result.");
+            public readonly GUIContent   sssTexturingMode             = new GUIContent("Texturing Mode", "Specifies when the diffuse texture should be applied.");
+            public readonly GUIContent[] sssTexturingModeOptions      = new GUIContent[2]
             {
                 new GUIContent("Pre- and post-scatter", "Texturing is performed during both the lighting and the SSS passes. Slightly blurs the diffuse texture. Choose this mode if your diffuse texture contains little to no SSS lighting."),
-                new GUIContent("Post-scatter", "Texturing is performed only during the SSS pass. Effectively preserves the sharpness of the diffuse texture. Choose this mode if your diffuse texture already contains SSS lighting (e.g. a photo of skin).")
+                new GUIContent("Post-scatter",          "Texturing is performed only during the SSS pass. Effectively preserves the sharpness of the diffuse texture. Choose this mode if your diffuse texture already contains SSS lighting (e.g. a photo of skin).")
             };
-            public readonly GUIContent   sssProfileTransmission    = new GUIContent("Enable Transmission", "Toggles simulation of light passing through thin objects. Depends on the thickness of the material.");
-            public readonly GUIContent   sssProfileTintColor       = new GUIContent("Transmission Tint Color", "Tints transmitted light.");
-            public readonly GUIContent   sssProfileThinObject    = new GUIContent("Enable Thin Object", "Define is the object is thin (paper, leaf) or not. Allow to get cheap transmission and shadow.");
-            public readonly GUIContent   sssProfileMinMaxThickness = new GUIContent("Min-Max Thickness", "Shows the values of the thickness remap below (in centimeters).");
-            public readonly GUIContent   sssProfileThicknessRemap  = new GUIContent("Thickness Remap", "Remaps the thickness parameter from [0, 1] to the desired range (in centimeters).");
-
+            public readonly GUIContent   sssProfileTransmissionMode = new GUIContent("Transmission Mode", "Configures the simulation of light passing through thin objects. Depends on the thickness value (which is applied in the normal direction).");
+            public readonly GUIContent[] sssTransmissionModeOptions = new GUIContent[3]
+            {
+                new GUIContent("None",         "Disables transmission. Choose this mode for completely opaque, or very thick translucent objects."),
+                new GUIContent("Thin Object",  "Choose this mode for thin objects, such as paper or leaves. Transmitted light reuses the shadowing state of the surface."),
+                new GUIContent("Regular",      "Choose this mode for moderately thick objects. For performance reasons, transmitted light ignores occlusion (shadows).")
+            };
+            public readonly GUIContent   sssProfileMinMaxThickness = new GUIContent("Min-Max Thickness", "Shows the values of the thickness remap below (in millimeters).");
+            public readonly GUIContent   sssProfileThicknessRemap  = new GUIContent("Thickness Remap", "Remaps the thickness parameter from [0, 1] to the desired range (in millimeters).");
+            public readonly GUIContent   sssProfileWorldScale      = new GUIContent("World Scale", "Size of the world unit in meters.");
+            // Old SSS Model >>>
+            public readonly GUIContent   sssProfileScatterDistance1 = new GUIContent("Scattering Distance #1", "The radius (in centimeters) of the 1st Gaussian filter, one per color channel. Alpha is ignored. The blur is energy-preserving, so a wide filter results in a large area with small contributions of individual samples. Smaller values increase the sharpness.");
+            public readonly GUIContent   sssProfileScatterDistance2 = new GUIContent("Scattering Distance #2", "The radius (in centimeters) of the 2nd Gaussian filter, one per color channel. Alpha is ignored. The blur is energy-preserving, so a wide filter results in a large area with small contributions of individual samples. Smaller values increase the sharpness.");
+            public readonly GUIContent   sssProfileLerpWeight       = new GUIContent("Filter Interpolation", "Controls linear interpolation between the two Gaussian filters.");
+            // <<< Old SSS Model
             public readonly GUIStyle     centeredMiniBoldLabel     = new GUIStyle(GUI.skin.label);
 
             public Styles()
@@ -470,64 +695,107 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         private RenderTexture      m_ProfileImage, m_TransmittanceImage;
         private Material           m_ProfileMaterial, m_TransmittanceMaterial;
-        private SerializedProperty m_ScatterDistance1, m_ScatterDistance2, m_LerpWeight, m_TintColor, m_ThinObject,
-                                   m_TexturingMode, m_Transmission, m_ThicknessRemap;
+        private SerializedProperty m_ScatteringDistance, m_MaxRadius, m_ShapeParam, m_TransmissionTint,
+                                   m_TexturingMode, m_TransmissionMode, m_ThicknessRemap, m_WorldScale;
+        // Old SSS Model >>>
+        private SerializedProperty m_ScatterDistance1, m_ScatterDistance2, m_LerpWeight;
+        // <<< Old SSS Model
 
         void OnEnable()
         {
-            m_ScatterDistance1 = serializedObject.FindProperty("scatterDistance1");
-            m_ScatterDistance2 = serializedObject.FindProperty("scatterDistance2");
-            m_LerpWeight       = serializedObject.FindProperty("lerpWeight");
-            m_TexturingMode    = serializedObject.FindProperty("texturingMode");
-            m_Transmission     = serializedObject.FindProperty("enableTransmission");
-            m_ThinObject     = serializedObject.FindProperty("enableThinObject");
-            m_TintColor        = serializedObject.FindProperty("tintColor");
-            m_ThicknessRemap   = serializedObject.FindProperty("thicknessRemap");
+            m_ScatteringDistance    = serializedObject.FindProperty("scatteringDistance");
+            m_MaxRadius             = serializedObject.FindProperty("m_MaxRadius");
+            m_ShapeParam            = serializedObject.FindProperty("m_ShapeParam");
+            m_TransmissionTint      = serializedObject.FindProperty("transmissionTint");
+            m_TexturingMode         = serializedObject.FindProperty("texturingMode");
+            m_TransmissionMode      = serializedObject.FindProperty("transmissionMode");
+            m_ThicknessRemap        = serializedObject.FindProperty("thicknessRemap");
+            m_WorldScale            = serializedObject.FindProperty("worldScale");
+            // Old SSS Model >>>
+            m_ScatterDistance1      = serializedObject.FindProperty("scatterDistance1");
+            m_ScatterDistance2      = serializedObject.FindProperty("scatterDistance2");
+            m_LerpWeight            = serializedObject.FindProperty("lerpWeight");
+            // <<< Old SSS Model
 
-            m_ProfileMaterial       = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/DrawGaussianProfile");
+            // These shaders don't need to be reference by RenderPipelineResource as they are not use at runtime
+            m_ProfileMaterial       = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/DrawSssProfile");
             m_TransmittanceMaterial = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/DrawTransmittanceGraph");
 
             m_ProfileImage          = new RenderTexture(256, 256, 0, RenderTextureFormat.DefaultHDR);
-            m_TransmittanceImage    = new RenderTexture(16, 256, 0, RenderTextureFormat.DefaultHDR);
+            m_TransmittanceImage    = new RenderTexture( 16, 256, 0, RenderTextureFormat.DefaultHDR);
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
+            // Old SSS Model >>>
+            bool useDisneySSS;
+            {
+                HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+                useDisneySSS = hdPipeline.sssSettings.useDisneySSS;
+            }
+            // <<< Old SSS Model
+
             EditorGUI.BeginChangeCheck();
             {
-                EditorGUILayout.PropertyField(m_ScatterDistance1, styles.sssProfileScatterDistance1);
-                EditorGUILayout.PropertyField(m_ScatterDistance2, styles.sssProfileScatterDistance2);
-                EditorGUILayout.PropertyField(m_LerpWeight,       styles.sssProfileLerpWeight);
-                m_TexturingMode.intValue = EditorGUILayout.Popup(styles.sssTexturingMode, m_TexturingMode.intValue, styles.sssTexturingModeOptions);
-                EditorGUILayout.PropertyField(m_Transmission,     styles.sssProfileTransmission);
-                EditorGUILayout.PropertyField(m_TintColor,        styles.sssProfileTintColor);
+                if (useDisneySSS)
+                {
+                    EditorGUILayout.PropertyField(m_ScatteringDistance, styles.sssProfileScatteringDistance);
+                
+                    GUI.enabled = false;
+                    EditorGUILayout.PropertyField(m_MaxRadius, styles.sssProfileMaxRadius);
+                    GUI.enabled = true;
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(m_ScatterDistance1, styles.sssProfileScatterDistance1);
+                    EditorGUILayout.PropertyField(m_ScatterDistance2, styles.sssProfileScatterDistance2);
+                    EditorGUILayout.PropertyField(m_LerpWeight,       styles.sssProfileLerpWeight);
+                }
 
-                EditorGUILayout.PropertyField(m_ThinObject,     styles.sssProfileThinObject);
+                m_TexturingMode.intValue    = EditorGUILayout.Popup(styles.sssTexturingMode,           m_TexturingMode.intValue,    styles.sssTexturingModeOptions);
+                m_TransmissionMode.intValue = EditorGUILayout.Popup(styles.sssProfileTransmissionMode, m_TransmissionMode.intValue, styles.sssTransmissionModeOptions);
 
+                EditorGUILayout.PropertyField(m_TransmissionTint,   styles.sssProfileTransmissionTint);
                 EditorGUILayout.PropertyField(m_ThicknessRemap, styles.sssProfileMinMaxThickness);
                 Vector2 thicknessRemap = m_ThicknessRemap.vector2Value;
-                EditorGUILayout.MinMaxSlider(styles.sssProfileThicknessRemap, ref thicknessRemap.x, ref thicknessRemap.y, 0, 10);
+                EditorGUILayout.MinMaxSlider(styles.sssProfileThicknessRemap, ref thicknessRemap.x, ref thicknessRemap.y, 0.0f, 50.0f);
                 m_ThicknessRemap.vector2Value = thicknessRemap;
+                EditorGUILayout.PropertyField(m_WorldScale, styles.sssProfileWorldScale);
 
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField(styles.sssProfilePreview0, styles.centeredMiniBoldLabel);
                 EditorGUILayout.LabelField(styles.sssProfilePreview1, EditorStyles.centeredGreyMiniLabel);
                 EditorGUILayout.LabelField(styles.sssProfilePreview2, EditorStyles.centeredGreyMiniLabel);
+                EditorGUILayout.LabelField(styles.sssProfilePreview3, EditorStyles.centeredGreyMiniLabel);
                 EditorGUILayout.Space();
             }
 
-            // Apply the three-sigma rule.
-            Color stdDev1 = m_ScatterDistance1.colorValue * (1.0f / 3.0f);
-            Color stdDev2 = m_ScatterDistance2.colorValue * (1.0f / 3.0f);
+            float   r = m_MaxRadius.floatValue;
+            Vector3 S = m_ShapeParam.vector3Value;
+            Vector4 T = m_TransmissionTint.colorValue;
+            Vector2 R = m_ThicknessRemap.vector2Value;
+            bool transmissionEnabled = m_TransmissionMode.intValue != (int)SubsurfaceScatteringProfile.TransmissionMode.None;
 
             // Draw the profile.
-            m_ProfileMaterial.SetColor("_StdDev1",    stdDev1);
-            m_ProfileMaterial.SetColor("_StdDev2",    stdDev2);
+            m_ProfileMaterial.SetFloat( "_MaxRadius",  r);
+            m_ProfileMaterial.SetVector("_ShapeParam", S);
+            // Old SSS Model >>>
+            Utilities.SelectKeyword(m_ProfileMaterial, "SSS_MODEL_DISNEY", "SSS_MODEL_BASIC", useDisneySSS);
+            // Apply the three-sigma rule, and rescale.
+            float   s       = (1.0f / 3.0f) * SssConstants.SSS_BASIC_DISTANCE_SCALE;
+            float   rMax    = Mathf.Max(m_ScatterDistance1.colorValue.r, m_ScatterDistance1.colorValue.g, m_ScatterDistance1.colorValue.b,
+                                        m_ScatterDistance2.colorValue.r, m_ScatterDistance2.colorValue.g, m_ScatterDistance2.colorValue.b);
+            Vector4 stdDev1 = new Vector4(s * m_ScatterDistance1.colorValue.r, s * m_ScatterDistance1.colorValue.g, s * m_ScatterDistance1.colorValue.b);
+            Vector4 stdDev2 = new Vector4(s * m_ScatterDistance2.colorValue.r, s * m_ScatterDistance2.colorValue.g, s * m_ScatterDistance2.colorValue.b);
+            m_ProfileMaterial.SetVector("_StdDev1",   stdDev1);
+            m_ProfileMaterial.SetVector("_StdDev2",   stdDev2);
             m_ProfileMaterial.SetFloat("_LerpWeight", m_LerpWeight.floatValue);
+            m_ProfileMaterial.SetFloat("_MaxRadius",  rMax);
+            // <<< Old SSS Model
             EditorGUI.DrawPreviewTexture(GUILayoutUtility.GetRect(256, 256), m_ProfileImage, m_ProfileMaterial, ScaleMode.ScaleToFit, 1.0f);
-
+            
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(styles.sssTransmittancePreview0, styles.centeredMiniBoldLabel);
             EditorGUILayout.LabelField(styles.sssTransmittancePreview1, EditorStyles.centeredGreyMiniLabel);
@@ -535,19 +803,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             EditorGUILayout.Space();
 
             // Draw the transmittance graph.
-            m_TransmittanceMaterial.SetColor("_StdDev1", stdDev1);
-            m_TransmittanceMaterial.SetColor("_StdDev2", stdDev2);
-            m_TransmittanceMaterial.SetFloat("_LerpWeight", m_LerpWeight.floatValue);
-            m_TransmittanceMaterial.SetVector("_ThicknessRemap", m_ThicknessRemap.vector2Value);
-            m_TransmittanceMaterial.SetVector("_TintColor", m_TintColor.colorValue);
+            m_TransmittanceMaterial.SetVector("_ShapeParam",       S);
+            m_TransmittanceMaterial.SetVector("_TransmissionTint", transmissionEnabled ? T : Vector4.zero);
+            m_TransmittanceMaterial.SetVector("_ThicknessRemap",   R);
             EditorGUI.DrawPreviewTexture(GUILayoutUtility.GetRect(16, 16), m_TransmittanceImage, m_TransmittanceMaterial, ScaleMode.ScaleToFit, 16.0f);
 
             serializedObject.ApplyModifiedProperties();
 
             if (EditorGUI.EndChangeCheck())
             {
-                // Validate each individual asset and update caches.
                 HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+                // Validate each individual asset and update caches.
                 hdPipeline.sssSettings.OnValidate();
             }
         }

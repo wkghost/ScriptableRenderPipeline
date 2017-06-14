@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // LightLoop
 // ----------------------------------------------------------------------------
 
@@ -30,12 +30,13 @@ void ApplyDebug(LightLoopContext lightLoopContext, float3 positionWS, inout floa
         int shadowSplitIndex = EvalShadow_GetSplitSphereIndexForDirshadows(positionWS, dirShadowSplitSpheres);
 
         if (shadowSplitIndex == -1)
+        {
             diffuseLighting = float3(0.0, 0.0, 0.0);
+        }
         else
         {
             diffuseLighting = s_CascadeColors[shadowSplitIndex] * shadow;
         }
-
     }
 #endif
 }
@@ -140,6 +141,10 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
                 out float3 specularLighting)
 {
     LightLoopContext context;
+    // Note: When we ImageLoad outside of texture size, the value returned by Load is 0 (Note: On Metal maybe it clamp to value of texture which is also fine)
+    // We use this property to have a neutral value for AO that doesn't consume a sampler and work also with compute shader (i.e use ImageLoad)
+    // We store inverse AO so neutral is black. So either we sample inside or outside the texture it return 0 in case of neutral
+    context.ambientOcclusion = 1.0 - LOAD_TEXTURE2D(_AmbientOcclusionTexture, posInput.unPositionSS).x;
     context.sampleShadow = 0;
     context.sampleReflection = 0;
     context.shadowContext = InitShadowContext();
@@ -150,14 +155,14 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
     uint i = 0; // Declare once to avoid the D3D11 compiler warning.
 
 #ifdef PROCESS_DIRECTIONAL_LIGHT
-    if(featureFlags & FEATURE_FLAG_LIGHT_DIRECTIONAL)
+    if(featureFlags & LIGHTFEATUREFLAGS_DIRECTIONAL)
     {
         for(i = 0; i < _DirectionalLightCount; ++i)
         {
             float3 localDiffuseLighting, localSpecularLighting;
 
-            EvaluateBSDF_Directional(context, V, posInput, prelightData, _DirectionalLightDatas[i], bsdfData,
-                localDiffuseLighting, localSpecularLighting);
+            EvaluateBSDF_Directional(   context, V, posInput, prelightData, _DirectionalLightDatas[i], bsdfData,
+                                        localDiffuseLighting, localSpecularLighting);
 
             diffuseLighting += localDiffuseLighting;
             specularLighting += localSpecularLighting;
@@ -166,7 +171,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
 #endif
 
 #ifdef PROCESS_PUNCTUAL_LIGHT
-    if(featureFlags & FEATURE_FLAG_LIGHT_PUNCTUAL)
+    if(featureFlags & LIGHTFEATUREFLAGS_PUNCTUAL)
     {
         // TODO: Convert the for loop below to a while on each type as we know we are sorted!
         uint punctualLightStart;
@@ -177,8 +182,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
         {
             float3 localDiffuseLighting, localSpecularLighting;
 
-            EvaluateBSDF_Punctual(context, V, posInput, prelightData, _LightDatas[FetchIndex(punctualLightStart, i)], bsdfData,
-                localDiffuseLighting, localSpecularLighting);
+            EvaluateBSDF_Punctual(  context, V, posInput, prelightData, _LightDatas[FetchIndex(punctualLightStart, i)], bsdfData,
+                                    localDiffuseLighting, localSpecularLighting);
 
             diffuseLighting += localDiffuseLighting;
             specularLighting += localSpecularLighting;
@@ -187,7 +192,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
 #endif
 
 #ifdef PROCESS_AREA_LIGHT
-    if(featureFlags & FEATURE_FLAG_LIGHT_AREA)
+    if(featureFlags & LIGHTFEATUREFLAGS_AREA)
     {
         // TODO: Convert the for loop below to a while on each type as we know we are sorted!
         uint areaLightStart;
@@ -201,13 +206,13 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
 
             if(_LightDatas[areaIndex].lightType == GPULIGHTTYPE_LINE)
             {
-                EvaluateBSDF_Line(context, V, posInput, prelightData, _LightDatas[areaIndex], bsdfData,
-                    localDiffuseLighting, localSpecularLighting);
+                EvaluateBSDF_Line(  context, V, posInput, prelightData, _LightDatas[areaIndex], bsdfData,
+                                    localDiffuseLighting, localSpecularLighting);
             }
             else
             {
-                EvaluateBSDF_Area(context, V, posInput, prelightData, _LightDatas[areaIndex], bsdfData,
-                    localDiffuseLighting, localSpecularLighting);
+                EvaluateBSDF_Area(  context, V, posInput, prelightData, _LightDatas[areaIndex], bsdfData,
+                                    localDiffuseLighting, localSpecularLighting);
             }
 
 
@@ -218,7 +223,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
 #endif
 
 #ifdef PROCESS_PROJECTOR_LIGHT
-    if(featureFlags & FEATURE_FLAG_LIGHT_PROJECTOR)
+    if(featureFlags & LIGHTFEATUREFLAGS_PROJECTOR)
     {
         // TODO: Convert the for loop below to a while on each type as we know we are sorted!
         uint projectorLightStart;
@@ -244,7 +249,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
     float3 iblSpecularLighting = float3(0.0, 0.0, 0.0);
 
     // Only apply sky IBL if the sky texture is available.
-    if(featureFlags & FEATURE_FLAG_LIGHT_SKY)
+    if(featureFlags & LIGHTFEATUREFLAGS_SKY)
     {
         if(_EnvLightSkyEnabled)
         {
@@ -260,7 +265,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
     }
 
 
-    if(featureFlags & FEATURE_FLAG_LIGHT_ENV)
+    if(featureFlags & LIGHTFEATUREFLAGS_ENV)
     {
         uint envLightStart;
         uint envLightCount;
@@ -285,7 +290,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
     // TODO: currently apply GI at the same time as reflection
 #ifdef PROCESS_ENV_LIGHT
     // Add indirect diffuse + emissive (if any)
-    diffuseLighting += bakeDiffuseLighting;
+    diffuseLighting += bakeDiffuseLighting * context.ambientOcclusion;
 #endif
 
     ApplyDebug(context, posInput.positionWS, diffuseLighting, specularLighting);
@@ -305,6 +310,10 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
                 out float3 specularLighting)
 {
     LightLoopContext context;
+    // Note: When we ImageLoad outside of texture size, the value returned by Load is 0 (Note: On Metal maybe it clamp to value of texture which is also fine)
+    // We use this property to have a neutral value for AO that doesn't consume a sampler and work also with compute shader (i.e use ImageLoad)
+    // We store inverse AO so neutral is black. So either we sample inside or outside the texture it return 0 in case of neutral
+    context.ambientOcclusion = 1.0 - LOAD_TEXTURE2D(_AmbientOcclusionTexture, posInput.unPositionSS).x;
     context.sampleShadow = 0;
     context.sampleReflection = 0;
     context.shadowContext = InitShadowContext();
@@ -398,7 +407,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData prelightData, BS
     specularLighting += iblSpecularLighting;
 
     // Add indirect diffuse + emissive (if any)
-    diffuseLighting += bakeDiffuseLighting;
+    diffuseLighting += bakeDiffuseLighting * context.ambientOcclusion;
 
     ApplyDebug(context, posInput.positionWS, diffuseLighting, specularLighting);
 }
