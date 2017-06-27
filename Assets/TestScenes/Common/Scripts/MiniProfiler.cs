@@ -1,12 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
 
 public class MiniProfiler : MonoBehaviour {
 
-    public bool m_Enable = true;
+    public bool m_Enable = false;
 
     private int frameCount = 0;
     private const int kAverageFrameCount = 64;
@@ -38,17 +38,19 @@ public class MiniProfiler : MonoBehaviour {
         new RecorderEntry() { name="RenderLoopDrawCount" },
         new RecorderEntry() { name="ShadowLoopDrawCount" },
 
-/*
         new RecorderEntry() { name="CustomMarker0" },
         new RecorderEntry() { name="CustomMarker1" },
         new RecorderEntry() { name="CustomMarker2" },
         new RecorderEntry() { name="CustomMarker3" },
-*/
 
     };
 
     void Awake()
     {
+
+        DebugMenuManager.instance.AddDebugItem<bool>("Arnaud", "Mini-Profiler", () => m_Enable, (value) => m_Enable = (bool)value);
+        DebugMenuManager.instance.AddDebugItem<bool>("Arnaud", "New Batcher", () => UnityEngine.Experimental.Rendering.ScriptableRenderContext.useNewBatcher, (value) => UnityEngine.Experimental.Rendering.ScriptableRenderContext.useNewBatcher = (bool)value);
+
         for (int i=0;i<recordersList.Length;i++)
         {
             var sampler = Sampler.Get(recordersList[i].name);
@@ -103,21 +105,10 @@ public class MiniProfiler : MonoBehaviour {
 
         if (m_Enable)
         {
-/*
-			GUI.changed = false;
-			if ( !Application.isEditor )
-			{
-				m_UseNewBatcher = GUI.Toggle(new Rect(10, 30, 200, 20), m_UseNewBatcher, "Use new render batch");
-				if (GUI.changed)
-				{
-					UnityEngine.Experimental.Rendering.ScriptableRenderContext.UseNewBatchRenderer(m_UseNewBatcher);
-				}
-			}
-*/
             GUI.color = new Color(1, 1, 1, .75f);
             float w = 500, h = 24 + (recordersList.Length+1) * 16 + 8;
 
-            GUILayout.BeginArea(new Rect(10, 50, w, h), "Mini Profiler", GUI.skin.window);
+            GUILayout.BeginArea(new Rect(Screen.width - w - 10, 10, w, h), "Mini Profiler", GUI.skin.window);
             string sLabel = System.String.Format("<b>{0:F2} FPS ({1:F2}ms)</b>\n", 1.0f / m_AvgDeltaTime, Time.deltaTime * 1000.0f);
             for (int i = 0; i < recordersList.Length; i++)
             {
