@@ -48,7 +48,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 };
 
             // binding code. This needs to be in sync with ShadowContext.hlsl
-            ShadowContext.BindDel binder = (ShadowContext sc, CommandBuffer cb) =>
+            ShadowContext.BindDel binder = (ShadowContext sc, CommandBuffer cb, ComputeShader computeShader, int computeKernel) =>
                 {
                     // bind buffers
                     cb.SetGlobalBuffer("_ShadowDatasExp", s_ShadowDataBuffer);
@@ -727,7 +727,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
                 uint shadowRequestCount = (uint)m_ShadowRequests.Count;
                 int[] shadowRequests = m_ShadowRequests.ToArray();
                 int[] shadowDataIndices;
-                m_ShadowMgr.ProcessShadowRequests(m_FrameId, inputs, camera, inputs.visibleLights,
+                m_ShadowMgr.ProcessShadowRequests(m_FrameId, inputs, camera, false, inputs.visibleLights,
                     ref shadowRequestCount, shadowRequests, out shadowDataIndices);
 
                 // update the visibleLights with the shadow information
@@ -1100,7 +1100,7 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             CommandBuffer cmdShadow = CommandBufferPool.Get();
             m_ShadowMgr.RenderShadows( m_FrameId, loop, cmdShadow, cullResults, cullResults.visibleLights );
             m_ShadowMgr.SyncData();
-            m_ShadowMgr.BindResources( cmdShadow );
+            m_ShadowMgr.BindResources( cmdShadow, null, 0 );
             loop.ExecuteCommandBuffer(cmdShadow);
             CommandBufferPool.Release(cmdShadow);
 

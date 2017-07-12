@@ -80,19 +80,35 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 };
 
             // binding code. This needs to be in sync with ShadowContext.hlsl
-            ShadowContext.BindDel binder = (ShadowContext sc, CommandBuffer cb) =>
+            ShadowContext.BindDel binder = (ShadowContext sc, CommandBuffer cb, ComputeShader computeShader, int computeKernel) =>
                 {
-                    // bind buffers
-                    cb.SetGlobalBuffer("_ShadowDatasExp", s_ShadowDataBuffer);
-                    cb.SetGlobalBuffer("_ShadowPayloads", s_ShadowPayloadBuffer);
-                    // bind textures
                     uint offset, count;
                     RenderTargetIdentifier[] tex;
-                    sc.GetTex2DArrays( out tex, out offset, out count );
-                    cb.SetGlobalTexture( "_ShadowmapExp_VSM_0", tex[0] );
-                    cb.SetGlobalTexture( "_ShadowmapExp_VSM_1", tex[1] );
-                    cb.SetGlobalTexture( "_ShadowmapExp_VSM_2", tex[2] );
-                    cb.SetGlobalTexture( "_ShadowmapExp_PCF"  , tex[3] );
+                    sc.GetTex2DArrays(out tex, out offset, out count);
+
+                    if(computeShader)
+                    {
+                        // bind buffers
+                        cb.SetComputeBufferParam(computeShader, computeKernel, "_ShadowDatasExp", s_ShadowDataBuffer);
+                        cb.SetComputeBufferParam(computeShader, computeKernel, "_ShadowPayloads", s_ShadowPayloadBuffer);
+                        // bind textures
+                        cb.SetComputeTextureParam(computeShader, computeKernel, "_ShadowmapExp_VSM_0", tex[0]);
+                        cb.SetComputeTextureParam(computeShader, computeKernel, "_ShadowmapExp_VSM_1", tex[1]);
+                        cb.SetComputeTextureParam(computeShader, computeKernel, "_ShadowmapExp_VSM_2", tex[2]);
+                        cb.SetComputeTextureParam(computeShader, computeKernel, "_ShadowmapExp_PCF", tex[3]);
+                    }
+                    else
+                    {
+                        // bind buffers
+                        cb.SetGlobalBuffer("_ShadowDatasExp", s_ShadowDataBuffer);
+                        cb.SetGlobalBuffer("_ShadowPayloads", s_ShadowPayloadBuffer);
+                        // bind textures
+                        cb.SetGlobalTexture("_ShadowmapExp_VSM_0", tex[0]);
+                        cb.SetGlobalTexture("_ShadowmapExp_VSM_1", tex[1]);
+                        cb.SetGlobalTexture("_ShadowmapExp_VSM_2", tex[2]);
+                        cb.SetGlobalTexture("_ShadowmapExp_PCF", tex[3]);
+                    }
+                    
                     // TODO: Currently samplers are hard coded in ShadowContext.hlsl, so we can't really set them here
                 };
 
@@ -941,7 +957,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Then Culling side
                 var range = light.range;
                 var lightToWorld = light.localToWorld;
-                Vector3 lightPos = lightToWorld.GetColumn(3);
+                Vector3 lightPos = lightData.positionWS;
 
                 // Fill bounds
                 var bound = new SFiniteLightBound();
@@ -1242,6 +1258,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 m_lightList.Clear();
 
+                Vector3 camPosWS = camera.transform.position;
+
                 if (cullResults.visibleLights.Count != 0 || cullResults.visibleReflectionProbes.Count != 0)
                 {
                     // 0. deal with shadows
@@ -1254,16 +1272,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         for (int i = 0; i < lcnt; ++i)
                         {
                             VisibleLight vl = cullResults.visibleLights[i];
+                            if (vl.light.shadows == LightShadows.None)
+                                continue;
+
                             AdditionalShadowData asd = vl.light.GetComponent<AdditionalShadowData>();
-                            if( vl.light.shadows != LightShadows.None && asd != null && asd.shadowDimmer > 0.0f )
-                                m_ShadowRequests.Add( i );
+                            if (asd != null && asd.shadowDimmer > 0.0f)
+                                m_ShadowRequests.Add(i);
                         }
                         // pass this list to a routine that assigns shadows based on some heuristic
                         uint    shadowRequestCount = (uint)m_ShadowRequests.Count;
                         //TODO: Do not call ToArray here to avoid GC, refactor API
                         int[]   shadowRequests = m_ShadowRequests.ToArray();
                         int[]   shadowDataIndices;
-                        m_ShadowMgr.ProcessShadowRequests(m_FrameId, cullResults, camera, cullResults.visibleLights,
+                        m_ShadowMgr.ProcessShadowRequests(m_FrameId, cullResults, camera, ShaderConfig.s_CameraRelativeRendering != 0, cullResults.visibleLights,
                             ref shadowRequestCount, shadowRequests, out shadowDataIndices);
 
                         // update the visibleLights with the shadow information
@@ -1381,8 +1402,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         sortKeys[sortCount++] = (uint)lightCategory << 27 | (uint)gpuLightType << 22 | (uint)lightVolumeType << 17 | shadow << 16 | (uint)lightIndex;
                     }
 
-                    //TODO: Replace with custom sort, allocates mem and increases GC pressure.
-                    Array.Sort(sortKeys, 0, sortCount);
+                    Utilities.QuickSort(sortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
 
                     // TODO: Refactor shadow management
                     // The good way of managing shadow:
@@ -1415,7 +1435,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (gpuLightType == GPULightType.Directional)
                         {
                             if (GetDirectionalLightData(shadowSettings, gpuLightType, light, additionalLightData, additionalShadowData, lightIndex))
+                            {
                                 directionalLightcount++;
+
+                                // We make the light position camera-relative as late as possible in order
+                                // to allow the preceding code to work with the absolute world space coordinates.
+                                if (ShaderConfig.s_CameraRelativeRendering != 0)
+                                {
+                                    // Caution: 'DirectionalLightData.positionWS' is camera-relative after this point.
+                                    int n = m_lightList.directionalLights.Count;
+                                    DirectionalLightData lightData = m_lightList.directionalLights[n - 1];
+                                    lightData.positionWS -= camPosWS;
+                                    m_lightList.directionalLights[n - 1] = lightData;
+                                }
+                            }
                             continue;
                         }
                         // Punctual, area, projector lights - the rendering side.
@@ -1439,6 +1472,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             // Then culling side. Must be call in this order as we pass the created Light data to the function
                             GetLightVolumeDataAndBound(lightCategory, gpuLightType, lightVolumeType, light, m_lightList.lights[m_lightList.lights.Count - 1], worldToView);
+
+                            // We make the light position camera-relative as late as possible in order
+                            // to allow the preceding code to work with the absolute world space coordinates.
+                            if (ShaderConfig.s_CameraRelativeRendering != 0)
+                            {
+                                // Caution: 'LightData.positionWS' is camera-relative after this point.
+                                int n = m_lightList.lights.Count;
+                                LightData lightData = m_lightList.lights[n - 1];
+                                lightData.positionWS -= camPosWS;
+                                m_lightList.lights[n - 1] = lightData;
+                            }
                         }
                     }
 
@@ -1474,7 +1518,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
 
                     // Not necessary yet but call it for future modification with sphere influence volume
-                    Array.Sort(sortKeys, 0, sortCount);
+                    Utilities.QuickSort(sortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
 
                     for (int sortIndex = 0; sortIndex < sortCount; ++sortIndex)
                     {
@@ -1488,6 +1532,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         GetEnvLightData(probe);
 
                         GetEnvLightVolumeDataAndBound(probe, lightVolumeType, worldToView);
+
+                        // We make the light position camera-relative as late as possible in order
+                        // to allow the preceding code to work with the absolute world space coordinates.
+                        if (ShaderConfig.s_CameraRelativeRendering != 0)
+                        {
+                            // Caution: 'EnvLightData.positionWS' is camera-relative after this point.
+                            int n = m_lightList.envLights.Count;
+                            EnvLightData envLightData = m_lightList.envLights[n - 1];
+                            envLightData.positionWS -= camPosWS;
+                            m_lightList.envLights[n - 1] = envLightData;
+                        }
                     }
 
                     // Sanity check
@@ -1786,9 +1841,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 s_LightVolumeDataBuffer.SetData(m_lightList.lightVolumes);
             }
 
-            private void BindGlobalParams(CommandBuffer cmd, ComputeShader computeShader, int kernelIndex, Camera camera)
+            private void BindGlobalParams(CommandBuffer cmd, Camera camera)
             {
-                m_ShadowMgr.BindResources(cmd);
+                m_ShadowMgr.BindResources(cmd, activeComputeShader, activeComputeKernel);
 
                 SetGlobalBuffer("g_vLightListGlobal", !usingFptl ? s_PerVoxelLightLists : s_LightList);       // opaques list (unless MSAA possibly)
 
@@ -1842,7 +1897,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_ShadowMgr.SyncData();
 
                     SetGlobalPropertyRedirect(computeShader, kernelIndex, cmd);
-                    BindGlobalParams(cmd, computeShader, kernelIndex, camera);
+                    BindGlobalParams(cmd, camera);
                     SetGlobalPropertyRedirect(null, 0, null);
                 }
             }
@@ -1942,6 +1997,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var bUseClusteredForDeferred = !usingFptl;
 
+                // TODO: To reduce GC pressure don't do concat string here
                 using (new Utilities.ProfilingSample((m_TileSettings.enableTileAndCluster ? "TilePass - Deferred Lighting Pass" : "SinglePass - Deferred Lighting Pass") + (outputSplitLighting ? " MRT" : ""), cmd))
                 {
                     var camera = hdCamera.camera;
@@ -2148,9 +2204,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public void RenderForward(Camera camera, CommandBuffer cmd, bool renderOpaque)
             {
-                // Note: if we use render opaque with deferred tiling we need to render a opaque depth pass for these opaque objects
-                bool useFptl = renderOpaque && usingFptl;
+                PushGlobalParams(camera, cmd, null, 0);
 
+                // Note: if we use render opaque with deferred tiling we need to render a opaque depth pass for these opaque objects
                 if (!m_TileSettings.enableTileAndCluster)
                 {
                     using (new Utilities.ProfilingSample("Forward pass", cmd))
@@ -2161,6 +2217,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 else
                 {
+                    // Only opaques can use FPTL, transparents must use clustered!
+                    bool useFptl = renderOpaque && usingFptl;
+
                     using (new Utilities.ProfilingSample(useFptl ? "Forward Tiled pass" : "Forward Clustered pass", cmd))
                     {
                         // say that we want to use tile of single loop
