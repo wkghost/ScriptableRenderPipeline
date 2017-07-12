@@ -28,16 +28,18 @@ public class MiniProfiler : MonoBehaviour {
 
     RecorderEntry[] recordersList =
     {
+        new RecorderEntry() { name="NormalObjects.Count" },
+        new RecorderEntry() { name="ShadowObjects.Count" },
+
         new RecorderEntry() { name="RenderLoop.Draw" },
-        new RecorderEntry() { name="RenderBatch.Count" },
-        new RecorderEntry() { name="Shadows.Draw" },
+        new RecorderEntry() { name="ShadowLoop.Draw" },
+        new RecorderEntry() { name="RenderLoopNewBatcher.Draw" },
+        new RecorderEntry() { name="ShadowLoopNewBatcher.Draw" },
+
+        new RecorderEntry() { name="BatchRendererFlush.Count" },
+        new RecorderEntry() { name="NewBatchRendererFlush.Count" },
 
         new RecorderEntry() { name="StaticBatch.Count" },
-        new RecorderEntry() { name="ApplyGpuProgram.Count" },
-
-        new RecorderEntry() { name="RenderLoopDrawCount" },
-        new RecorderEntry() { name="ShadowLoopDrawCount" },
-
         new RecorderEntry() { name="CustomMarker0" },
         new RecorderEntry() { name="CustomMarker1" },
         new RecorderEntry() { name="CustomMarker2" },
