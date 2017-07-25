@@ -12,8 +12,8 @@
 #define GPULIGHTTYPE_SPOT (2)
 #define GPULIGHTTYPE_POINT (3)
 #define GPULIGHTTYPE_PROJECTOR_PYRAMID (4)
-#define GPULIGHTTYPE_RECTANGLE (5)
-#define GPULIGHTTYPE_LINE (6)
+#define GPULIGHTTYPE_LINE (5)
+#define GPULIGHTTYPE_RECTANGLE (6)
 #define GPULIGHTTYPE_SPHERE (7)
 #define GPULIGHTTYPE_DISK (8)
 #define GPULIGHTTYPE_HEMISPHERE (9)
@@ -44,7 +44,7 @@
 struct DirectionalLightData
 {
     float3 positionWS;
-    float unused;
+    bool tileCookie;
     float3 color;
     int shadowIndex;
     float3 forward;
@@ -103,9 +103,9 @@ float3 GetPositionWS(DirectionalLightData value)
 {
 	return value.positionWS;
 }
-float GetUnused(DirectionalLightData value)
+bool GetTileCookie(DirectionalLightData value)
 {
-	return value.unused;
+	return value.tileCookie;
 }
 float3 GetColor(DirectionalLightData value)
 {
