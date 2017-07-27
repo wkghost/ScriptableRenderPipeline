@@ -54,7 +54,6 @@ Shader "Hidden/HDRenderPipeline/Deferred"
             // deferred material must replace the old one here. If in the future we want to support multiple layout (cause a lot of consistency problem),
             // the deferred shader will require to use multicompile.
             #define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
-            #include "../ShaderConfig.cs.hlsl"
             #include "../ShaderVariables.hlsl"
             #include "../Lighting/Lighting.hlsl" // This include Material.hlsl
 
@@ -93,6 +92,8 @@ Shader "Hidden/HDRenderPipeline/Deferred"
 
             Outputs Frag(Varyings input)
             {
+                // This need to stay in sync with deferred.compute
+
                 // input.positionCS is SV_Position
                 PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, uint2(input.positionCS.xy) / GetTileSize());
                 float depth = LOAD_TEXTURE2D(_MainDepthTexture, posInput.unPositionSS).x;

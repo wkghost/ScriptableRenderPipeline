@@ -174,7 +174,7 @@ void GetPreIntegratedFGD(float NdotV, float perceptualRoughness, float3 fresnel0
 #endif
 }
 
-void ApplyDebugToBSDFData(inout BSDFData bsdfData)
+void ApplyDebugToSurfaceData(inout SurfaceData surfaceData)
 {
 #ifdef DEBUG_DISPLAY
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_SPECULAR_LIGHTING)
@@ -184,14 +184,13 @@ void ApplyDebugToBSDFData(inout BSDFData bsdfData)
 
         if (overrideSmoothness)
         {
-            bsdfData.perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(overrideSmoothnessValue);
-            bsdfData.roughness = PerceptualRoughnessToRoughness(bsdfData.perceptualRoughness);
+            surfaceData.perceptualSmoothness = overrideSmoothnessValue;
         }
     }
 
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_DIFFUSE_LIGHTING)
     {
-        bsdfData.diffuseColor = _DebugLightingAlbedo.xyz;
+        surfaceData.baseColor = _DebugLightingAlbedo.xyz;
     }
 #endif
 }
@@ -238,11 +237,15 @@ void FillMaterialIdSSSData(float3 baseColor, int subsurfaceProfile, float subsur
 
     bool performPostScatterTexturing = IsBitSet(_TexturingModeFlags, subsurfaceProfile);
 
+    bool enableSssAndTransmission = true;
+
 #if defined(SHADERPASS) && (SHADERPASS == SHADERPASS_LIGHT_TRANSPORT) // In case of GI pass don't modify the diffuseColor
-    if (0)
-#else
-    if (_EnableSSSAndTransmission != 0) // If we globally disable SSS effect, don't modify diffuseColor
+    enableSssAndTransmission = false;
+#elif (SSS_PASS == 0)
+    enableSssAndTransmission = _EnableSSSAndTransmission != 0;
 #endif
+
+    if (enableSssAndTransmission) // If we globally disable SSS effect, don't modify diffuseColor
     {
         // We modify the albedo here as this code is used by all lighting (including light maps and GI).
         if (performPostScatterTexturing)
@@ -264,6 +267,8 @@ void FillMaterialIdSSSData(float3 baseColor, int subsurfaceProfile, float subsur
 
 BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
 {
+    ApplyDebugToSurfaceData(surfaceData);
+
     BSDFData bsdfData;
     ZERO_INITIALIZE(BSDFData, bsdfData);
 
@@ -296,8 +301,6 @@ BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
         FillMaterialIdSSSData(surfaceData.baseColor, surfaceData.subsurfaceProfile, surfaceData.subsurfaceRadius, surfaceData.thickness, bsdfData);
     }
 
-    ApplyDebugToBSDFData(bsdfData);
-
     return bsdfData;
 }
 
@@ -323,6 +326,8 @@ void EncodeIntoGBuffer( SurfaceData surfaceData,
     #if SHADEROPTIONS_PACK_GBUFFER_IN_U16
     float4 outGBuffer0, outGBuffer1, outGBuffer2, outGBuffer3;
     #endif
+
+    ApplyDebugToSurfaceData(surfaceData);
 
     // RT0 - 8:8:8:8 sRGB
     outGBuffer0 = float4(surfaceData.baseColor, surfaceData.specularOcclusion);
@@ -381,7 +386,7 @@ void EncodeIntoGBuffer( SurfaceData surfaceData,
                             (packedGBuffer1 & 0x0000FFFF),
                             (packedGBuffer1 & 0xFFFF0000) >> 16);
 
-    uint packedGBuffer3 = PackR11G11B10f(outGBuffer3.xyz);
+    uint packedGBuffer3 = PackToR11G11B10f(outGBuffer3.xyz);
 
     outGBufferU1 = uint4(   PackFloatToUInt(outGBuffer2.x, 8, 0)  | PackFloatToUInt(outGBuffer2.y, 8, 8),
                             PackFloatToUInt(outGBuffer2.z, 8, 0)  | PackFloatToUInt(outGBuffer2.w, 8, 8),
@@ -436,7 +441,7 @@ void DecodeFromGBuffer(
     inGBuffer2.w = UnpackUIntToFloat(inGBufferU1.y, 8, 8);
 
     uint packedGBuffer3 = inGBufferU1.z | inGBufferU1.w << 16;
-    inGBuffer3.xyz = UnpackR11G11B10f(packedGBuffer1);
+    inGBuffer3.xyz = UnpackFromR11G11B10f(packedGBuffer1);
     inGBuffer3.w = 0.0;
 #endif
 
@@ -527,8 +532,6 @@ void DecodeFromGBuffer(
     }
 
     bakeDiffuseLighting = inGBuffer3.rgb;
-
-    ApplyDebugToBSDFData(bsdfData);
 }
 
 uint MaterialFeatureFlagsFromGBuffer(
