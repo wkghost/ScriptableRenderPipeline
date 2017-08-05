@@ -33,24 +33,44 @@ public class BasicRenderPipeline : RenderPipelineAsset
     }
 }
 
+public struct RenderInfo
+{
+    public bool useIntermediateBlit;
+    public RenderPassAttachment m_Color;
+    public RenderPassAttachment m_Depth;
+}
+
 public class BasicRenderPipelineInstance : RenderPipeline
 {
-    bool useIntermediateBlit;
+    RenderInfo renderInfo;
+
+    private void SetupRenderPassAttachments()
+    {
+        renderInfo.m_Color = new RenderPassAttachment(RenderTextureFormat.ARGB32);
+        renderInfo.m_Depth = new RenderPassAttachment(RenderTextureFormat.Depth);
+
+        renderInfo.m_Color.Clear(new Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0);
+        renderInfo.m_Depth.Clear(new Color(), 1.0f, 0);
+    }
 
     public BasicRenderPipelineInstance()
     {
-        useIntermediateBlit = false;
+        renderInfo.useIntermediateBlit = false;
+
+        SetupRenderPassAttachments();
     }
 
     public BasicRenderPipelineInstance(bool useIntermediate)
     {
-        useIntermediateBlit = useIntermediate;
+        renderInfo.useIntermediateBlit = useIntermediate;
+
+        SetupRenderPassAttachments();
     }
 
     public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
     {
         base.Render(renderContext, cameras);
-        BasicRendering.Render(renderContext, cameras, useIntermediateBlit);
+        BasicRendering.Render(renderContext, cameras, ref renderInfo);
     }
 }
 
@@ -58,62 +78,7 @@ public static class BasicRendering
 {
     // Main entry point for our scriptable render loop
 
-    static void ConfigureAndBindIntermediateRenderTarget(ScriptableRenderContext context, Camera cam, bool stereoEnabled, out RenderTargetIdentifier intermediateRTID, out bool isRTTexArray)
-    {
-        var intermediateRT = Shader.PropertyToID("_IntermediateTarget");
-        intermediateRTID = new RenderTargetIdentifier(intermediateRT);
-
-        isRTTexArray = false;
-
-        var bindIntermediateRTCmd = CommandBufferPool.Get("Bind intermediate RT");
-
-        if (stereoEnabled)
-        {
-            RenderTextureDescriptor vrDesc = XRSettings.eyeTextureDesc;
-            vrDesc.depthBufferBits = 24;
-
-            if (vrDesc.dimension == TextureDimension.Tex2DArray)
-                isRTTexArray = true;
-
-            bindIntermediateRTCmd.GetTemporaryRT(intermediateRT, vrDesc, FilterMode.Point);
-        }
-        else
-        {
-            int w = cam.pixelWidth;
-            int h = cam.pixelHeight;
-            bindIntermediateRTCmd.GetTemporaryRT(intermediateRT, w, h, 24, FilterMode.Point, RenderTextureFormat.Default, RenderTextureReadWrite.Default, 1, true);
-        }
-
-        if (isRTTexArray)
-            bindIntermediateRTCmd.SetRenderTarget(intermediateRTID, 0, CubemapFace.Unknown, -1); // depthSlice == -1 => bind all slices
-        else
-            bindIntermediateRTCmd.SetRenderTarget(intermediateRTID);
-
-        context.ExecuteCommandBuffer(bindIntermediateRTCmd);
-        CommandBufferPool.Release(bindIntermediateRTCmd);
-    }
-
-    static void BlitFromIntermediateToCameraTarget(ScriptableRenderContext context, RenderTargetIdentifier intermediateRTID, bool isRTTexArray)
-    {
-        var blitIntermediateRTCmd = CommandBufferPool.Get("Copy intermediate RT to default RT");
-
-        if (isRTTexArray)
-        {
-            // Currently, Blit does not allow specification of a slice in a texture array.
-            // It can use the CurrentActive render texture's bound slices, so we use that
-            // as a temporary workaround.
-            blitIntermediateRTCmd.SetRenderTarget(BuiltinRenderTextureType.CameraTarget, 0, CubemapFace.Unknown, -1);
-            blitIntermediateRTCmd.Blit(intermediateRTID, BuiltinRenderTextureType.CurrentActive);
-        }
-        else
-            blitIntermediateRTCmd.Blit(intermediateRTID, BuiltinRenderTextureType.CameraTarget);
-
-        context.ExecuteCommandBuffer(blitIntermediateRTCmd);
-        CommandBufferPool.Release(blitIntermediateRTCmd);
-
-    }
-
-    public static void Render(ScriptableRenderContext context, IEnumerable<Camera> cameras, bool useIntermediateBlitPath)
+    public static void Render(ScriptableRenderContext context, IEnumerable<Camera> cameras, ref RenderInfo renderInfo)
     {
         bool stereoEnabled = XRSettings.isDeviceActive;
 
@@ -130,52 +95,58 @@ public static class BasicRendering
             // Setup camera for rendering (sets render target, view/projection matrices and other
             // per-camera built-in shader variables).
             // If stereo is enabled, we also configure stereo matrices, viewports, and XR device render targets
+            // We still need this for RenderPass
             context.SetupCameraProperties(camera, stereoEnabled);
 
-            // Draws in-between [Start|Stop]MultiEye are stereo-ized by engine
-            if (stereoEnabled)
-                context.StartMultiEye(camera);
-
-            RenderTargetIdentifier intermediateRTID = new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive);
-            bool isIntermediateRTTexArray = false;
-            if (useIntermediateBlitPath)
-            {
-                ConfigureAndBindIntermediateRenderTarget(context, camera, stereoEnabled, out intermediateRTID, out isIntermediateRTTexArray);
-            }
-
-            // clear depth buffer
-            var cmd = CommandBufferPool.Get();
-            cmd.ClearRenderTarget(true, false, Color.black);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
+            // This is honestly crazy code to write.  We should be getting explicit targets
+            // whether it be backbuffer, camera target texture, or VR device active texture
+            renderInfo.m_Color.BindSurface(BuiltinRenderTextureType.CameraTarget, false, true);
+            renderInfo.m_Depth.BindSurface(BuiltinRenderTextureType.Depth, false, false);
 
             // Setup global lighting shader variables
             SetupLightShaderVariables(cull.visibleLights, context);
 
-            // Draw opaque objects using BasicPass shader pass
-            var settings = new DrawRendererSettings(cull, camera, new ShaderPassName("BasicPass"));
-            settings.sorting.flags = SortFlags.CommonOpaque;
-            settings.inputFilter.SetQueuesOpaque();
-            context.DrawRenderers(ref settings);
-
-            // Draw skybox
-            context.DrawSkybox(camera);
-
-            // Draw transparent objects using BasicPass shader pass
-            settings.sorting.flags = SortFlags.CommonTransparent;
-            settings.inputFilter.SetQueuesTransparent();
-            context.DrawRenderers(ref settings);
-
-            if (useIntermediateBlitPath)
+            int renderPassWidth = camera.pixelWidth;
+            int renderPassHeight = camera.pixelHeight;
+            if (stereoEnabled)
             {
-                BlitFromIntermediateToCameraTarget(context, intermediateRTID, isIntermediateRTTexArray);
+                RenderTextureDescriptor xrDesc = XRSettings.eyeTextureDesc;
+                renderPassWidth = xrDesc.width;
+                renderPassHeight = xrDesc.height;
+            }
+
+            if (stereoEnabled)
+            {
+                // Should this be integrated into RenderPass?
+                context.StartMultiEye(camera);
+            }
+
+            using (RenderPass rp = new RenderPass(context, renderPassWidth, renderPassHeight, 1, new[] { renderInfo.m_Color }, renderInfo.m_Depth, stereoEnabled))
+            {
+
+                using (new RenderPass.SubPass(rp, new[] { renderInfo.m_Color }, null))
+                {
+                    // Draw opaque objects using BasicPass shader pass
+                    var settings = new DrawRendererSettings(cull, camera, new ShaderPassName("BasicPass"));
+                    settings.sorting.flags = SortFlags.CommonOpaque;
+                    settings.inputFilter.SetQueuesOpaque();
+                    context.DrawRenderers(ref settings);
+
+                    // Draw skybox
+                    context.DrawSkybox(camera);
+
+                    // Draw transparent objects using BasicPass shader pass
+                    settings.sorting.flags = SortFlags.CommonTransparent;
+                    settings.inputFilter.SetQueuesTransparent();
+                    context.DrawRenderers(ref settings);
+                }
             }
 
             if (stereoEnabled)
             {
                 context.StopMultiEye(camera);
-                // StereoEndRender will reset state on the camera to pre-Stereo settings,
-                // and invoke XR based events/callbacks.
+                // StereoEndRender will reset state on the camera to pre-Stereo settings, 
+                // and invoke XR based events/callbacks. 
                 context.StereoEndRender(camera);
             }
 
