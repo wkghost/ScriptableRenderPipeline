@@ -10,6 +10,7 @@ using UnityEngine.Profiling;
 using UnityEditor;
 #endif
 
+
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [Serializable]
