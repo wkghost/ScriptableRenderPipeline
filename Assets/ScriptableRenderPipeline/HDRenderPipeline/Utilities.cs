@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 using UnityObject = UnityEngine.Object;
 using System.Reflection;
 using UnityEngine.Rendering.PostProcessing;
+using UnityEngine.Profiling;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -198,6 +199,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool            disposed;
             CommandBuffer   cmd;
             string          name;
+            CustomSampler   sampler;
 
             public ProfilingSample(string _name, CommandBuffer _cmd)
             {
@@ -205,6 +207,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 disposed = false;
                 name = _name;
                 cmd.BeginSample(name);
+//                Profiler.BeginSample("Direct_" + _name);
+                sampler = CustomSampler.Create("Direct_" + _name);
+                sampler.Begin();
             }
 
             public void Dispose()
@@ -221,6 +226,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (disposing)
                 {
                     cmd.EndSample(name);
+                    //                    Profiler.EndSample();
+                    sampler.End();
                 }
 
                 disposed = true;

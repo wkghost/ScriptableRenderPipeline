@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using System;
 using System.Linq;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.Rendering.HDPipeline.TilePass;
+using UnityEngine.Profiling;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -373,6 +374,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         private SkySettings m_SkySettings = null;
         private ScreenSpaceAmbientOcclusionSettings.Settings m_SsaoSettings = ScreenSpaceAmbientOcclusionSettings.Settings.s_Defaultsettings;
 
+        private CustomSampler   m_sampler;
+
         public CommonSettings.Settings commonSettingsToUse
         {
             get
@@ -485,6 +488,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DebugDisplaySettings.RegisterDebug();
             m_DebugFullScreenTempRT = HDShaderIDs._DebugFullScreenTexture;
+
+            m_sampler = CustomSampler.Create("HDRenderPipeline::Render");
+
         }
 
         void InitializeDebugMaterials()
@@ -741,6 +747,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         CullResults m_CullResults;
         public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
+
+            m_sampler.Begin();
+
             base.Render(renderContext, cameras);
 
 #if UNITY_EDITOR
@@ -942,6 +951,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             renderContext.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
             renderContext.Submit();
+
+            m_sampler.End();
+
         }
 
         void RenderOpaqueRenderList(CullResults cull, Camera camera, ScriptableRenderContext renderContext, CommandBuffer cmd, string passName, RendererConfiguration rendererConfiguration = 0)
