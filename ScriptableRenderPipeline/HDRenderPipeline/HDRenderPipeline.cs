@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using System;
 using System.Linq;
@@ -814,10 +814,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             m_LightLoop.UpdateCullingParameters( ref cullingParams );
-          
+
+#if UNITY_EDITOR
             // emit scene view UI
             if (camera.cameraType == CameraType.SceneView)
                 ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
+#endif
 
             CullResults.Cull(ref cullingParams, renderContext,ref m_CullResults);
 
