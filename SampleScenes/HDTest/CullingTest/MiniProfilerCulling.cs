@@ -113,7 +113,7 @@ public class MiniProfilerCulling : MonoBehaviour {
             GUI.color = new Color(1, 1, 1, .75f);
             float w = 500, h = 24 + (recordersList.Length+1) * 16 + 8;
 
-            GUILayout.BeginArea(new Rect(10, 50, w, h), "Mini Profiler", GUI.skin.window);
+            GUILayout.BeginArea(new Rect(300, 50, w, h), "Mini Profiler", GUI.skin.window);
             string sLabel = System.String.Format("<b>{0:F2} FPS ({1:F2}ms)</b>\n", 1.0f / m_AvgDeltaTime, Time.deltaTime * 1000.0f);
             for (int i = 0; i < recordersList.Length; i++)
             {

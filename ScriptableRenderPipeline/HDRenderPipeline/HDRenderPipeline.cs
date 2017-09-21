@@ -821,7 +821,41 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
 #endif
 
-            CullResults.Cull(ref cullingParams, renderContext,ref m_CullResults);
+
+//            CullResults.Cull(ref cullingParams, renderContext, ref m_CullResults);
+            CullResults.CullSceneAndGetLightList(ref cullingParams, renderContext, ref m_CullResults);
+
+
+            lightSelector selector = Camera.main.GetComponent<lightSelector>();
+
+            if ( selector != null )
+            {
+                selector.m_count = m_CullResults.visibleLights.Count();
+                for (int i = 0; i < m_CullResults.visibleLights.Count(); i++)
+                {
+                    if (selector.testBool[i])
+                        CullResults.CullDisableShadowLight(ref m_CullResults, i);
+                }
+            }
+
+            //            m_lightSelector.m_count = m_CullResults.visibleLights.Count();
+
+            //            selector.m_count = m_CullResults.visibleLights.Count();
+
+            //            CullResults.CullDisableShadowLight(ref m_CullResults, 1);
+
+            CullResults.CullForAllLights(ref cullingParams, renderContext, ref m_CullResults);
+
+
+            /*
+                        int lcnt = m_CullResults.visibleLights.Count;
+                        for (int i = 0; i < lcnt; ++i)
+                        {
+                            VisibleLight vl = m_CullResults.visibleLights[i];
+                            vl.light.cullingDisabledByScript = true;
+                            vl.light.intensity = 12.34f;
+                        }
+            */
 
             Resize(camera);
 

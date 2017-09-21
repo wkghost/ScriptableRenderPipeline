@@ -106,7 +106,7 @@ Material:
     - _Drag: 1
     - _DstBlend: 0
     - _EmissiveColorMode: 1
-    - _EmissiveIntensity: 0
+    - _EmissiveIntensity: 0.36
     - _EnablePerPixelDisplacement: 0
     - _EnableSpecularOcclusion: 0
     - _EnableWind: 0
@@ -143,7 +143,7 @@ Material:
     - _BaseColor: {r: 0.8897059, g: 0.454508, b: 0.294388, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissiveColor: {r: 0.8897059, g: 0.13083912, b: 0.13083912, a: 1}
+    - _EmissiveColor: {r: 0.2512112, g: 0.13083912, b: 0.8897059, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
