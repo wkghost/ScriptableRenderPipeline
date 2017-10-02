@@ -31,8 +31,32 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
     public class LightweightPipelineAsset : RenderPipelineAsset
     {
+        public static readonly string m_SimpleLightShaderPath = "ScriptableRenderPipeline/LightweightPipeline/Standard (Simple Lighting)";
+        public static readonly string m_PBSShaderPath = "ScriptableRenderPipeline/LightweightPipeline/Standard (Simple Lighting)";
+        public static readonly string m_BlitShaderPath = "Hidden/ScriptableRenderPipeline/LightweightPipeline/Blit";
         private static readonly string m_PipelineFolder = "Assets/ScriptableRenderPipeline/LightweightPipeline";
         private static readonly string m_AssetName = "LightweightPipelineAsset.asset";
+
+        [SerializeField] private int m_MaxPixelLights = 1;
+        [SerializeField] private bool m_SupportsVertexLight = true;
+        [SerializeField] private MSAAQuality m_MSAA = MSAAQuality.Disabled;
+        [SerializeField] private float m_RenderScale = 1.0f;
+        [SerializeField] private ShadowType m_ShadowType = ShadowType.HARD_SHADOWS;
+        [SerializeField] private ShadowResolution m_ShadowAtlasResolution = ShadowResolution._1024;
+        [SerializeField] private float m_ShadowNearPlaneOffset = 2.0f;
+        [SerializeField] private float m_ShadowDistance = 50.0f;
+        [SerializeField] private ShadowCascades m_ShadowCascades = ShadowCascades.NO_CASCADES;
+        [SerializeField] private float m_Cascade2Split = 0.25f;
+        [SerializeField] private Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
+        [SerializeField] private bool m_LinearRendering = true;
+        [SerializeField] private Texture2D m_AttenuationTexture;
+
+        [SerializeField] private Material m_DefaultDiffuseMaterial;
+        [SerializeField] private Material m_DefaultParticleMaterial;
+        [SerializeField] private Material m_DefaultLineMaterial;
+        [SerializeField] private Material m_DefaultSpriteMaterial;
+        [SerializeField] private Material m_DefaultUIMaterial;
+        [SerializeField] private Shader m_DefaultShader;
 
 #if UNITY_EDITOR
         [UnityEditor.MenuItem("RenderPipeline/LightweightPipeline/Create Pipeline Asset", false, 15)]
@@ -65,29 +89,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             DestroyCreatedInstances();
         }
 
-        #region PipelineAssetSettings
-
-        [SerializeField] private int m_MaxPixelLights = 1;
-        [SerializeField] private bool m_SupportsVertexLight = true;
-        [SerializeField] private bool m_EnableLightmaps = true;
-        [SerializeField] private bool m_EnableAmbientProbe = true;
-        [SerializeField] private MSAAQuality m_MSAA = MSAAQuality.Disabled;
-        [SerializeField] private ShadowType m_ShadowType = ShadowType.HARD_SHADOWS;
-        [SerializeField] private ShadowResolution m_ShadowAtlasResolution = ShadowResolution._1024;
-        [SerializeField] private float m_ShadowNearPlaneOffset = 2.0f;
-        [SerializeField] private float m_ShadowDistance = 50.0f;
-        [SerializeField] private ShadowCascades m_ShadowCascades = ShadowCascades.NO_CASCADES;
-        [SerializeField] private float m_Cascade2Split = 0.25f;
-        [SerializeField] private Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
-        [SerializeField] private bool m_LinearRendering = true;
-        [SerializeField] private Texture2D m_AttenuationTexture;
-
-        [SerializeField] private Material m_DefaultDiffuseMaterial;
-        [SerializeField] private Material m_DefaultParticleMaterial;
-        [SerializeField] private Material m_DefaultLineMaterial;
-        [SerializeField] private Material m_DefaultSpriteMaterial;
-        [SerializeField] private Material m_DefaultUIMaterial;
-        [SerializeField] private Shader m_DefaultShader;
+        public bool AreShadowsEnabled()
+        {
+            return ShadowSetting != ShadowType.NO_SHADOW;
+        }
 
         public int MaxSupportedPixelLights
         {
@@ -101,25 +106,19 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             private set { m_SupportsVertexLight = value; }
         }
 
-        public bool EnableLightmap
-        {
-            get { return m_EnableLightmaps; }
-            private set { m_EnableLightmaps = value; }
-        }
-
-        public bool EnableAmbientProbe
-        {
-            get { return m_EnableAmbientProbe; }
-            private set { m_EnableAmbientProbe = value; }
-        }
-
         public int MSAASampleCount
         {
             get { return (int)m_MSAA; }
             set { m_MSAA = (MSAAQuality)value; }
         }
 
-        public ShadowType CurrShadowType
+        public float RenderScale
+        {
+            get { return m_RenderScale; }
+            set { m_RenderScale = value; }
+        }
+
+        public ShadowType ShadowSetting
         {
             get { return m_ShadowType; }
             private set { m_ShadowType = value; }
@@ -173,7 +172,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             set { m_AttenuationTexture = value; }
         }
 
-        #endregion
         public override Material GetDefaultMaterial()
         {
             return m_DefaultDiffuseMaterial;
@@ -216,6 +214,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public override Shader GetDefaultShader()
         {
             return m_DefaultShader;
+        }
+
+        public Shader BlitShader
+        {
+            get { return Shader.Find(LightweightPipelineAsset.m_BlitShaderPath); }
         }
     }
 }
