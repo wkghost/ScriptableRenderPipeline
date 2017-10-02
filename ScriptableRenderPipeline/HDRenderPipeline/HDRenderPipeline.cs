@@ -822,7 +822,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #endif
 
 
-//            CullResults.Cull(ref cullingParams, renderContext, ref m_CullResults);
+
+            CullResults.Cull(ref cullingParams, renderContext, ref m_CullResults);
+
+            /*
             CullResults.CullSceneAndGetLightList(ref cullingParams, renderContext, ref m_CullResults);
 
 
@@ -847,15 +850,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CullResults.CullForAllLights(ref cullingParams, renderContext, ref m_CullResults);
 
 
-            /*
-                        int lcnt = m_CullResults.visibleLights.Count;
-                        for (int i = 0; i < lcnt; ++i)
-                        {
-                            VisibleLight vl = m_CullResults.visibleLights[i];
-                            vl.light.cullingDisabledByScript = true;
-                            vl.light.intensity = 12.34f;
-                        }
+            
+                        //int lcnt = m_CullResults.visibleLights.Count;
+                        //for (int i = 0; i < lcnt; ++i)
+                        //{
+                        //    VisibleLight vl = m_CullResults.visibleLights[i];
+                        //    vl.light.cullingDisabledByScript = true;
+                        //    vl.light.intensity = 12.34f;
+                        //}
+            
+
             */
+
 
             Resize(camera);
 
