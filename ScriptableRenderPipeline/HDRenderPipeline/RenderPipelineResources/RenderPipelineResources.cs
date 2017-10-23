@@ -10,12 +10,12 @@
 
         // Lighting resources
         public Shader deferredShader;
-        public Shader screenSpaceAmbientOcclusionShader;
         public ComputeShader subsurfaceScatteringCS;
         public ComputeShader volumetricLightingCS;
         public ComputeShader gaussianPyramidCS;
         public ComputeShader depthPyramidCS;
         public ComputeShader copyChannelCS;
+        public ComputeShader applyDistortionCS;
 
         // Lighting tile pass resources
         public ComputeShader clearDispatchIndirectShader;
@@ -40,7 +40,18 @@
         public ComputeShader buildProbabilityTables;
         public ComputeShader computeGgxIblSampleData;
         public Shader GGXConvolve;
+        public Shader opaqueAtmosphericScattering;
 
         public Shader skyboxCubemap;
+
+        public int applyDistortionKernel { get; private set; }
+
+        void OnEnable()
+        {
+            applyDistortionKernel = -1;
+
+            if (applyDistortionCS != null)
+                applyDistortionKernel = applyDistortionCS.FindKernel("KMain");
+        }
     }
 }
