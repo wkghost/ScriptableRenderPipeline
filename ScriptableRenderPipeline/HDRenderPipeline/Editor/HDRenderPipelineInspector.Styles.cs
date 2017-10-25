@@ -18,6 +18,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent useForwardRenderingOnly = new GUIContent("Use Forward Rendering Only");
             public readonly GUIContent useDepthPrepassWithDeferredRendering = new GUIContent("Use Depth Prepass with Deferred rendering");
             public readonly GUIContent renderAlphaTestOnlyInDeferredPrepass = new GUIContent("Alpha Test Only");
+            public readonly GUIContent disableStereoPaths = new GUIContent("Disable Stereo Paths");
 
             // Texture Settings
             public readonly GUIContent textureSettings = new GUIContent("Texture Settings");

@@ -24,6 +24,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         SerializedProperty m_RenderingUseForwardOnly;
         SerializedProperty m_RenderingUseDepthPrepass;
         SerializedProperty m_RenderingUseDepthPrepassAlphaTestOnly;
+        SerializedProperty m_RenderingDisableStereoPaths;
 
         // Subsurface Scattering Settings
         SerializedProperty m_SubsurfaceScatteringSettings;
@@ -64,6 +65,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_RenderingUseForwardOnly = properties.Find(x => x.renderingSettings.useForwardRenderingOnly);
             m_RenderingUseDepthPrepass = properties.Find(x => x.renderingSettings.useDepthPrepassWithDeferredRendering);
             m_RenderingUseDepthPrepassAlphaTestOnly = properties.Find(x => x.renderingSettings.renderAlphaTestOnlyInDeferredPrepass);
+            m_RenderingDisableStereoPaths = properties.Find(x => x.renderingSettings.disableStereoPaths);
 
             // Subsurface Scattering Settings
             m_SubsurfaceScatteringSettings = properties.Find(x => x.sssSettings);
@@ -174,6 +176,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUI.indentLevel--;
                 }
             }
+
+            EditorGUILayout.PropertyField(m_RenderingDisableStereoPaths, s_Styles.disableStereoPaths);
 
             EditorGUI.indentLevel--;
         }
