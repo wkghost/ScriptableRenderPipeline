@@ -93,7 +93,7 @@ float3 PerformIntegration(PositionInputs posInput, Ray ray, uint numSteps)
 
                 float3 L         = -lightData.forward; // Lights point backwards in Unity
                 float  intensity = 1;
-                float3 color     = lightData.color;
+                float3 color     = lightData.diffuseColor;
 
             #ifdef USE_HENYEY_GREENSTEIN_PHASE_FUNCTION
                 // Note: we apply the scattering coefficient and the constant part of the phase function later.
@@ -152,7 +152,7 @@ float3 PerformIntegration(PositionInputs posInput, Ray ray, uint numSteps)
                 float  dist          = sqrt(distSq);
                 float3 L             = lightToSample * -rsqrt(distSq);
                 float  intensity     = GetPunctualShapeAttenuation(lightData, L, distSq);
-                float3 color         = lightData.color;
+                float3 color         = lightData.diffuseColor;
 
             #ifdef USE_HENYEY_GREENSTEIN_PHASE_FUNCTION
                 // Note: we apply the scattering coefficient and the constant part of the phase function later.

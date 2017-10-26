@@ -1161,17 +1161,16 @@ void EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         float4 cookie = EvaluateCookie_Directional(lightLoopContext, lightData, lightToSurface);
 
         // Premultiply.
-        lightData.color         *= cookie.rgb;
-        lightData.diffuseScale  *= cookie.a;
-        lightData.specularScale *= cookie.a;
+        lightData.diffuseColor *= cookie.rgb * cookie.a;
+        lightData.specularColor *= cookie.rgb * cookie.a;
     }
 
     [branch] if (illuminance > 0.0)
     {
         BSDF(V, L, positionWS, preLightData, bsdfData, diffuseLighting, specularLighting);
 
-        diffuseLighting  *= illuminance * lightData.diffuseScale;
-        specularLighting *= illuminance * lightData.specularScale;
+        diffuseLighting  *= illuminance;
+        specularLighting *= illuminance;
     }
 
     [branch] if (bsdfData.enableTransmission)
@@ -1181,12 +1180,12 @@ void EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         float illuminance = Lambert() * ComputeWrappedDiffuseLighting(-NdotL, SSS_WRAP_LIGHT);
 
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
-        diffuseLighting += EvaluateTransmission(bsdfData, illuminance * lightData.diffuseScale, shadow);
+        diffuseLighting += EvaluateTransmission(bsdfData, illuminance, shadow);
     }
 
-    // Save ALU by applying 'lightData.color' only once.
-    diffuseLighting  *= lightData.color;
-    specularLighting *= lightData.color;
+    // Save ALU by applying 'color' only once.
+    diffuseLighting  *= lightData.diffuseColor;
+    specularLighting *= lightData.specularColor;
 
     lighting.directDiffuse += diffuseLighting;
     lighting.directSpecular += specularLighting;
@@ -1262,9 +1261,7 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
 
     float attenuation = GetPunctualShapeAttenuation(lightData, L, distSq);
 
-    // Premultiply.
-    lightData.diffuseScale  *= attenuation;
-    lightData.specularScale *= attenuation;
+    float colorScale = attenuation;
 
     float3 diffuseLighting  = float3(0.0, 0.0, 0.0);
     float3 specularLighting = float3(0.0, 0.0, 0.0);
@@ -1284,8 +1281,7 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
     float volumetricShadow = Transmittance(OpticalDepthHomogeneous(preLightData.globalFogExtinction, dist));
 
     // Premultiply.
-    lightData.diffuseScale  *= volumetricShadow;
-    lightData.specularScale *= volumetricShadow;
+    colorScale *= volumetricShadow;
 #endif
 
     // Projector lights always have a cookies, so we can perform clipping inside the if().
@@ -1294,9 +1290,9 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
         float4 cookie = EvaluateCookie_Punctual(lightLoopContext, lightData, lightToSurface);
 
         // Premultiply.
-        lightData.color         *= cookie.rgb;
-        lightData.diffuseScale  *= cookie.a;
-        lightData.specularScale *= cookie.a;
+        lightData.diffuseColor  *= cookie.rgb;
+        lightData.specularColor *= cookie.rgb;
+        colorScale              *= cookie.a;
     }
 
     [branch] if (illuminance > 0.0)
@@ -1304,8 +1300,8 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
         bsdfData.roughness = max(bsdfData.roughness, lightData.minRoughness); // Simulate that a punctual ligth have a radius with this hack
         BSDF(V, L, positionWS, preLightData, bsdfData, diffuseLighting, specularLighting);
 
-        diffuseLighting  *= illuminance * lightData.diffuseScale;
-        specularLighting *= illuminance * lightData.specularScale;
+        diffuseLighting  *= illuminance;
+        specularLighting *= illuminance;
     }
 
     [branch] if (bsdfData.enableTransmission)
@@ -1315,12 +1311,12 @@ void EvaluateBSDF_Punctual( LightLoopContext lightLoopContext,
         float illuminance = Lambert() * ComputeWrappedDiffuseLighting(-NdotL, SSS_WRAP_LIGHT);
 
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
-        diffuseLighting += EvaluateTransmission(bsdfData, illuminance * lightData.diffuseScale, shadow);
+        diffuseLighting += EvaluateTransmission(bsdfData, illuminance, shadow);
     }
 
-    // Save ALU by applying 'lightData.color' only once.
-    diffuseLighting  *= lightData.color;
-    specularLighting *= lightData.color;
+    // Save ALU by applying 'color' only once.
+    diffuseLighting  *= lightData.diffuseColor * colorScale;
+    specularLighting *= lightData.specularColor * colorScale;
 
     lighting.directDiffuse += diffuseLighting;
     lighting.directSpecular += specularLighting;
@@ -1365,8 +1361,8 @@ void EvaluateBSDF_Line(LightLoopContext lightLoopContext,
     // Terminate if the shaded point is too far away.
     if (intensity == 0.0) return;
 
-    lightData.diffuseScale  *= intensity;
-    lightData.specularScale *= intensity;
+    lightData.diffuseColor  *= intensity;
+    lightData.specularColor *= intensity;
 
     // Translate the light s.t. the shaded point is at the origin of the coordinate system.
     lightData.positionWS -= positionWS;
@@ -1387,7 +1383,6 @@ void EvaluateBSDF_Line(LightLoopContext lightLoopContext,
     // Evaluate the diffuse part
     {
         ltcValue  = LTCEvaluate(P1, P2, B, preLightData.ltcTransformDiffuse);
-        ltcValue *= lightData.diffuseScale;
         diffuseLighting = bsdfData.diffuseColor * (preLightData.ltcMagnitudeDiffuse * ltcValue);
     }
 
@@ -1401,7 +1396,6 @@ void EvaluateBSDF_Line(LightLoopContext lightLoopContext,
         // Use the Lambertian approximation for performance reasons.
         // The matrix multiplication should not generate any extra ALU on GCN.
         ltcValue  = LTCEvaluate(P1, P2, B, mul(flipMatrix, k_identity3x3));
-        ltcValue *= lightData.diffuseScale;
 
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
         diffuseLighting += EvaluateTransmission(bsdfData, ltcValue, 1);
@@ -1412,20 +1406,18 @@ void EvaluateBSDF_Line(LightLoopContext lightLoopContext,
     {
         // TODO
         // ltcValue  = LTCEvaluate(P1, P2, B, preLightData.ltcXformClearCoat);
-        // ltcValue *= lightData.specularScale;
         // specularLighting = preLightData.ltcClearCoatFresnelTerm * (ltcValue * bsdfData.coatCoverage);
     }
 
     // Evaluate the specular part
     {
         ltcValue  = LTCEvaluate(P1, P2, B, preLightData.ltcTransformSpecular);
-        ltcValue *= lightData.specularScale;
         specularLighting += preLightData.ltcMagnitudeFresnel * ltcValue;
     }
 
-    // Save ALU by applying 'lightData.color' only once.
-    diffuseLighting  *= lightData.color;
-    specularLighting *= lightData.color;
+    // Save ALU by applying 'color' only once.
+    diffuseLighting  *= lightData.diffuseColor;
+    specularLighting *= lightData.specularColor;
 #endif // LIT_DISPLAY_REFERENCE_AREA
 
     lighting.directDiffuse += diffuseLighting;
@@ -1489,8 +1481,8 @@ void EvaluateBSDF_Rect( LightLoopContext lightLoopContext,
     // Terminate if the shaded point is too far away.
     if (intensity == 0.0) return;
 
-    lightData.diffuseScale  *= intensity;
-    lightData.specularScale *= intensity;
+    lightData.diffuseColor  *= intensity;
+    lightData.specularColor *= intensity;
 
     // Translate the light s.t. the shaded point is at the origin of the coordinate system.
     lightData.positionWS -= positionWS;
@@ -1512,7 +1504,6 @@ void EvaluateBSDF_Rect( LightLoopContext lightLoopContext,
     {
         // Polygon irradiance in the transformed configuration.
         ltcValue  = PolygonIrradiance(mul(lightVerts, preLightData.ltcTransformDiffuse));
-        ltcValue *= lightData.diffuseScale;
         diffuseLighting = bsdfData.diffuseColor * (preLightData.ltcMagnitudeDiffuse * ltcValue);
     }
 
@@ -1529,7 +1520,6 @@ void EvaluateBSDF_Rect( LightLoopContext lightLoopContext,
 
         // Polygon irradiance in the transformed configuration.
         ltcValue  = PolygonIrradiance(mul(lightVerts, ltcTransform));
-        ltcValue *= lightData.diffuseScale;
 
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
         diffuseLighting += EvaluateTransmission(bsdfData, ltcValue, 1);
@@ -1552,13 +1542,12 @@ void EvaluateBSDF_Rect( LightLoopContext lightLoopContext,
     {
         // Polygon irradiance in the transformed configuration.
         ltcValue  = PolygonIrradiance(mul(lightVerts, preLightData.ltcTransformSpecular));
-        ltcValue *= lightData.specularScale;
         specularLighting += preLightData.ltcMagnitudeFresnel * ltcValue;
     }
 
-    // Save ALU by applying 'lightData.color' only once.
-    diffuseLighting  *= lightData.color;
-    specularLighting *= lightData.color;
+    // Save ALU by applying 'color' only once.
+    diffuseLighting  *= lightData.diffuseColor;
+    specularLighting *= lightData.specularColor;
 #endif // LIT_DISPLAY_REFERENCE_AREA
 
     lighting.directDiffuse += diffuseLighting;

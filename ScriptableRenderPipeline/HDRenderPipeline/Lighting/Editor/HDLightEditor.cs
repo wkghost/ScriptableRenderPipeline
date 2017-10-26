@@ -50,6 +50,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty shapeRadius;
             public SerializedProperty maxSmoothness;
             public SerializedProperty applyRangeAttenuation;
+            public SerializedProperty overrideColorForSpecular;
+            public SerializedProperty specularColor;
 
             // Editor stuff
             public SerializedProperty useOldInspector;
@@ -164,6 +166,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 shapeRadius = o.Find(x => x.shapeRadius),
                 maxSmoothness = o.Find(x => x.maxSmoothness),
                 applyRangeAttenuation = o.Find(x => x.applyRangeAttenuation),
+                overrideColorForSpecular = o.Find(x => x.overrideColorForSpecular),
+                specularColor = o.Find(x => x.specularColor),
 
                 // Editor stuff
                 useOldInspector = o.Find(x => x.useOldInspector),
@@ -400,6 +404,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditorGUILayout.PropertyField(m_AdditionalLightData.fadeDistance, s_Styles.fadeDistance);
                 EditorGUILayout.PropertyField(m_AdditionalLightData.lightDimmer, s_Styles.lightDimmer);
                 EditorGUILayout.PropertyField(m_AdditionalLightData.applyRangeAttenuation, s_Styles.applyRangeAttenuation);
+                EditorGUILayout.PropertyField(m_AdditionalLightData.overrideColorForSpecular, s_Styles.overrideColorForSpecular);
+                EditorGUI.indentLevel++;
+                using (new UnityEditor.EditorGUI.DisabledGroupScope(!m_AdditionalLightData.overrideColorForSpecular.boolValue))
+                {
+                    EditorGUILayout.PropertyField(m_AdditionalLightData.specularColor, s_Styles.specularColor);
+                }
+                EditorGUI.indentLevel--;
                 EditorGUI.indentLevel--;
             }
         }

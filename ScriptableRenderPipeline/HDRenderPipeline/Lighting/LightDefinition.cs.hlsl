@@ -47,14 +47,16 @@ struct DirectionalLightData
 {
     float3 positionWS;
     bool tileCookie;
-    float3 color;
+    float3 diffuseColor;
     int shadowIndex;
+    float3 specularColor;
+    float unused0;
     float3 forward;
     int cookieIndex;
     float3 right;
-    float specularScale;
+    float unused1;
     float3 up;
-    float diffuseScale;
+    float unused2;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.LightData
@@ -63,21 +65,19 @@ struct LightData
 {
     float3 positionWS;
     float invSqrAttenuationRadius;
-    float3 color;
+    float3 diffuseColor;
     int shadowIndex;
+    float3 specularColor;
+    int lightType;
     float3 forward;
     int cookieIndex;
     float3 right;
-    float specularScale;
+    float minRoughness;
     float3 up;
-    float diffuseScale;
+    float shadowDimmer;
     float angleScale;
     float angleOffset;
-    float shadowDimmer;
-    int unused0;
     float2 size;
-    int lightType;
-    float minRoughness;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.EnvLightData
@@ -109,13 +109,21 @@ bool GetTileCookie(DirectionalLightData value)
 {
 	return value.tileCookie;
 }
-float3 GetColor(DirectionalLightData value)
+float3 GetDiffuseColor(DirectionalLightData value)
 {
-	return value.color;
+	return value.diffuseColor;
 }
 int GetShadowIndex(DirectionalLightData value)
 {
 	return value.shadowIndex;
+}
+float3 GetSpecularColor(DirectionalLightData value)
+{
+	return value.specularColor;
+}
+float GetUnused0(DirectionalLightData value)
+{
+	return value.unused0;
 }
 float3 GetForward(DirectionalLightData value)
 {
@@ -129,17 +137,17 @@ float3 GetRight(DirectionalLightData value)
 {
 	return value.right;
 }
-float GetSpecularScale(DirectionalLightData value)
+float GetUnused1(DirectionalLightData value)
 {
-	return value.specularScale;
+	return value.unused1;
 }
 float3 GetUp(DirectionalLightData value)
 {
 	return value.up;
 }
-float GetDiffuseScale(DirectionalLightData value)
+float GetUnused2(DirectionalLightData value)
 {
-	return value.diffuseScale;
+	return value.unused2;
 }
 
 //
@@ -153,13 +161,21 @@ float GetInvSqrAttenuationRadius(LightData value)
 {
 	return value.invSqrAttenuationRadius;
 }
-float3 GetColor(LightData value)
+float3 GetDiffuseColor(LightData value)
 {
-	return value.color;
+	return value.diffuseColor;
 }
 int GetShadowIndex(LightData value)
 {
 	return value.shadowIndex;
+}
+float3 GetSpecularColor(LightData value)
+{
+	return value.specularColor;
+}
+int GetLightType(LightData value)
+{
+	return value.lightType;
 }
 float3 GetForward(LightData value)
 {
@@ -173,17 +189,17 @@ float3 GetRight(LightData value)
 {
 	return value.right;
 }
-float GetSpecularScale(LightData value)
+float GetMinRoughness(LightData value)
 {
-	return value.specularScale;
+	return value.minRoughness;
 }
 float3 GetUp(LightData value)
 {
 	return value.up;
 }
-float GetDiffuseScale(LightData value)
+float GetShadowDimmer(LightData value)
 {
-	return value.diffuseScale;
+	return value.shadowDimmer;
 }
 float GetAngleScale(LightData value)
 {
@@ -193,25 +209,9 @@ float GetAngleOffset(LightData value)
 {
 	return value.angleOffset;
 }
-float GetShadowDimmer(LightData value)
-{
-	return value.shadowDimmer;
-}
-int GetUnused0(LightData value)
-{
-	return value.unused0;
-}
 float2 GetSize(LightData value)
 {
 	return value.size;
-}
-int GetLightType(LightData value)
-{
-	return value.lightType;
-}
-float GetMinRoughness(LightData value)
-{
-	return value.minRoughness;
 }
 
 //

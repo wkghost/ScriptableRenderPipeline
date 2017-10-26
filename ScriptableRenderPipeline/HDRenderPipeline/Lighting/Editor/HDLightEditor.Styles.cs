@@ -47,6 +47,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent shapeLengthBox = new GUIContent("Size X", "");
             public readonly GUIContent shapeWidthBox = new GUIContent("Size Y", "");
             public readonly GUIContent applyRangeAttenuation = new GUIContent("Apply Range Attenuation", "Allows disabling range attenuation. This is useful indoor (like a room) to avoid having to setup a large range for a light to get correct inverse square attenuation that may leak out of the indoor");
+            public readonly GUIContent overrideColorForSpecular = new GUIContent("Override color for specular", "This option allow to override the color use for specular lighting. CAUTION: This option break all physical lighting rules. Must be use with care.");
+            public readonly GUIContent specularColor = new GUIContent("Color", "The color to use for specular lighting");
 
             public readonly GUIContent shape = new GUIContent("Type", "Specifies the current type of light. Possible types are Directional, Spot, Point, Rectangle and Line lights.");
             public readonly GUIContent[] shapeNames;

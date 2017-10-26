@@ -49,12 +49,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Only for Rectangle/Line/box projector lights
         [Range(0.0f, 20.0f)]
-        [FormerlySerializedAs("lightLength")]
         public float shapeLength = 0.5f;
 
         // Only for Rectangle/box projector lights
         [Range(0.0f, 20.0f)]
-        [FormerlySerializedAs("lightWidth")]
         public float shapeWidth = 0.5f;
 
         // Only for pyramid projector
@@ -69,6 +67,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // If true, we apply the smooth attenuation factor on the range attenuation to get 0 value, else the attenuation is just inverse square and never reach 0
         public bool applyRangeAttenuation = true;
+
+        public bool overrideColorForSpecular = false;
+        public Color specularColor = Color.white;
 
         // This is specific for the LightEditor GUI and not use at runtime
         public bool useOldInspector = false;

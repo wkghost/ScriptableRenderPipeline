@@ -744,6 +744,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return new Vector3(light.finalColor.r, light.finalColor.g, light.finalColor.b);
             }
 
+            public Vector3 GetLightSpecularColor(HDAdditionalLightData data)
+            {
+                return new Vector3(data.specularColor.r, data.specularColor.g, data.specularColor.b);
+            }
+
             public bool GetDirectionalLightData(ShadowSettings shadowSettings, GPULightType gpuLightType, VisibleLight light, HDAdditionalLightData additionalData, AdditionalShadowData additionalShadowData, int lightIndex)
             {
                 var directionalLightData = new DirectionalLightData();
@@ -759,9 +764,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 directionalLightData.up         = light.light.transform.up    * 2 / additionalData.shapeWidth;
                 directionalLightData.right      = light.light.transform.right * 2 / additionalData.shapeLength;
                 directionalLightData.positionWS = light.light.transform.position;
-                directionalLightData.color = GetLightColor(light);
-                directionalLightData.diffuseScale = additionalData.affectDiffuse ? diffuseDimmer : 0.0f;
-                directionalLightData.specularScale = additionalData.affectSpecular ? specularDimmer : 0.0f;
+                Vector3 color = GetLightColor(light);
+
+                float diffuseScale = additionalData.affectDiffuse ? diffuseDimmer : 0.0f;
+                float specularScale = additionalData.affectSpecular ? specularDimmer : 0.0f;
+
+                directionalLightData.diffuseColor = color * diffuseScale;
+                Vector3 specularColorTint = GetLightSpecularColor(additionalData);
+                specularColorTint.Scale(color);
+                directionalLightData.specularColor = specularColorTint * specularScale;
+
                 directionalLightData.shadowIndex = directionalLightData.cookieIndex = -1;
 
                 if (light.light.cookie != null)
@@ -800,7 +812,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.positionWS = light.light.transform.position;
                 // Setting 0 for invSqrAttenuationRadius mean we have no range attenuation, but still have inverse square attenuation.
                 lightData.invSqrAttenuationRadius = additionalLightData.applyRangeAttenuation ? 1.0f / (light.range * light.range) : 0.0f;
-                lightData.color = GetLightColor(light);
+
+                // Calculate light fading
+                float distanceToCamera = (lightData.positionWS - camera.transform.position).magnitude;
+                float distanceFade = ComputeLinearDistanceFade(distanceToCamera, additionalLightData.fadeDistance);
+                float lightScale = additionalLightData.lightDimmer * distanceFade;
+
+                float diffuseScale = additionalLightData.affectDiffuse ? lightScale * m_TileSettings.diffuseGlobalDimmer : 0.0f;
+                float specularScale = additionalLightData.affectSpecular ? lightScale * m_TileSettings.specularGlobalDimmer : 0.0f;
+
+                if (diffuseScale <= 0.0f && specularScale <= 0.0f)
+                    return false;
+
+                Vector3 color = GetLightColor(light);
+                lightData.diffuseColor = color * diffuseScale;
+                Vector3 specularColorTint = GetLightSpecularColor(additionalLightData);
+                specularColorTint.Scale(color);
+                lightData.specularColor = specularColorTint * specularScale;
 
                 lightData.forward = light.light.transform.forward; // Note: Light direction is oriented backward (-Z)
                 lightData.up = light.light.transform.up;
@@ -863,16 +891,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     lightData.angleScale = 0.0f;
                     lightData.angleOffset = 1.0f;
                 }
-
-                float distanceToCamera = (lightData.positionWS - camera.transform.position).magnitude;
-                float distanceFade = ComputeLinearDistanceFade(distanceToCamera, additionalLightData.fadeDistance);
-                float lightScale = additionalLightData.lightDimmer * distanceFade;
-
-                lightData.diffuseScale = additionalLightData.affectDiffuse ? lightScale * m_TileSettings.diffuseGlobalDimmer : 0.0f;
-                lightData.specularScale = additionalLightData.affectSpecular ? lightScale * m_TileSettings.specularGlobalDimmer : 0.0f;
-
-                if (lightData.diffuseScale <= 0.0f && lightData.specularScale <= 0.0f)
-                    return false;
 
                 lightData.cookieIndex = -1;
                 lightData.shadowIndex = -1;

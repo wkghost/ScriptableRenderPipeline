@@ -39,17 +39,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 positionWS;
         public bool tileCookie;
 
-        public Vector3 color;
+        public Vector3 diffuseColor;
         public int shadowIndex; // -1 if unused
+
+        public Vector3 specularColor;
+        public float unused0;
 
         public Vector3 forward;
         public int cookieIndex; // -1 if unused
 
         public Vector3 right;   // Rescaled by (2 / shapeLenght)
-        public float specularScale;
+        public float unused1;
 
         public Vector3 up;      // Rescaled by (2 / shapeWidth)
-        public float diffuseScale;
+        public float unused2;
     };
 
     [GenerateHLSL]
@@ -58,26 +61,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 positionWS;
         public float invSqrAttenuationRadius;
 
-        public Vector3 color;
+        public Vector3 diffuseColor;
         public int shadowIndex; // -1 if unused
+
+        public Vector3 specularColor;
+        public GPULightType lightType;
 
         public Vector3 forward;
         public int cookieIndex; // -1 if unused
 
         public Vector3 right;   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeLenght)
-        public float specularScale;
+        public float minRoughness;  // This is use to give a small "area" to punctual light, as if we have a light with a radius.
 
         public Vector3 up;      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by * (2 / shapeWidth)
-        public float diffuseScale;
+        public float shadowDimmer;
 
         public float angleScale;  // Spot light
         public float angleOffset; // Spot light
-        public float shadowDimmer;
-        public int unused0;
-
         public Vector2 size;      // Used by area, frustum projector and spot lights (x = cot(outerHalfAngle))
-        public GPULightType lightType;
-        public float minRoughness;  // This is use to give a small "area" to punctual light, as if we have a light with a radius.
     };
 
 
