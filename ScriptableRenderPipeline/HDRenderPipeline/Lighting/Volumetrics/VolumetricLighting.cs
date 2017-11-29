@@ -106,6 +106,7 @@ public partial class HDRenderPipeline : RenderPipeline
 
     ComputeShader m_VolumetricLightingCS { get { return m_Asset.renderPipelineResources.volumetricLightingCS; } }
 
+    // XRTODO: Fix up for XR buffers, probably just add more slices
     void CreateVolumetricLightingBuffers(int width, int height)
     {
         if (m_VolumetricLightingBufferAccumulated != null)
@@ -191,6 +192,10 @@ public partial class HDRenderPipeline : RenderPipeline
 
     void VolumetricLightingPass(HDCamera hdCamera, CommandBuffer cmd)
     {
+        // XRTODO: Disable for now...
+        if (hdCamera.stereoActive)
+            return;
+
         if (!SetGlobalVolumeProperties(m_VolumetricLightingEnabled, cmd, m_VolumetricLightingCS)) { return; }
 
         using (new ProfilingSample(cmd, "VolumetricLighting"))
@@ -209,7 +214,8 @@ public partial class HDRenderPipeline : RenderPipeline
             m_LightLoop.PushGlobalParams(hdCamera.camera, cmd, m_VolumetricLightingCS, volumetricLightingKernel, true);
             cmd.SetComputeIntParam(m_VolumetricLightingCS, HDShaderIDs._UseTileLightList, 0);
 
-            cmd.DispatchCompute(m_VolumetricLightingCS, volumetricLightingKernel, ((int)hdCamera.screenSize.x + 15) / 16, ((int)hdCamera.screenSize.y + 15) / 16, 1);
+            //cmd.DispatchCompute(m_VolumetricLightingCS, volumetricLightingKernel, ((int)hdCamera.screenSize.x + 15) / 16, ((int)hdCamera.screenSize.y + 15) / 16, 1);
+            cmd.DispatchCompute(m_VolumetricLightingCS, volumetricLightingKernel, ((int)hdCamera.textureSize.x + 15) / 16, ((int)hdCamera.textureSize.y + 15) / 16, 1);
         }
     }
 } // class HDRenderPipeline

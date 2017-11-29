@@ -681,6 +681,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return 8 * (1 << k_Log2NumClusters);       // total footprint for all layers of the tile (measured in light index entries)
             }
 
+            // XRTODO: Plumb this for stereo.  First pass will be to double the tiles,
+            // second pass will be to unify the tiles
             public void AllocResolutionDependentBuffers(int width, int height)
             {
                 var nrTilesX = (width + LightDefinitions.s_TileSizeFptl - 1) / LightDefinitions.s_TileSizeFptl;
@@ -1939,6 +1941,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public void RenderDeferredDirectionalShadow(HDCamera hdCamera, RenderTargetIdentifier deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd)
             {
+                // TODO: Should this be disabled for forward?
+
                 if (m_CurrentSunLight == null)
                     return;
 
@@ -1952,8 +1956,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(deferredDirectionalShadowComputeShader, s_deferredDirectionalShadowKernel, HDShaderIDs._MainDepthTexture, depthTexture);
 
                     int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
-                    int numTilesX = (hdCamera.camera.pixelWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
-                    int numTilesY = (hdCamera.camera.pixelHeight + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+                    //int numTilesX = (hdCamera.camera.pixelWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+                    //int numTilesY = (hdCamera.camera.pixelHeight + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+                    // XRTODO: Proper fix
+                    int numTilesX = ((int)hdCamera.textureSize.x + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+                    int numTilesY = ((int)hdCamera.textureSize.y + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
 
                     cmd.DispatchCompute(deferredDirectionalShadowComputeShader, s_deferredDirectionalShadowKernel, numTilesX, numTilesY, 1);
                 }

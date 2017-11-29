@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
+using UnityEngine.XR;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -15,8 +16,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Matrix4x4 projMatrix;
         public Matrix4x4 nonJitteredProjMatrix;
         public Vector4 screenSize;
+        public Vector2 textureSize;
+        public RenderTextureDescriptor rtDesc;
         public Plane[] frustumPlanes;
         public Vector4[] frustumPlaneEquations;
+        public bool stereoActive;
         public Camera camera;
 
         public Matrix4x4 viewProjMatrix
@@ -73,7 +77,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Reset();
         }
 
-        public void Update(PostProcessLayer postProcessLayer)
+        public void Update(PostProcessLayer postProcessLayer, bool stereoEnabled = false)
         {
             // If TAA is enabled projMatrix will hold a jittered projection matrix. The original,
             // non-jittered projection matrix can be accessed via nonJitteredProjMatrix.
@@ -122,7 +126,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             projMatrix = gpuProj;
             nonJitteredProjMatrix = gpuNonJitteredProj;
             cameraPos = pos;
-            screenSize = new Vector4(camera.pixelWidth, camera.pixelHeight, 1.0f / camera.pixelWidth, 1.0f / camera.pixelHeight);
+
+            if (stereoEnabled == true)
+            {
+                screenSize = new Vector4(XRSettings.eyeTextureWidth, XRSettings.eyeTextureHeight, 1.0f / XRSettings.eyeTextureWidth, 1.0f / XRSettings.eyeTextureHeight);
+                rtDesc = XRSettings.eyeTextureDesc;
+            }
+            else
+            {
+                screenSize = new Vector4(camera.pixelWidth, camera.pixelHeight, 1.0f / camera.pixelWidth, 1.0f / camera.pixelHeight);
+                rtDesc = new RenderTextureDescriptor(camera.pixelWidth, camera.pixelHeight);
+            }
+            textureSize = new Vector4(rtDesc.width, rtDesc.height);
+            stereoActive = stereoEnabled;
 
             GeometryUtility.CalculateFrustumPlanes(viewProjMatrix, frustumPlanes);
 
@@ -141,7 +157,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Grab the HDCamera tied to a given Camera and update it.
-        public static HDCamera Get(Camera camera, PostProcessLayer postProcessLayer)
+        public static HDCamera Get(Camera camera, PostProcessLayer postProcessLayer, bool stereoEnabled = false)
         {
             HDCamera hdcam;
 
@@ -151,7 +167,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 s_Cameras.Add(camera, hdcam);
             }
 
-            hdcam.Update(postProcessLayer);
+            hdcam.Update(postProcessLayer, stereoEnabled);
             return hdcam;
         }
 

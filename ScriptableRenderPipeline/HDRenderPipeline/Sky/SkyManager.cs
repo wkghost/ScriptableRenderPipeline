@@ -261,6 +261,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void Resize(float nearPlane, float farPlane)
         {
+            // XRTODO: Maybe consider two sets of skyboxes for each camera eye?
             // When loading RenderDoc, RenderTextures will go null
             RebuildTextures(skySettings);
             RebuildSkyMatrices(nearPlane, farPlane);

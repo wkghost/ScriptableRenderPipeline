@@ -14,9 +14,10 @@ MonoBehaviour:
   m_RenderPipelineResources: {fileID: 11400000, guid: 42086e81f4f0c724f96f7f09cc995354,
     type: 2}
   renderingSettings:
-    useForwardRenderingOnly: 0
+    useForwardRenderingOnly: 1
     useDepthPrepassWithDeferredRendering: 0
     renderAlphaTestOnlyInDeferredPrepass: 0
+    disableStereoPaths: 0
   sssSettings: {fileID: 11400000, guid: 873499ce7a6f749408981f512a9683f7, type: 2}
   tileSettings:
     enableTileAndCluster: 1
