@@ -1,0 +1,11 @@
+{
+    "name": "com.unity.render-pipelines.core.Editor",
+    "references": [
+      "com.unity.render-pipelines.core.Runtime",
+      "ICSharpCode.NRefactory"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
