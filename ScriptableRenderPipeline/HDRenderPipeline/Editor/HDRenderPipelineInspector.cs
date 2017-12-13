@@ -1,5 +1,5 @@
 using System.Reflection;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -186,7 +186,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.PropertyField(m_SpotCookieSize, s_Styles.spotCookieSize);
             EditorGUILayout.PropertyField(m_PointCookieSize, s_Styles.pointCookieSize);
             EditorGUILayout.PropertyField(m_ReflectionCubemapSize, s_Styles.reflectionCubemapSize);
-            
+
             // Commented ou until we have proper realtime BC6H compression
             //EditorGUILayout.PropertyField(m_ReflectionCacheCompressed, s_Styles.reflectionCacheCompressed);
 
@@ -215,7 +215,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             EditorGUILayout.LabelField(s_Styles.defaults, EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(m_RenderPipelineResources, s_Styles.renderPipelineResources);            
+            EditorGUILayout.PropertyField(m_RenderPipelineResources, s_Styles.renderPipelineResources);
             EditorGUILayout.PropertyField(m_DefaultDiffuseMaterial, s_Styles.defaultDiffuseMaterial);
             EditorGUILayout.PropertyField(m_DefaultShader, s_Styles.defaultShader);
             EditorGUI.indentLevel--;
