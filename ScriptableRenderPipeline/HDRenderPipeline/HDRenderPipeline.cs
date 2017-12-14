@@ -1033,7 +1033,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             renderContext.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
-            var drawSettings = new DrawRendererSettings(camera, HDShaderPassNames.s_EmptyName)
+            var drawSettings = new DrawSettings (camera, HDShaderPassNames.s_EmptyName)
             {
                 rendererConfiguration = rendererConfiguration,
                 sorting = { flags = SortFlags.CommonOpaque }
@@ -1047,7 +1047,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (overrideMaterial != null)
                 drawSettings.SetOverrideMaterial(overrideMaterial, 0);
 
-            var filterSettings = new FilterRenderersSettings(true)
+            var filterSettings = new FilterSettings(true)
             {
                 renderQueueRange = inRenderQueueRange == null ? RenderQueueRange.opaque : inRenderQueueRange.Value
             };
@@ -1091,7 +1091,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             renderContext.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
-            var drawSettings = new DrawRendererSettings(camera, HDShaderPassNames.s_EmptyName)
+            var drawSettings = new DrawSettings (camera, HDShaderPassNames.s_EmptyName)
             {
                 rendererConfiguration = rendererConfiguration,
                 sorting = { flags = SortFlags.CommonTransparent }
@@ -1105,7 +1105,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (overrideMaterial != null)
                 drawSettings.SetOverrideMaterial(overrideMaterial, 0);
 
-            var filterSettings = new FilterRenderersSettings(true)
+            var filterSettings = new FilterSettings(true)
             {
                 renderQueueRange = inRenderQueueRange == null ? k_RenderQueue_AllTransparent : inRenderQueueRange.Value
             };

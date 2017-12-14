@@ -332,10 +332,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
 
-            var opaqueDrawSettings = new DrawRendererSettings(m_CurrCamera, m_DepthPrePass);
+            var opaqueDrawSettings = new DrawSettings (m_CurrCamera, m_DepthPrePass);
             opaqueDrawSettings.sorting.flags = SortFlags.CommonOpaque;
 
-            var opaqueFilterSettings = new FilterRenderersSettings(true)
+            var opaqueFilterSettings = new FilterSettings(true)
             {
                 renderQueueRange = RenderQueueRange.opaque
             };
@@ -359,12 +359,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void RenderOpaques(ref ScriptableRenderContext context, RendererConfiguration settings)
         {
-            var opaqueDrawSettings = new DrawRendererSettings(m_CurrCamera, m_LitPassName);
+            var opaqueDrawSettings = new DrawSettings (m_CurrCamera, m_LitPassName);
             opaqueDrawSettings.SetShaderPassName(1, m_UnlitPassName);
             opaqueDrawSettings.sorting.flags = SortFlags.CommonOpaque;
             opaqueDrawSettings.rendererConfiguration = settings;
 
-            var opaqueFilterSettings = new FilterRenderersSettings(true)
+            var opaqueFilterSettings = new FilterSettings(true)
             {
                 renderQueueRange = RenderQueueRange.opaque
             };
@@ -410,12 +410,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void RenderTransparents(ref ScriptableRenderContext context, RendererConfiguration config)
         {
-            var transparentSettings = new DrawRendererSettings(m_CurrCamera, m_LitPassName);
+            var transparentSettings = new DrawSettings (m_CurrCamera, m_LitPassName);
             transparentSettings.SetShaderPassName(1, m_UnlitPassName);
             transparentSettings.sorting.flags = SortFlags.CommonTransparent;
             transparentSettings.rendererConfiguration = config;
 
-            var transparentFilterSettings = new FilterRenderersSettings(true)
+            var transparentFilterSettings = new FilterSettings(true)
             {
                 renderQueueRange = RenderQueueRange.transparent
             };
@@ -438,11 +438,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         }
 
         [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
-        private void RenderObjectsWithError(ref ScriptableRenderContext context, FilterRenderersSettings filterSettings, SortFlags sortFlags)
+        private void RenderObjectsWithError(ref ScriptableRenderContext context, FilterSettings filterSettings, SortFlags sortFlags)
         {
             if (m_ErrorMaterial != null)
             {
-                DrawRendererSettings errorSettings = new DrawRendererSettings(m_CurrCamera, s_LegacyPassNames[0]);
+                DrawSettings  errorSettings = new DrawSettings (m_CurrCamera, s_LegacyPassNames[0]);
                 for (int i = 1; i < s_LegacyPassNames.Length; ++i)
                     errorSettings.SetShaderPassName(i, s_LegacyPassNames[i]);
 

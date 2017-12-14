@@ -418,13 +418,13 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             CommandBufferPool.Release(cmd);
 
             // render opaque objects using Deferred pass
-            var drawSettings = new DrawRendererSettings(camera, new ShaderPassName("Deferred"))
+            var drawSettings = new DrawSettings (camera, new ShaderPassName("Deferred"))
             {
                 sorting = { flags = SortFlags.CommonOpaque },
                 //@TODO: need to get light probes + LPPV too?
                 rendererConfiguration = RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe | RendererConfiguration.ProvideLightIndices | RendererConfiguration.ProvideReflectionProbeIndices
             };
-            var filterSettings = new FilterRenderersSettings(true){renderQueueRange = RenderQueueRange.opaque};
+            var filterSettings = new FilterSettings(true){renderQueueRange = RenderQueueRange.opaque};
             loop.DrawRenderers(cull.visibleRenderers, ref drawSettings, filterSettings);
         }
 
@@ -446,12 +446,12 @@ namespace UnityEngine.Experimental.Rendering.Fptl
 
 
             // render opaque objects using Deferred pass
-            var drawSettings = new DrawRendererSettings(camera, new ShaderPassName("ForwardSinglePass"))
+            var drawSettings = new DrawSettings (camera, new ShaderPassName("ForwardSinglePass"))
             {
                 sorting = { flags = opaquesOnly ? SortFlags.CommonOpaque : SortFlags.CommonTransparent },
                 rendererConfiguration = RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe | RendererConfiguration.ProvideLightIndices | RendererConfiguration.ProvideReflectionProbeIndices
             };
-            var filterSettings = new FilterRenderersSettings(true) { renderQueueRange = opaquesOnly ? RenderQueueRange.opaque : RenderQueueRange.transparent };
+            var filterSettings = new FilterSettings(true) { renderQueueRange = opaquesOnly ? RenderQueueRange.opaque : RenderQueueRange.transparent };
 
             loop.DrawRenderers(cull.visibleRenderers, ref drawSettings, filterSettings);
         }
@@ -464,11 +464,11 @@ namespace UnityEngine.Experimental.Rendering.Fptl
             CommandBufferPool.Release(cmd);
 
             // render opaque objects using Deferred pass
-            var drawSettings = new DrawRendererSettings(camera, new ShaderPassName("DepthOnly"))
+            var drawSettings = new DrawSettings (camera, new ShaderPassName("DepthOnly"))
             {
                 sorting = { flags = SortFlags.CommonOpaque }
             };
-            var filterSettings = new FilterRenderersSettings(true) {};
+            var filterSettings = new FilterSettings(true) {};
             filterSettings.renderQueueRange = RenderQueueRange.opaque;
             loop.DrawRenderers(cull.visibleRenderers, ref drawSettings, filterSettings);
         }
