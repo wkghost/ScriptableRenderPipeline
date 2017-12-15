@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using UnityEditor.Experimental.Rendering.HDPipeline;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -81,6 +83,8 @@ namespace UnityEditor.Experimental.Rendering
         {
             if (s.HasAndClearOperation(Operation.UpdateOldLocalSpace))
                 s.UpdateOldLocalSpace((ReflectionProbe)p.so.targetObject);
+            if (s.HasAndClearOperation(Operation.FitVolumeToSurroundings))
+                FitProbe(s, p, o);
         }
 
         void HideAdditionalComponents(bool visible)
@@ -228,6 +232,77 @@ namespace UnityEditor.Experimental.Rendering
                 var p = data.GetComponent<ReflectionProbe>();
                 ResetProbeSceneTextureInMaterial(p);
             }
+        }
+
+        class Entry
+        {
+            internal float v;
+            internal int c;
+        }
+        static readonly Vector3[] k_Orientations = { Vector3.right, -Vector3.right, Vector3.up, -Vector3.up, Vector3.forward, -Vector3.forward };
+        static void FitProbe(UIState s, SerializedReflectionProbe p, HDReflectionProbeEditor o)
+        {
+            var rp = (ReflectionProbe)p.so.targetObject;
+
+            var go = new GameObject("Camera");
+            var cam = go.AddComponent<Camera>();
+            var rt = RenderTexture.GetTemporary(128, 128, 24);
+            cam.SetTargetBuffers(rt.colorBuffer, rt.depthBuffer);
+            cam.depthTextureMode = DepthTextureMode.Depth;
+            cam.aspect = 1;
+            cam.fieldOfView = 90;
+            var tr = cam.transform;
+            tr.position = rp.transform.position;
+
+            var t = new Texture2D(rt.width, rt.height, TextureFormat.RGBAFloat, false, true);
+
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(HDEditorUtils.GetHDRenderPipelinePath() + "RenderPipelineResources/RenderDepth.shader");
+
+            var size = rt.width * rt.height;
+            var pixels = new float[size * 6];
+
+            for (var i = 0; i < k_Orientations.Length; i++)
+            {
+                tr.forward = k_Orientations[i];
+                cam.RenderWithShader(shader, null);
+                var tmp = RenderTexture.active;
+                t.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0, false);
+                RenderTexture.active = tmp;
+
+                var pixs = t.GetPixels(0);
+                var offset = size * i;
+                for (var j = 0; j < pixs.Length; ++j)
+                    pixels[j + offset] = pixs[j].r;
+            }
+
+            RenderTexture.ReleaseTemporary(rt);
+            DestroyImmediate(go);
+
+            Array.Sort(pixels);
+
+            var step = 0.01f;
+            var vs = new List<Entry>();
+            vs.Add(new Entry { v = pixels[0], c = 0 });
+            var last = vs[0];
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                var d = pixels[i];
+                if (d >= last.v + step)
+                {
+                    last = new Entry
+                    {
+                        v = d,
+                        c = 1
+                    };
+                    vs.Add(last);
+                }
+                else
+                    ++last.c;
+            }
+
+            var percent = 0;
+
+            p.boxSize.vector3Value = Vector3.one * pixels[percent];
         }
     }
 }
