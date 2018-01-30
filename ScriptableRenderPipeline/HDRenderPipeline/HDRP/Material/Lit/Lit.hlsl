@@ -174,6 +174,7 @@ uint TileVariantToFeatureFlags(uint variant, uint tileIndex)
 //-----------------------------------------------------------------------------
 
 #if HAS_REFRACTION
+# include "CoreRP/ShaderLibrary/DepthRaymarching.hlsl"
 # include "CoreRP/ShaderLibrary/Refraction.hlsl"
 
 # if defined(_REFRACTION_PLANE)
@@ -1660,12 +1661,33 @@ IndirectLighting EvaluateBSDF_SSRefraction(LightLoopContext lightLoopContext,
     //    a. Get the corresponding color depending on the roughness from the gaussian pyramid of the color buffer
     //    b. Multiply by the transmittance for absorption (depends on the optical depth)
 
-    float3 refractedBackPointWS = EstimateRaycast(V, posInput, preLightData.transparentPositionWS, preLightData.transparentRefractV);
+    float3 positionVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentPositionWS, 1)).xyz;
+    float transparentRefractVVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentRefractV, 0));
+
+    uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
+
+    float hitDistance = 0;
+    float refractedBackPointDepth = 0;
+    if (!RaymarchDepthBuffer(
+            positionVS,
+        posInput.linearDepth,
+            transparentRefractVVS,
+            UNITY_MATRIX_P,
+            depthSize,
+            0,
+            int(_PyramidDepthMipSize.z),
+            hitDistance,
+            refractedBackPointDepth
+        ))
+        return lighting;
+
+    //float3 refractedBackPointWS = EstimateRaycast(V, posInput, preLightData.transparentPositionWS, preLightData.transparentRefractV);
+    float3 refractedBackPointWS = preLightData.transparentPositionWS + preLightData.transparentRefractV * hitDistance;
+
 
     // Calculate screen space coordinates of refracted point in back plane
     float2 refractedBackPointNDC = ComputeNormalizedDeviceCoordinates(refractedBackPointWS, UNITY_MATRIX_VP);
-    uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
-    float refractedBackPointDepth = LinearEyeDepth(LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, refractedBackPointNDC * depthSize, 0).r, _ZBufferParams);
+    //float refractedBackPointDepth = LinearEyeDepth(LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, refractedBackPointNDC * depthSize, 0).r, _ZBufferParams);
 
     // Exit if texel is out of color buffer
     // Or if the texel is from an object in front of the object
