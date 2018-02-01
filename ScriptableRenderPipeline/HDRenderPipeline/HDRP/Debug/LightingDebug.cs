@@ -42,7 +42,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         public bool IsDebugDisplayEnabled()
         {
-            return debugLightingMode != DebugLightingMode.None;
+            return debugLightingMode != DebugLightingMode.None || overrideSmoothness || overrideAlbedo || overrideNormal;
         }
 
         public DebugScreenSpaceTracing debugScreenSpaceTracingMode = DebugScreenSpaceTracing.None;
@@ -56,7 +56,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool                 overrideSmoothness = false;
         public float                overrideSmoothnessValue = 0.5f;
-        public Color                debugLightingAlbedo = new Color(0.5f, 0.5f, 0.5f);
+        public bool                 overrideAlbedo = false;
+        public Color                overrideAlbedoValue = new Color(0.5f, 0.5f, 0.5f);
+        public bool                 overrideNormal = false;
 
         public bool                 displaySkyReflection = false;
         public float                skyReflectionMipmap = 0.0f;
