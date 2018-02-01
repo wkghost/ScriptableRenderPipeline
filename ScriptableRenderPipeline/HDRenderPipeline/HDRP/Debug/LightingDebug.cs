@@ -25,9 +25,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public enum DebugScreenSpaceTracing
     {
         None,
-        PositionVS,
+        PositionNDC,
+        DirNDC,
         HitDistance,
-        HitDepth
+        HitDepth,
+        HitSuccess,
+        IterationCount,
+        MaxUsedLevel
     }
 
     public enum ShadowMapDebugMode

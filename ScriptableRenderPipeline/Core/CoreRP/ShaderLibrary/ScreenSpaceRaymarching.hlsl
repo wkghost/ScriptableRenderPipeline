@@ -56,6 +56,10 @@ bool ScreenSpaceRaymarch(
 
     bool hitSuccessful = true;
 
+#ifdef DEBUG_DISPLAY
+    int maxUsedLevel = currentLevel;
+#endif
+
     while (currentLevel >= minLevel)
     {
         if (++iteration < MAX_ITERATIONS)
@@ -93,6 +97,9 @@ bool ScreenSpaceRaymarch(
         if (hiZLinearDepth > testHitPositionTXS.z)
         {
             currentLevel = min(maxLevel, currentLevel + 1);
+#ifdef DEBUG_DISPLAY
+            maxUsedLevel = max(maxUsedLevel, currentLevel);
+#endif
             positionTXS = testHitPositionTXS;
             hit.distance += rayOffsetTestLength;
         }
@@ -101,6 +108,7 @@ bool ScreenSpaceRaymarch(
             float rayOffsetLength = (hiZLinearDepth - positionTXS.z) / dirNDC.z;
             positionTXS += dirNDC * rayOffsetLength;
             hit.distance += rayOffsetLength;
+            --currentLevel;
         }
     }
 
@@ -112,14 +120,26 @@ bool ScreenSpaceRaymarch(
     {
         switch (_DebugLightingSubMode)
         {
-            case DEBUGSCREENSPACETRACING_POSITION_VS:
+            case DEBUGSCREENSPACETRACING_POSITION_NDC:
                 hit.debugOutput = float3(startPositionNDC.xy, 0);
+                break;
+            case DEBUGSCREENSPACETRACING_DIR_NDC:
+                hit.debugOutput = dirNDC;
                 break;
             case DEBUGSCREENSPACETRACING_HIT_DISTANCE:
                 hit.debugOutput = hit.distance;
                 break;
             case DEBUGSCREENSPACETRACING_HIT_DEPTH:
                 hit.debugOutput = hit.linearDepth;
+                break;
+            case DEBUGSCREENSPACETRACING_HIT_SUCCESS:
+                hit.debugOutput = hitSuccessful;
+                break;
+            case DEBUGSCREENSPACETRACING_ITERATION_COUNT:
+                hit.debugOutput = float(iteration) / float(MAX_ITERATIONS);
+                break;
+            case DEBUGSCREENSPACETRACING_MAX_USED_LEVEL:
+                hit.debugOutput = float(maxUsedLevel) / float(maxLevel);
                 break;
         }
     }
