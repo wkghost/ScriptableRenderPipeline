@@ -18,6 +18,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         IndirectSpecularGtaoFromSsao,
         EnvironmentProxyVolume,
         EnvironmentSampleCoordinates,
+        ScreenSpaceTracingRefraction,
+    }
+
+    [GenerateHLSL]
+    public enum DebugScreenSpaceTracing
+    {
+        None,
+        PositionVS,
+        HitDistance,
+        HitDepth
     }
 
     public enum ShadowMapDebugMode
@@ -35,6 +45,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return debugLightingMode != DebugLightingMode.None;
         }
 
+        public DebugScreenSpaceTracing debugScreenSpaceTracingMode = DebugScreenSpaceTracing.None;
         public DebugLightingMode    debugLightingMode = DebugLightingMode.None;
         public ShadowMapDebugMode   shadowDebugMode = ShadowMapDebugMode.None;
         public bool                 shadowDebugUseSelection = false;

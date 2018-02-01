@@ -107,6 +107,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             --EditorGUI.indentLevel;
                             break;
                         }
+                    case DebugLightingMode.ScreenSpaceTracingRefraction:
+                        {
+                            ++EditorGUI.indentLevel;
+                            m_DebugPanel.GetDebugItem(DebugDisplaySettings.kScreenSpaceTracingMode).handler.OnEditorGUI();
+                            --EditorGUI.indentLevel;
+                            break;
+                        }
                 }
 
                 var fullScreenDebugModeHandler = m_DebugPanel.GetDebugItem(DebugDisplaySettings.kFullScreenDebugMode);

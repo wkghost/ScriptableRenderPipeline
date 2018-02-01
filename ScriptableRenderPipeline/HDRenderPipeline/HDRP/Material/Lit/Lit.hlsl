@@ -174,7 +174,7 @@ uint TileVariantToFeatureFlags(uint variant, uint tileIndex)
 //-----------------------------------------------------------------------------
 
 #if HAS_REFRACTION
-# include "CoreRP/ShaderLibrary/DepthRaymarching.hlsl"
+# include "CoreRP/ShaderLibrary/ScreenSpaceRaymarching.hlsl"
 # include "CoreRP/ShaderLibrary/Refraction.hlsl"
 
 # if defined(_REFRACTION_PLANE)
@@ -1662,45 +1662,57 @@ IndirectLighting EvaluateBSDF_SSRefraction(LightLoopContext lightLoopContext,
     //    b. Multiply by the transmittance for absorption (depends on the optical depth)
 
     float3 positionVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentPositionWS, 1)).xyz;
-    float transparentRefractVVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentRefractV, 0));
+    float3 transparentRefractVVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentRefractV, 0)).xyz;
 
     uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
 
-    float hitDistance = 0;
-    float refractedBackPointDepth = 0;
-    if (!RaymarchDepthBuffer(
-            positionVS,
+    ScreenSpaceRayHit hit;
+    ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
+
+    bool hitSuccessful = ScreenSpaceRaymarch(
+        positionVS,
         posInput.linearDepth,
-            transparentRefractVVS,
-            UNITY_MATRIX_P,
-            depthSize,
-            0,
-            int(_PyramidDepthMipSize.z),
-            hitDistance,
-            refractedBackPointDepth
-        ))
+        transparentRefractVVS,
+        UNITY_MATRIX_P,
+        depthSize,
+        0,
+        int(_PyramidDepthMipSize.z),
+        hit
+    );
+
+#ifdef DEBUG_DISPLAY
+    if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)
+    {
+        float weight = 1.0;
+        UpdateLightingHierarchyWeights(hierarchyWeight, weight);
+        lighting.specularTransmitted = hit.debugOutput;
+        return lighting;
+    }
+#endif
+
+    if (!hitSuccessful)
         return lighting;
 
     //float3 refractedBackPointWS = EstimateRaycast(V, posInput, preLightData.transparentPositionWS, preLightData.transparentRefractV);
-    float3 refractedBackPointWS = preLightData.transparentPositionWS + preLightData.transparentRefractV * hitDistance;
+    //float3 refractedBackPointWS = preLightData.transparentPositionWS + preLightData.transparentRefractV * hitDistance;
 
 
     // Calculate screen space coordinates of refracted point in back plane
-    float2 refractedBackPointNDC = ComputeNormalizedDeviceCoordinates(refractedBackPointWS, UNITY_MATRIX_VP);
+    //float2 refractedBackPointNDC = ComputeNormalizedDeviceCoordinates(refractedBackPointWS, UNITY_MATRIX_VP);
     //float refractedBackPointDepth = LinearEyeDepth(LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, refractedBackPointNDC * depthSize, 0).r, _ZBufferParams);
 
     // Exit if texel is out of color buffer
     // Or if the texel is from an object in front of the object
-    if (refractedBackPointDepth < posInput.linearDepth
-        || any(refractedBackPointNDC < 0.0)
-        || any(refractedBackPointNDC > 1.0))
+    if (hit.linearDepth < posInput.linearDepth
+        || any(hit.positionSS < 0.0)
+        || any(hit.positionSS > 1.0))
     {
         // Do nothing and don't update the hierarchy weight so we can fall back on refraction probe
         return lighting;
     }
 
     // Map the roughness to the correct mip map level of the color pyramid
-    lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_GaussianPyramidColorTexture, s_trilinear_clamp_sampler, refractedBackPointNDC, preLightData.transparentSSMipLevel).rgb;
+    lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_GaussianPyramidColorTexture, s_trilinear_clamp_sampler, hit.positionSS, preLightData.transparentSSMipLevel).rgb;
 
     // Beer-Lamber law for absorption
     lighting.specularTransmitted *= preLightData.transparentTransmittance;
@@ -1709,6 +1721,10 @@ IndirectLighting EvaluateBSDF_SSRefraction(LightLoopContext lightLoopContext,
     UpdateLightingHierarchyWeights(hierarchyWeight, weight); // Shouldn't be needed, but safer in case we decide to change hierarchy priority
     // We use specularFGD as an approximation of the fresnel effect (that also handle smoothness), so take the remaining for transmission
     lighting.specularTransmitted *= (1.0 - preLightData.specularFGD) * weight;
+
+    // DEBUG Depth
+    lighting.specularTransmitted = hit.linearDepth;
+
 #else
     // No refraction, no need to go further
     hierarchyWeight = 1.0;
@@ -1983,36 +1999,40 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 
 #ifdef DEBUG_DISPLAY
 
-    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
+    switch (_DebugLightingMode)
     {
-        diffuseLighting = lighting.direct.diffuse + bakeLightingData.bakeDiffuseLighting;
-    }
-    else if (_DebugLightingMode == DEBUGLIGHTINGMODE_INDIRECT_DIFFUSE_OCCLUSION_FROM_SSAO)
-    {
-        diffuseLighting = indirectAmbientOcclusion;
-        specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
-    }
-    else if (_DebugLightingMode == DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_OCCLUSION_FROM_SSAO)
-    {
-        diffuseLighting = specularOcclusion;
-        specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
-    }
-    #if GTAO_MULTIBOUNCE_APPROX
-    else if (_DebugLightingMode == DEBUGLIGHTINGMODE_INDIRECT_DIFFUSE_GTAO_FROM_SSAO)
-    {
-        diffuseLighting = GTAOMultiBounce(indirectAmbientOcclusion, bsdfData.diffuseColor);
-        specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
-    }
-    else if (_DebugLightingMode == DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_GTAO_FROM_SSAO)
-    {
-        diffuseLighting = GTAOMultiBounce(specularOcclusion, bsdfData.fresnel0);
-        specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
-    }
-    #endif
-    else if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-    {
-        diffuseLighting = bsdfData.diffuseColor;
-        specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+        case DEBUGLIGHTINGMODE_LUX_METER:
+            diffuseLighting = lighting.direct.diffuse + bakeLightingData.bakeDiffuseLighting;
+            break;
+        case DEBUGLIGHTINGMODE_INDIRECT_DIFFUSE_OCCLUSION_FROM_SSAO:
+            diffuseLighting = indirectAmbientOcclusion;
+            specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            break;
+        case DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_OCCLUSION_FROM_SSAO:
+            diffuseLighting = specularOcclusion;
+            specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            break;
+        case DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION:
+            diffuseLighting = lighting.indirect.specularTransmitted;
+            specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            break;
+#if GTAO_MULTIBOUNCE_APPROX
+        case DEBUGLIGHTINGMODE_INDIRECT_DIFFUSE_GTAO_FROM_SSAO:
+            diffuseLighting = GTAOMultiBounce(indirectAmbientOcclusion, bsdfData.diffuseColor);
+            specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            break;
+        case DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_GTAO_FROM_SSAO:
+            diffuseLighting = GTAOMultiBounce(specularOcclusion, bsdfData.fresnel0);
+            specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            break;
+#endif
+        default:
+            if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+            {
+                diffuseLighting = bsdfData.diffuseColor;
+                specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            }
+            break;
     }
 #endif
 }

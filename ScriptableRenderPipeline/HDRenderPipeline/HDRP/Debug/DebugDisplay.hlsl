@@ -11,6 +11,7 @@
 CBUFFER_START(UnityDebugDisplay)
 // Set of parameters available when switching to debug shader mode
 int _DebugLightingMode; // Match enum DebugLightingMode
+int _DebugLightingSubMode; // Match an enum depending on DebugLightingMode
 int _DebugViewMaterial; // Contain the id (define in various materialXXX.cs.hlsl) of the property to display
 int _DebugMipMapMode; // Match enum DebugMipMapMode
 float4 _DebugLightingAlbedo; // xyz = albedo for diffuse, w unused

@@ -1569,6 +1569,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 cmd.SetGlobalInt(HDShaderIDs._DebugViewMaterial, (int)m_CurrentDebugDisplaySettings.GetDebugMaterialIndex());
                 cmd.SetGlobalInt(HDShaderIDs._DebugLightingMode, (int)m_CurrentDebugDisplaySettings.GetDebugLightingMode());
+                cmd.SetGlobalInt(HDShaderIDs._DebugLightingSubMode, m_CurrentDebugDisplaySettings.GetDebugLightingSubMode());
                 cmd.SetGlobalInt(HDShaderIDs._DebugMipMapMode, (int)m_CurrentDebugDisplaySettings.GetDebugMipMapMode());
                 cmd.SetGlobalVector(HDShaderIDs._DebugLightingAlbedo, debugAlbedo);
 

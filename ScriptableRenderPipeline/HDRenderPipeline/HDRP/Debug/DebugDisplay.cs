@@ -38,6 +38,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static string kOverrideSmoothnessDebug = "Override Smoothness";
         public static string kOverrideSmoothnessValueDebug = "Override Smoothness Value"; 
         public static string kDebugEnvironmentProxyDepthScale = "Debug Environment Proxy Depth Scale";
+        public static string kScreenSpaceTracingMode = "Screen Space Tracing Mode";
         public static string kDebugLightingAlbedo = "Debug Lighting Albedo";
         public static string kFullScreenDebugMode = "Fullscreen Debug Mode";
         public static string kFullScreenDebugMip = "Fullscreen Debug Mip";
@@ -76,6 +77,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public DebugLightingMode GetDebugLightingMode()
         {
             return lightingDebugSettings.debugLightingMode;
+        }
+
+        public int GetDebugLightingSubMode()
+        {
+            switch (GetDebugLightingMode())
+            {
+                default:
+                    return 0;
+                case DebugLightingMode.ScreenSpaceTracingRefraction:
+                    return (int)lightingDebugSettings.debugScreenSpaceTracingMode;
+            }
         }
 
         public DebugMipMapMode GetDebugMipMapMode()
@@ -263,6 +275,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DebugMenuManager.instance.AddDebugItem<float>("Rendering", ColorPickerDebugSettings.kColorPickerThreshold3Debug, () => colorPickerDebugSettings.colorThreshold3, (value) => colorPickerDebugSettings.colorThreshold3 = (float)value);
             DebugMenuManager.instance.AddDebugItem<Color>("Rendering", ColorPickerDebugSettings.kColorPickerFontColor, () => colorPickerDebugSettings.fontColor, (value) => colorPickerDebugSettings.fontColor = (Color)value);
 
+            DebugMenuManager.instance.AddDebugItem<LightingDebugPanel, DebugScreenSpaceTracing>(kScreenSpaceTracingMode, () => lightingDebugSettings.debugScreenSpaceTracingMode, (value) => lightingDebugSettings.debugScreenSpaceTracingMode = (DebugScreenSpaceTracing)value);
         }
 
         public void OnValidate()

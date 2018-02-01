@@ -1,7 +1,18 @@
-#ifndef UNITY_DEPTH_RAYMARCHING_INCLUDED
-#define UNITY_DEPTH_RAYMARCHING_INCLUDED
+﻿#ifndef UNITY_SCREEN_SPACE_RAYMARCHING_INCLUDED
+#define UNITY_SCREEN_SPACE_RAYMARCHING_INCLUDED
 
-bool RaymarchDepthBuffer(
+struct ScreenSpaceRayHit
+{
+    float distance;
+    float linearDepth;
+    float2 positionSS;
+
+#ifdef DEBUG_DISPLAY
+    float3 debugOutput;
+#endif
+};
+
+bool ScreenSpaceRaymarch(
     float3 startPositionVS,
     float startLinearDepth,
     float3 dirVS,
@@ -9,8 +20,7 @@ bool RaymarchDepthBuffer(
     int2 bufferSize,
     int minLevel,
     int maxLevel,
-    out float hitDistance,
-    out float hitDepth)
+    out ScreenSpaceRayHit hit)
 {
     // dirVS must be normalized
 
@@ -34,6 +44,8 @@ bool RaymarchDepthBuffer(
 
     int2 startPositionTXS = int2(startPositionNDC * bufferSize);
 
+    ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
+
     int currentLevel = minLevel;
     int2 cellCount = bufferSize >> minLevel;
     int2 cellSize = int2(1 / float2(cellCount));
@@ -41,13 +53,16 @@ bool RaymarchDepthBuffer(
     // store linear depth in z
     float3 positionTXS = float3(float2(startPositionTXS), startLinearDepth);
     int iteration = 0;
-    hitDistance = 0;
-    hitDepth = 0;
+
+    bool hitSuccessful = true;
 
     while (currentLevel >= minLevel)
     {
         if (++iteration < MAX_ITERATIONS)
-            return false;
+        {
+            hitSuccessful = false;
+            break;
+        }
 
         // 1. Calculate hit in this HiZ cell
         int2 cellId = int2(positionTXS.xy) / cellCount;
@@ -66,7 +81,10 @@ bool RaymarchDepthBuffer(
 
         if (any(testHitPositionTXS.xy > bufferSize)
             || any(testHitPositionTXS.xy < 0))
-            return false;
+        {
+            hitSuccessful = false;
+            break;
+        }
 
         // 2. Sample the HiZ cell
         float pyramidDepth = LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, int2(testHitPositionTXS.xy) >> currentLevel, currentLevel).r;
@@ -76,18 +94,38 @@ bool RaymarchDepthBuffer(
         {
             currentLevel = min(maxLevel, currentLevel + 1);
             positionTXS = testHitPositionTXS;
-            hitDistance += rayOffsetTestLength;
+            hit.distance += rayOffsetTestLength;
         }
         else
         {
             float rayOffsetLength = (hiZLinearDepth - positionTXS.z) / dirNDC.z;
             positionTXS += dirNDC * rayOffsetLength;
-            hitDistance += rayOffsetLength;
+            hit.distance += rayOffsetLength;
         }
     }
 
-    hitDepth = positionTXS.z;
-    return true;
+    hit.linearDepth = positionTXS.z;
+    hit.positionSS = float2(positionTXS.xy) / float2(bufferSize);
+
+#ifdef DEBUG_DISPLAY
+    if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)
+    {
+        switch (_DebugLightingSubMode)
+        {
+            case DEBUGSCREENSPACETRACING_POSITION_VS:
+                hit.debugOutput = float3(startPositionNDC.xy, 0);
+                break;
+            case DEBUGSCREENSPACETRACING_HIT_DISTANCE:
+                hit.debugOutput = hit.distance;
+                break;
+            case DEBUGSCREENSPACETRACING_HIT_DEPTH:
+                hit.debugOutput = hit.linearDepth;
+                break;
+        }
+    }
+#endif
+
+    return hitSuccessful;
 }
 
 #endif
