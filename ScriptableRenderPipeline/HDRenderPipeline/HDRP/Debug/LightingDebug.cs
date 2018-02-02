@@ -26,6 +26,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         None,
         PositionNDC,
+        DirVS,
         DirNDC,
         HitDistance,
         HitDepth,

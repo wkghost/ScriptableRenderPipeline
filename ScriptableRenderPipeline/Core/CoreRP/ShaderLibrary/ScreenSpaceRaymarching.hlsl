@@ -28,7 +28,7 @@ bool ScreenSpaceRaymarch(
     const int MAX_ITERATIONS = 32;
 
     float4 startPositionCS = mul(projectionMatrix, float4(startPositionVS, 1));
-    float4 dirCS = mul(projectionMatrix, float4(dirVS, 0));
+    float4 dirCS = mul(projectionMatrix, float4(dirVS, 1));
 #if UNITY_UV_STARTS_AT_TOP
     // Our clip space is correct, but the NDC is flipped.
     // Conceptually, it should be (positionNDC.y = 1.0 - positionNDC.y), but this is more efficient.
@@ -38,7 +38,9 @@ bool ScreenSpaceRaymarch(
 
     float2 startPositionNDC = (startPositionCS.xy * rcp(startPositionCS.w)) * 0.5 + 0.5;
     // store linear depth in z
-    float3 dirNDC = float3(normalize((dirCS.xy * rcp(dirCS.w)) * 0.5 + 0.5), -dirVS.z /*RHS convention for VS*/);
+    float l = length(dirCS.xy);
+    float3 dirNDC = dirCS.xyz / l;
+
     float2 invDirNDC = 1 / dirNDC.xy;
     int2 cellPlanes = clamp(sign(dirNDC.xy), 0, 1);
 
@@ -47,7 +49,7 @@ bool ScreenSpaceRaymarch(
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
 
     int currentLevel = minLevel;
-    int2 cellCount = bufferSize >> minLevel;
+    int2 cellCount = bufferSize >> currentLevel;
     int2 cellSize = int2(1 / float2(cellCount));
 
     // store linear depth in z
@@ -110,6 +112,9 @@ bool ScreenSpaceRaymarch(
             hit.distance += rayOffsetLength;
             --currentLevel;
         }
+
+        cellCount = bufferSize >> currentLevel;
+        cellSize = int2(1 / float2(cellCount));
     }
 
     hit.linearDepth = positionTXS.z;
@@ -123,8 +128,11 @@ bool ScreenSpaceRaymarch(
             case DEBUGSCREENSPACETRACING_POSITION_NDC:
                 hit.debugOutput = float3(startPositionNDC.xy, 0);
                 break;
+            case DEBUGSCREENSPACETRACING_DIR_VS:
+                hit.debugOutput = dirVS * 0.5 + 0.5;
+                break;
             case DEBUGSCREENSPACETRACING_DIR_NDC:
-                hit.debugOutput = dirNDC;
+                hit.debugOutput = float3(dirNDC.xy * 0.5 + 0.5, dirNDC.z);
                 break;
             case DEBUGSCREENSPACETRACING_HIT_DISTANCE:
                 hit.debugOutput = hit.distance;
