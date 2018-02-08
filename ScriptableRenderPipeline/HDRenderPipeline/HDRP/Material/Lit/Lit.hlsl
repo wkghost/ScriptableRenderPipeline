@@ -1681,6 +1681,31 @@ IndirectLighting EvaluateBSDF_SSRefraction(LightLoopContext lightLoopContext,
     ZERO_INITIALIZE(IndirectLighting, lighting);
 
 #if HAS_REFRACTION
+
+#ifdef DEBUG_DISPLAY
+    PositionInputs initialPositionInputs = posInput;
+    float3 initialV = V;
+    BSDFData initialBSDFData = bsdfData;
+    PreLightData initialPreLightData = preLightData;
+
+    if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION
+        && _DebugLightingSubMode == DEBUGSCREENSPACETRACING_STEP_BY_STEP)
+    {
+        // Use input from clicked point
+        float depth = LOAD_TEXTURE2D(_MainDepthTexture, _MouseClickPixelCoord.xy).x;
+        posInput = GetPositionInput(_MouseClickPixelCoord.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP, uint2(_MouseClickPixelCoord.xy) / GetTileSize());
+        V = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
+
+        BSDFData bsdfData;
+        BakeLightingData bakeLightingData;
+        DecodeFromGBuffer(posInput.positionSS, UINT_MAX, bsdfData, bakeLightingData.bakeDiffuseLighting);
+#ifdef SHADOWS_SHADOWMASK
+        DecodeShadowMask(LOAD_TEXTURE2D(_ShadowMaskTexture, posInput.positionSS), bakeLightingData.bakeShadowMask);
+#endif
+        preLightData = GetPreLightData(V, posInput, bsdfData);
+    }
+#endif
+
     // Refraction process:
     //  1. Depending on the shape model, we calculate the refracted point in world space and the optical depth
     //  2. We calculate the screen space position of the refracted point
@@ -1693,19 +1718,25 @@ IndirectLighting EvaluateBSDF_SSRefraction(LightLoopContext lightLoopContext,
 
     uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
 
+    ScreenSpaceRaymarchInput ssInput;
+    ZERO_INITIALIZE(ScreenSpaceRaymarchInput, ssInput);
+
     ScreenSpaceRayHit hit;
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
+    
+    ssInput.startPositionVS = positionVS;
+    ssInput.startLinearDepth = posInput.linearDepth;
+    ssInput.dirVS = transparentRefractVVS;
+    ssInput.projectionMatrix = UNITY_MATRIX_P;
+    ssInput.bufferSize = depthSize;
+    ssInput.minLevel = 2;
+    ssInput.maxLevel = int(_PyramidDepthMipSize.z);
 
-    bool hitSuccessful = ScreenSpaceRaymarch(
-        positionVS,
-        posInput.linearDepth,
-        transparentRefractVVS,
-        UNITY_MATRIX_P,
-        depthSize,
-        0,
-        int(_PyramidDepthMipSize.z),
-        hit
-    );
+#ifdef DEBUG_DISPLAY
+    ssInput.initialStartPositionSS = initialPositionInputs.positionSS;
+#endif
+
+    bool hitSuccessful = ScreenSpaceRaymarch(ssInput, hit);
 
 #ifdef DEBUG_DISPLAY
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)

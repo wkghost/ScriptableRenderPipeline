@@ -117,7 +117,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _ViewTilesFlags = Shader.PropertyToID("_ViewTilesFlags");
         public static readonly int _MousePixelCoord = Shader.PropertyToID("_MousePixelCoord");
+        public static readonly int _MouseClickPixelCoord = Shader.PropertyToID("_MouseClickPixelCoord");
         public static readonly int _DebugFont = Shader.PropertyToID("_DebugFont");
+        public static readonly int _DebugStep = Shader.PropertyToID("_DebugStep");
 
         public static readonly int _DebugEnvironmentProxyDepthScale = Shader.PropertyToID("_DebugEnvironmentProxyDepthScale");
         public static readonly int _DebugViewMaterial = Shader.PropertyToID("_DebugViewMaterial");
