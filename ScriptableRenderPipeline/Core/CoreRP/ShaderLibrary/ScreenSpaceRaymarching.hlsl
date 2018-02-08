@@ -71,6 +71,7 @@ bool ScreenSpaceRaymarch(
 #ifdef DEBUG_DISPLAY
     int maxUsedLevel = currentLevel;
     uint2 debugCellSize = cellSize;
+    float3 debugPositionTXS = positionTXS;
 #endif
 
     while (currentLevel >= input.minLevel)
@@ -85,6 +86,7 @@ bool ScreenSpaceRaymarch(
         if (_DebugStep == iteration)
         {
             debugCellSize = cellSize;
+            debugPositionTXS = positionTXS;
         }
 #endif
 
@@ -174,10 +176,16 @@ bool ScreenSpaceRaymarch(
                 float2 distanceToCell = abs(float2(input.initialStartPositionSS % debugCellSize) - float2(debugCellSize) / float2(2, 2));
                 distanceToCell = clamp(1 - distanceToCell, 0, 1);
                 float cellSDF = max(distanceToCell.x, distanceToCell.y);
-                float3 gridColor = float3(
-                    frac(input.initialStartLinearDepth * 0.1).xx,
+
+                float distanceToPosition = length(input.initialStartPositionSS - debugPositionTXS.xy);
+                float positionSDF = clamp(3 - distanceToPosition, 0, 1);
+
+                float3 debugColor = float3(
+                    0,
+                    positionSDF,
                     cellSDF);
-                hit.debugOutput = gridColor;
+
+                hit.debugOutput = debugColor * 0.5 + frac(input.initialStartLinearDepth * 0.1).xxx * 0.5;
                 break;
             }
         }

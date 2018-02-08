@@ -1734,6 +1734,7 @@ IndirectLighting EvaluateBSDF_SSRefraction(LightLoopContext lightLoopContext,
 
 #ifdef DEBUG_DISPLAY
     ssInput.initialStartPositionSS = initialPositionInputs.positionSS;
+    ssInput.initialStartLinearDepth = initialPositionInputs.linearDepth;
 #endif
 
     bool hitSuccessful = ScreenSpaceRaymarch(ssInput, hit);
