@@ -55,7 +55,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float debugOverlayRatio = 0.33f;
         public FullScreenDebugMode  fullScreenDebugMode = FullScreenDebugMode.None;
-        public float fullscreenDebugMip = 0;
+        public float fullscreenDebugMip = 0.0f;
 
         public MaterialDebugSettings materialDebugSettings = new MaterialDebugSettings();
         public LightingDebugSettings lightingDebugSettings = new LightingDebugSettings();
@@ -198,7 +198,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DebugMenuManager.instance.AddDebugItem<LightingDebugPanel, float>(kShadowMinValueDebug, () => lightingDebugSettings.shadowMinValue, (value) => lightingDebugSettings.shadowMinValue = (float)value);
             DebugMenuManager.instance.AddDebugItem<LightingDebugPanel, float>(kShadowMaxValueDebug, () => lightingDebugSettings.shadowMaxValue, (value) => lightingDebugSettings.shadowMaxValue = (float)value);
             DebugMenuManager.instance.AddDebugItem<LightingDebugPanel, int>(kFullScreenDebugMode, () => (int)fullScreenDebugMode, (value) => fullScreenDebugMode = (FullScreenDebugMode)value, DebugItemFlag.None, new DebugItemHandlerIntEnum(DebugDisplaySettings.lightingFullScreenDebugStrings, DebugDisplaySettings.lightingFullScreenDebugValues));
-            DebugMenuManager.instance.AddDebugItem<LightingDebugPanel, float>(
+            DebugMenuManager.instance.AddDebugItem<LightingDebugPanel, uint>(
                 kFullScreenDebugMip,
                 () =>
                 {
@@ -215,7 +215,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             break;
                     }
                     var size = Shader.GetGlobalVector(id);
-                    var lodCount = Mathf.FloorToInt(Mathf.Log(Mathf.Min(size.x, size.y), 2f));
+                    var lodCount = size.z;
                     return (uint)(fullscreenDebugMip * lodCount);
 
                 },
@@ -234,7 +234,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             break;
                     }
                     var size = Shader.GetGlobalVector(id);
-                    var lodCount = Mathf.Floor(Mathf.Log(Mathf.Min(size.x, size.y), 2f));
+                    var lodCount = size.z;
                     fullscreenDebugMip = (float)Convert.ChangeType(value, typeof(Single)) / lodCount;
                 }, 
                 DebugItemFlag.None, 
@@ -254,7 +254,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 break;
                         }
                         var size = Shader.GetGlobalVector(id);
-                        var lodCount = Mathf.FloorToInt(Mathf.Log(Mathf.Min(size.x, size.y), 2f));
+                        var lodCount = size.z;
                         return (uint)lodCount;
                     })
                 );

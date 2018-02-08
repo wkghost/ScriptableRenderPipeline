@@ -363,8 +363,9 @@ real FastATan(real x)
 
 // Using pow often result to a warning like this
 // "pow(f, e) will not work for negative f, use abs(f) or conditionally handle negative values if you expect them"
-// PositivePow remove this warning when you know the value is positive and avoid inf/NAN.
-TEMPLATE_2_REAL(PositivePow, base, power, return pow(max(abs(base), FLT_EPS), power))
+// PositivePow remove this warning when you know the value is positive or 0 and avoid inf/NAN.
+// Note: https://msdn.microsoft.com/en-us/library/windows/desktop/bb509636(v=vs.85).aspx pow(0, >0) == 0
+TEMPLATE_2_REAL(PositivePow, base, power, return pow(abs(base), power))
 
 // Composes a floating point value with the magnitude of 'x' and the sign of 's'.
 // See the comment about FastSign() below.
@@ -657,11 +658,11 @@ float3 ComputeWorldSpacePosition(float2 positionNDC, float deviceDepth, float4x4
 struct PositionInputs
 {
     float3 positionWS;  // World space position (could be camera-relative)
-    float2 positionNDC; // Normalized screen UVs          : [0, 1) (with the half-pixel offset)
-    uint2  positionSS;  // Screen space pixel coordinates : [0, NumPixels)
-    uint2  tileCoord;   // Screen tile coordinates        : [0, NumTiles)
-    float  deviceDepth; // Depth from the depth buffer    : [0, 1] (typically reversed)
-    float  linearDepth; // View space Z coordinate        : [Near, Far]
+    float2 positionNDC; // Normalized screen coordinates within the viewport    : [0, 1) (with the half-pixel offset)
+    uint2  positionSS;  // Screen space pixel coordinates                       : [0, NumPixels)
+    uint2  tileCoord;   // Screen tile coordinates                              : [0, NumTiles)
+    float  deviceDepth; // Depth from the depth buffer                          : [0, 1] (typically reversed)
+    float  linearDepth; // View space Z coordinate                              : [Near, Far]
 };
 
 // This function is use to provide an easy way to sample into a screen texture, either from a pixel or a compute shaders.

@@ -131,7 +131,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         break;
                         }
                     default:
-                        fullScreenDebugMipHandler.SetValue(0f);
+                        fullScreenDebugMipHandler.SetValue(0);
                         break;
                 }
 
