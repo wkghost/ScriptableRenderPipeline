@@ -34,7 +34,7 @@ bool ScreenSpaceRaymarch(
 {
     // dirVS must be normalized
 
-    const float2 CROSS_OFFSET = float2(1, 1);
+    const float2 CROSS_OFFSET = float2(2, 2);
     const int MAX_ITERATIONS = 32;
 
     float4 startPositionCS = mul(input.projectionMatrix, float4(input.startPositionVS, 1));
@@ -51,15 +51,17 @@ bool ScreenSpaceRaymarch(
     float l = length(dirCS.xy);
     float3 dirNDC = dirCS.xyz / l;
 
-    float2 invDirNDC = 1 / dirNDC.xy;
-    int2 cellPlanes = clamp(sign(dirNDC.xy), 0, 1);
+    float2 invDirNDC = float2(1, 1) / dirNDC.xy;
+    int2 cellPlanes = sign(dirNDC.xy);
+    float2 crossOffset = CROSS_OFFSET * cellPlanes;
+    cellPlanes = clamp(cellPlanes, 0, 1);
 
     int2 startPositionTXS = int2(startPositionNDC * input.bufferSize);
 
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
 
     int currentLevel = input.minLevel;
-    int2 cellCount = input.bufferSize >> currentLevel;
+    uint2 cellCount = input.bufferSize >> currentLevel;
     uint2 cellSize = uint2(1, 1) << currentLevel;
 
     // store linear depth in z
@@ -70,13 +72,13 @@ bool ScreenSpaceRaymarch(
 
 #ifdef DEBUG_DISPLAY
     int maxUsedLevel = currentLevel;
-    uint2 debugCellSize = cellSize;
-    float3 debugPositionTXS = positionTXS;
+    uint2 debugCellSize = uint2(10000, 10000);
+    float3 debugPositionTXS = float3(0, 0, 0);
 #endif
 
     while (currentLevel >= input.minLevel)
     {
-        if (iteration < MAX_ITERATIONS)
+        if (iteration >= MAX_ITERATIONS)
         {
             hitSuccessful = false;
             break;
@@ -96,14 +98,16 @@ bool ScreenSpaceRaymarch(
         // Planes to check
         int2 planes = (cellId + cellPlanes) * cellSize;
         // Hit distance to each planes
-        float2 planeHits = (planes - positionTXS.xy) * invDirNDC;
+        float2 distanceToCellAxes = float2(planes - positionTXS.xy) * invDirNDC; // (distance to x axis, distance to y axis)
 
-        float rayOffsetTestLength = min(planeHits.x, planeHits.y);
-        float3 testHitPositionTXS = positionTXS + dirNDC * rayOffsetTestLength;
+        float distanceToCell = min(distanceToCellAxes.x, distanceToCellAxes.y);
+        float3 testHitPositionTXS = positionTXS + dirNDC * distanceToCell;
 
         // Offset the proper axis to enforce cell crossing
         // https://gamedev.autodesk.com/blogs/1/post/5866685274515295601
-        testHitPositionTXS.xy += (planeHits.x < planeHits.y) ? float2(CROSS_OFFSET.x, 0) : float2(0, CROSS_OFFSET.y);
+        testHitPositionTXS.xy += (distanceToCellAxes.x < distanceToCellAxes.y)
+            ? float2(crossOffset.x, 0)
+            : float2(0, crossOffset.y);
 
         if (any(testHitPositionTXS.xy > input.bufferSize)
             || any(testHitPositionTXS.xy < 0))
@@ -116,14 +120,14 @@ bool ScreenSpaceRaymarch(
         float pyramidDepth = LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, int2(testHitPositionTXS.xy) >> currentLevel, currentLevel).r;
         float hiZLinearDepth = LinearEyeDepth(pyramidDepth, _ZBufferParams);
 
-        if (hiZLinearDepth > testHitPositionTXS.z)
+        if (hiZLinearDepth < testHitPositionTXS.z)
         {
             currentLevel = min(input.maxLevel, currentLevel + 1);
 #ifdef DEBUG_DISPLAY
             maxUsedLevel = max(maxUsedLevel, currentLevel);
 #endif
             positionTXS = testHitPositionTXS;
-            hit.distance += rayOffsetTestLength;
+            hit.distance += distanceToCell;
         }
         else
         {
@@ -157,10 +161,10 @@ bool ScreenSpaceRaymarch(
                 hit.debugOutput = float3(dirNDC.xy * 0.5 + 0.5, dirNDC.z);
                 break;
             case DEBUGSCREENSPACETRACING_HIT_DISTANCE:
-                hit.debugOutput = hit.distance;
+                hit.debugOutput = frac(hit.distance * 0.1);
                 break;
             case DEBUGSCREENSPACETRACING_HIT_DEPTH:
-                hit.debugOutput = hit.linearDepth;
+                hit.debugOutput = frac(hit.linearDepth * 0.1);
                 break;
             case DEBUGSCREENSPACETRACING_HIT_SUCCESS:
                 hit.debugOutput = hitSuccessful;
