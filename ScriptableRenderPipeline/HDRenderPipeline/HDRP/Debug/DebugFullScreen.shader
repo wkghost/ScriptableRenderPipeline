@@ -24,7 +24,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
             TEXTURE2D(_DebugFullScreenTexture);
             float _FullScreenDebugMode;
             float _RequireToFlipInputTexture;
-            RWStructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracing;
+            TEXTURE2D(_DebugScreenSpaceTracing);
 
             struct Attributes
             {
@@ -199,11 +199,16 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 }
                 if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_SCREEN_SPACE_TRACING_REFRACTION)
                 {
-                    ScreenSpaceTracingDebug debug = _DebugScreenSpaceTracing[0];
+                    float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
+
+                    uint4 v01 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 0));
+                    uint4 v02 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(1, 0));
+                    uint4 v03 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 1));
+                    ScreenSpaceTracingDebug debug;
+                    UnpackScreenSpaceTracingDebug(v01, v02, v03, debug);
 
                     uint2 positionTXS = uint2((input.positionCS.xy * 0.5 + 0.5) * _ScreenParams.zw);
 
-                    uint2 startPositionSS = uint2(debug.startPositionSSX, debug.startPositionSSY);
                     uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
 
                     float2 distanceToCell = abs(float2(positionTXS % cellSize) - float2(cellSize) / float2(2, 2));
@@ -211,7 +216,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     float cellSDF = max(distanceToCell.x, distanceToCell.y);
 
                     float distanceToPosition = length(positionTXS - debug.positionTXS.xy);
-                    float positionSDF = clamp(3 - distanceToPosition, 0, 1);
+                    float positionSDF = clamp(2 - distanceToPosition, 0, 1);
 
                     float3 debugColor = float3(
                         0,
@@ -219,7 +224,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                         cellSDF
                     );
 
-                    return float4(debugColor * 0.5 + frac(debug.startLinearDepth * 0.1).xxx * 0.5, 1);
+                    return float4(debugColor * 0.5 + color.rgb * 0.5, 1);
                 }
 
                 return float4(0.0, 0.0, 0.0, 0.0);

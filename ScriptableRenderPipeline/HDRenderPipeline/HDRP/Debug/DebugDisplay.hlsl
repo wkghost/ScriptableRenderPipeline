@@ -23,7 +23,7 @@ float4 _MouseClickPixelCoord;  // xy unorm, zw norm
 float _DebugEnvironmentProxyDepthScale;
 CBUFFER_END
 
-RWStructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracing;
+RW_TEXTURE2D(float4, _DebugScreenSpaceTracing) : register(u1);
 
 TEXTURE2D(_DebugFont); // Debug font to write string in shader
 
