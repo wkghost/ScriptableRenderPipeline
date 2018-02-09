@@ -32,8 +32,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HitDepth,
         HitSuccess,
         IterationCount,
-        MaxUsedLevel,
-        StepByStep
+        MaxUsedLevel
     }
 
     public enum ShadowMapDebugMode

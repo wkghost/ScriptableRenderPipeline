@@ -16,6 +16,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         PreRefractionColorPyramid,
         DepthPyramid,
         FinalColorPyramid,
+        ScreenSpaceTracingRefraction,
         MaxLightingFullScreenDebug,
 
         // Rendering
@@ -23,6 +24,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         MotionVectors,
         NanTracker,
         MaxRenderingFullScreenDebug
+    }
+
+    [GenerateHLSL]
+    public struct ScreenSpaceTracingDebug
+    {
+        public uint startPositionSSX;
+        public uint startPositionSSY;
+        public uint cellSizeW;
+        public uint cellSizeH;
+
+        public Vector3 positionTXS;
+        public float startLinearDepth;
+
+        public uint level;
+        public uint levelMax;
+        public uint iteration;
+        public uint iterationMax;
     }
 
     public class DebugDisplaySettings

@@ -169,6 +169,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         FrameSettings m_FrameSettings; // Init every frame
 
+        static ComputeBuffer s_DebugScreenSpaceTracing = null;
+        static ScreenSpaceTracingDebug[] s_DebugScreenSpaceTracingArray = new ScreenSpaceTracingDebug[1];
+
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
             SetRenderingFeatures();
@@ -234,6 +237,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // We don't need the debug of Default camera at runtime (each camera have its own debug settings)
             FrameSettings.RegisterDebug("Default Camera", m_Asset.GetFrameSettings());
 #endif
+
+            // struct ScreenSpaceTracingDebug, defined in ScreenSpaceRaymarching.hlsl
+            s_DebugScreenSpaceTracing = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ScreenSpaceTracingDebug)));
 
             InitializeRenderTextures();
 
@@ -569,6 +575,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 foreach (var material in m_MaterialList)
                     material.RenderInit(cmd);
 
+                s_DebugScreenSpaceTracingArray[0] = new ScreenSpaceTracingDebug();
+                s_DebugScreenSpaceTracing.SetData(s_DebugScreenSpaceTracingArray);
+
                 using (new ProfilingSample(cmd, "HDRenderPipeline::Render", CustomSamplerId.HDRenderPipelineRender.GetSampler()))
                 {
                     // Do anything we need to do upon a new frame.
@@ -820,6 +829,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderDistortion(cmd, m_Asset.renderPipelineResources, hdCamera);
 
                         PushFullScreenDebugTexture(cmd, m_CameraColorBuffer, hdCamera, FullScreenDebugMode.NanTracker);
+                        PushFullScreenDebugTexture(cmd, m_CameraColorBuffer, hdCamera, FullScreenDebugMode.ScreenSpaceTracingRefraction);
                         PushColorPickerDebugTexture(cmd, m_CameraColorBuffer, hdCamera);
 
                         // The final pass either postprocess of Blit will flip the screen (as it is reverse by default due to Unity openGL legacy)
@@ -1484,7 +1494,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetGlobalInt(HDShaderIDs._DebugViewMaterial, (int)m_CurrentDebugDisplaySettings.GetDebugMaterialIndex());
                 cmd.SetGlobalInt(HDShaderIDs._DebugLightingMode, (int)m_CurrentDebugDisplaySettings.GetDebugLightingMode());
                 cmd.SetGlobalInt(HDShaderIDs._DebugLightingSubMode, m_CurrentDebugDisplaySettings.GetDebugLightingSubMode());
-                cmd.SetGlobalInt(HDShaderIDs._DebugMipMapMode, (int)m_CurrentDebugDisplaySettings.GetDebugMipMapMode());
 
                 cmd.SetGlobalVector(HDShaderIDs._DebugLightingAlbedo, debugAlbedo);
                 cmd.SetGlobalVector(HDShaderIDs._DebugLightingSmoothness, debugSmoothness);
@@ -1495,6 +1504,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetGlobalVector(HDShaderIDs._MouseClickPixelCoord, HDUtils.GetMouseClickCoordinates(hdCamera));
 
                 cmd.SetGlobalTexture(HDShaderIDs._DebugFont, m_Asset.renderPipelineResources.debugFontTexture);
+                cmd.SetGlobalBuffer(HDShaderIDs._DebugScreenSpaceTracing, s_DebugScreenSpaceTracing);
             }
             else
             {
@@ -1558,6 +1568,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Everything we have capture is flipped (as it happen before FinalPass/postprocess/Blit. So if we are not in SceneView
                     // (i.e. we have perform a flip, we need to flip the input texture)
                     m_DebugFullScreen.SetFloat(HDShaderIDs._RequireToFlipInputTexture, hdCamera.camera.cameraType != CameraType.SceneView ? 1.0f : 0.0f);
+                    m_DebugFullScreen.SetBuffer(HDShaderIDs._DebugScreenSpaceTracing, s_DebugScreenSpaceTracing);
                     HDUtils.DrawFullScreen(cmd, hdCamera, m_DebugFullScreen, (RenderTargetIdentifier)BuiltinRenderTextureType.CameraTarget);
 
                     PushColorPickerDebugTexture(cmd, (RenderTargetIdentifier)BuiltinRenderTextureType.CameraTarget, hdCamera);

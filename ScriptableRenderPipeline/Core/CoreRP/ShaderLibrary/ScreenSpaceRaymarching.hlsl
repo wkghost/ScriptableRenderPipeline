@@ -12,8 +12,7 @@ struct ScreenSpaceRaymarchInput
     int maxLevel;
 
 #ifdef DEBUG_DISPLAY
-    uint2 initialStartPositionSS;
-    float initialStartLinearDepth;
+    bool writeStepDebug;
 #endif
 };
 
@@ -56,7 +55,7 @@ bool ScreenSpaceRaymarch(
     float2 crossOffset = CROSS_OFFSET * cellPlanes;
     cellPlanes = clamp(cellPlanes, 0, 1);
 
-    int2 startPositionTXS = int2(startPositionNDC * input.bufferSize);
+    uint2 startPositionTXS = uint2(startPositionNDC * input.bufferSize);
 
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
 
@@ -72,8 +71,14 @@ bool ScreenSpaceRaymarch(
 
 #ifdef DEBUG_DISPLAY
     int maxUsedLevel = currentLevel;
-    uint2 debugCellSize = uint2(10000, 10000);
-    float3 debugPositionTXS = float3(0, 0, 0);
+
+    ScreenSpaceTracingDebug debug;
+    ZERO_INITIALIZE(ScreenSpaceTracingDebug, debug);
+    debug.startPositionSSX = startPositionTXS.x;
+    debug.startPositionSSY = startPositionTXS.y;
+    debug.startLinearDepth = input.startLinearDepth;
+    debug.levelMax = input.maxLevel;
+    debug.iterationMax = MAX_ITERATIONS;
 #endif
 
     while (currentLevel >= input.minLevel)
@@ -87,8 +92,9 @@ bool ScreenSpaceRaymarch(
 #ifdef DEBUG_DISPLAY
         if (_DebugStep == iteration)
         {
-            debugCellSize = cellSize;
-            debugPositionTXS = positionTXS;
+            debug.cellSizeW = cellSize.x;
+            debug.cellSizeH = cellSize.y;
+            debug.positionTXS = positionTXS;
         }
 #endif
 
@@ -147,6 +153,12 @@ bool ScreenSpaceRaymarch(
     hit.positionSS = float2(positionTXS.xy) / float2(input.bufferSize);
 
 #ifdef DEBUG_DISPLAY
+    debug.level = maxUsedLevel;
+    debug.iteration = iteration;
+
+    if (input.writeStepDebug)
+        _DebugScreenSpaceTracing[0] = debug;
+
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)
     {
         switch (_DebugLightingSubMode)
@@ -175,23 +187,6 @@ bool ScreenSpaceRaymarch(
             case DEBUGSCREENSPACETRACING_MAX_USED_LEVEL:
                 hit.debugOutput = float(maxUsedLevel) / float(input.maxLevel);
                 break;
-            case DEBUGSCREENSPACETRACING_STEP_BY_STEP:
-            {
-                float2 distanceToCell = abs(float2(input.initialStartPositionSS % debugCellSize) - float2(debugCellSize) / float2(2, 2));
-                distanceToCell = clamp(1 - distanceToCell, 0, 1);
-                float cellSDF = max(distanceToCell.x, distanceToCell.y);
-
-                float distanceToPosition = length(input.initialStartPositionSS - debugPositionTXS.xy);
-                float positionSDF = clamp(3 - distanceToPosition, 0, 1);
-
-                float3 debugColor = float3(
-                    0,
-                    positionSDF,
-                    cellSDF);
-
-                hit.debugOutput = debugColor * 0.5 + frac(input.initialStartLinearDepth * 0.1).xxx * 0.5;
-                break;
-            }
         }
     }
 #endif

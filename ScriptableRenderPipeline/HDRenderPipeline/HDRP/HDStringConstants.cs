@@ -130,6 +130,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DebugLightingNormal = Shader.PropertyToID("_DebugLightingNormal");
         public static readonly int _AmbientOcclusionTexture = Shader.PropertyToID("_AmbientOcclusionTexture");
         public static readonly int _DebugMipMapMode = Shader.PropertyToID("_DebugMipMapMode");
+        public static readonly int _DebugScreenSpaceTracing = Shader.PropertyToID("_DebugScreenSpaceTracing");
 
         public static readonly int _UseTileLightList = Shader.PropertyToID("_UseTileLightList");
         public static readonly int _Time = Shader.PropertyToID("_Time");
