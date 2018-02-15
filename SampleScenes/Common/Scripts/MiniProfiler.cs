@@ -32,6 +32,7 @@ public class MiniProfiler : MonoBehaviour {
         new RecorderEntry() { name="Shadows.Draw" },
         new RecorderEntry() { name="RenderLoopNewBatcher.Draw" },
         new RecorderEntry() { name="ShadowLoopNewBatcher.Draw" },
+        new RecorderEntry() { name="RenderLoopDevice.Idle" },
         new RecorderEntry() { name="StaticBatchDraw.Count" },
     };
 
