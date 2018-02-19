@@ -75,7 +75,7 @@ Shader "LightweightPipeline/Standard (Low End)"
             // -------------------------------------
             // Lightweight Pipeline keywords
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
-            #pragma multi_compile _ FOG_LINEAR
+            #pragma multi_compile _ FOG_LINEAR FOG_EXP2
 
             // -------------------------------------
             // Unity defined keywords
