@@ -5,22 +5,21 @@ namespace UnityEngine.Experimental.Rendering
 {
     public enum PackingRules
     {
-        Exact,
-        Aggressive
+        Exact,          // Do nothing
+        AtomicElement,  // Generate accessor to access element that are declare as individual parameters (i.e vecX, vecY, vecZ instead of vec)
+        Aggressive      // ?
     };
 
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Enum)]
     public class GenerateHLSL : System.Attribute
     {
         public PackingRules packingRules;
-        public bool needAccessors; // Whether or not to generate the accessors
         public bool needParamDebug; // // Whether or not to generate define for each field of the struct + debug function (use in HDRenderPipeline)
         public int paramDefinesStart; // Start of the generated define
 
-        public GenerateHLSL(PackingRules rules = PackingRules.Exact, bool needAccessors = true, bool needParamDebug = false, int paramDefinesStart = 1)
+        public GenerateHLSL(PackingRules rules = PackingRules.Exact, bool needParamDebug = false, int paramDefinesStart = 1)
         {
             packingRules = rules;
-            this.needAccessors = needAccessors;
             this.needParamDebug = needParamDebug;
             this.paramDefinesStart = paramDefinesStart;
         }

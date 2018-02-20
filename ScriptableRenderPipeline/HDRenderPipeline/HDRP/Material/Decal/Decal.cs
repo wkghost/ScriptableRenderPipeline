@@ -5,7 +5,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public partial class Decal
     {
         // Main structure that store the user data (i.e user input of master node in material graph)
-        [GenerateHLSL(PackingRules.Exact, false, true, 10000)]
+        [GenerateHLSL(PackingRules.Exact, true, 10000)]
         public struct DecalSurfaceData
         {
             [SurfaceDataAttributes("Base Color", false, true)]
@@ -15,7 +15,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Mask", true)]
             public Vector4 mask;
 			[SurfaceDataAttributes("HTileMask")]
-			public uint HTileMask; 
+			public uint HTileMask;
         };
 
         [GenerateHLSL(PackingRules.Exact)]
@@ -27,7 +27,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         [GenerateHLSL(PackingRules.Exact)]
         public enum DBufferHTileBit
-        {            
+        {
             Diffuse = 1,
             Normal = 2,
             Mask = 4

@@ -374,6 +374,8 @@ namespace UnityEditor.Experimental.Rendering
             return mergedFields;
         }
 
+        public static readonly string[] CoordString = { "X", "Y", "Z", "W" };
+
         public string EmitTypeDecl()
         {
             string shaderText = string.Empty;
@@ -382,9 +384,38 @@ namespace UnityEditor.Experimental.Rendering
             shaderText += "// PackingRules = " + attr.packingRules.ToString() + "\n";
             shaderText += "struct " + type.Name + "\n";
             shaderText += "{\n";
-            foreach (var shaderFieldInfo in m_PackedFields)
+
+            if (attr.packingRules == PackingRules.AtomicElement)
             {
-                shaderText += "    " + shaderFieldInfo.ToString() + "\n";
+                foreach (var shaderFieldInfo in m_PackedFields)
+                {
+                    if (shaderFieldInfo.cols == 0)
+                    {
+                        for (int i = 0; i < shaderFieldInfo.rows; ++i)
+                        {
+                            shaderText += "    " + PrimitiveToString(shaderFieldInfo.type, 0, 0) + " " + shaderFieldInfo.name + CoordString[i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < shaderFieldInfo.rows; ++i)
+                        {
+                            for (int j = 0; j < shaderFieldInfo.cols; ++j)
+                            {
+                                shaderText += "    " + PrimitiveToString(shaderFieldInfo.type, 0, 0) + " " + shaderFieldInfo.name + CoordString[i] + CoordString[j];
+                            }
+                        }
+                    }
+
+                    shaderText += "\n";
+                }
+            }
+            else
+            {
+                foreach (var shaderFieldInfo in m_PackedFields)
+                {
+                    shaderText += "    " + shaderFieldInfo.ToString() + "\n";
+                }
             }
             shaderText += "};\n";
 
@@ -419,7 +450,39 @@ namespace UnityEditor.Experimental.Rendering
                     }
                 }
 
-                shaderText += "\treturn value." + acc.name + swizzle + ";\n";
+                if (attr.packingRules == PackingRules.AtomicElement)
+                {
+                    shaderText += "\treturn " + PrimitiveToString(shaderField.type, shaderField.rows, shaderField.cols) + "(";
+
+                    if (shaderField.cols == 0)
+                    {
+                        for (int i = 0; i < shaderField.rows; ++i)
+                        {
+                            shaderText += "value." + shaderField.name + CoordString[i];
+                            if (i < shaderField.rows - 1)
+                                shaderText += ", ";
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < shaderField.rows; ++i)
+                        {
+                            for (int j = 0; j < shaderField.cols; ++j)
+                            {
+                                shaderText += "value." + shaderField.name + CoordString[i] + CoordString[j];
+                                if (i < shaderField.rows - 1 || j < shaderField.cols - 1)
+                                    shaderText += ", ";
+                            }
+                        }
+                    }
+
+                    shaderText += ";\n";
+                }
+                else
+                {
+                    shaderText += "\treturn value." + acc.name + swizzle + ";\n";
+                }
+
                 shaderText += "}\n";
             }
 
@@ -683,7 +746,7 @@ namespace UnityEditor.Experimental.Rendering
 
         public bool needAccessors
         {
-            get { return attr.needAccessors; }
+            get { return attr.packingRules != PackingRules.AtomicElement; }
         }
         public bool needParamDebug
         {

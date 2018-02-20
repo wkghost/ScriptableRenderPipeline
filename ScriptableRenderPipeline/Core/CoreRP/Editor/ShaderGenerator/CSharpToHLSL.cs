@@ -144,9 +144,13 @@ namespace UnityEditor.Experimental.Rendering
 
                     writer.Write("\n#endif\n");
 
+                    // User can specify a custom file to add at the end of the generated file by creating a file name: "filename.custom.hlsl" in the same directory
                     var customFile = it.Key + ".custom.hlsl";
+
                     if (File.Exists(customFile))
                         writer.Write("#include \"{0}\"", Path.GetFileName(customFile));
+
+                    writer.Write(Environment.NewLine); // TODO: we should use this everywhere ?
                 }
             }
         }

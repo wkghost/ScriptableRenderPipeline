@@ -11,7 +11,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // and are independent from the BSDF parametrization.
         // Note: These parameters can be store in GBuffer if the writer wants
         //-----------------------------------------------------------------------------
-        [GenerateHLSL(PackingRules.Exact, false, true, 100)]
+        [GenerateHLSL(PackingRules.Exact, true, 100)]
         public struct BuiltinData
         {
             [SurfaceDataAttributes("Opacity")]
@@ -59,7 +59,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // LightTransportData
         // This struct is use to store information for Enlighten/Progressive light mapper. both at runtime or off line.
         //-----------------------------------------------------------------------------
-        [GenerateHLSL(PackingRules.Exact, false, true, 120)]
+        [GenerateHLSL(PackingRules.Exact, true, 120)]
         public struct LightTransportData
         {
             [SurfaceDataAttributes("", false, true)]
