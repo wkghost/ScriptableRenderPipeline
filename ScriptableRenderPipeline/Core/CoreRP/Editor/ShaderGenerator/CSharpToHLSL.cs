@@ -149,8 +149,6 @@ namespace UnityEditor.Experimental.Rendering
 
                     if (File.Exists(customFile))
                         writer.Write("#include \"{0}\"", Path.GetFileName(customFile));
-
-                    writer.Write(Environment.NewLine); // TODO: we should use this everywhere ?
                 }
             }
         }

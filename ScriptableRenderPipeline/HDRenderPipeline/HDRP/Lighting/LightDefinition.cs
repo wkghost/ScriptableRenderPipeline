@@ -34,7 +34,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     // These structures share between C# and hlsl need to be align on float4, so we pad them.
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    [GenerateHLSL]
+    [GenerateHLSL(PackingRules.AtomicElement)]
     public struct DirectionalLightData
     {
         public Vector3 positionWS;
@@ -60,7 +60,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     };
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    [GenerateHLSL]
+    [GenerateHLSL(PackingRules.AtomicElement)]
     public struct LightData
     {
         public Vector3 positionWS;
@@ -113,7 +113,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // Users can also chose to not have any projection, in this case we use the property minProjectionDistance to minimize code change. minProjectionDistance is set to huge number
     // that simulate effect of no shape projection
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    [GenerateHLSL]
+    [GenerateHLSL(PackingRules.AtomicElement)]
     public struct EnvLightData
     {
         // Packing order depends on chronological access to avoid cache misses
