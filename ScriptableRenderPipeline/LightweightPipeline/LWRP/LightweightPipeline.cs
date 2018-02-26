@@ -427,14 +427,19 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             {
                 var desc = XRSettings.eyeTextureDesc;
                 desc.depthBufferBits = 0;
-                desc.colorFormat = RenderTextureFormat.R8;
+                desc.colorFormat = RenderTextureFormat.RFloat;
                 cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, desc, FilterMode.Bilinear);
+
+                SetRenderTarget(cmd, m_ScreenSpaceShadowMapRT, ClearFlag.Color);
+                cmd.Blit(null, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
+                //cmd.DrawProcedural(Matrix4x4.identity, m_ScreenSpaceShadowsMaterial, 0, MeshTopology.Triangles, 3, 2);
+
             }
             else
             {
                 cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.R8);
+                cmd.Blit(null, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
             }
-            cmd.Blit(null, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
 
             if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.Stereo))
                 context.StartMultiEye(m_CurrCamera);
@@ -1392,7 +1397,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             var cmd = CommandBufferPool.Get("Blit");
             if (m_IntermediateTextureArray)
             {
-                cmd.Blit(m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget);
+                //cmd.Blit(m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget);
+                cmd.Blit(m_ScreenSpaceShadowMapRT, BuiltinRenderTextureType.CameraTarget);
             }
             else if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.IntermediateTexture))
             {
@@ -1402,7 +1408,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 // If PostProcessing is enabled, it is already blit to CameraTarget.
                 if (!LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.PostProcess))
-                    Blit(cmd, renderingConfig, m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget, blitMaterial);
+                    Blit(cmd, renderingConfig, m_ScreenSpaceShadowMapRT, BuiltinRenderTextureType.CameraTarget, blitMaterial);
+                    //Blit(cmd, renderingConfig, m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget, blitMaterial);
             }
 
             SetRenderTarget(cmd, BuiltinRenderTextureType.CameraTarget);
