@@ -439,7 +439,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // doesn't like null sources when trying to determine a stereo-ized blit.  So for proper
             // stereo functionality, we use the screen-space shadow map as the source (until we have
             // a better solution).
-            cmd.Blit(m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
+            //cmd.Blit(m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
+            //cmd.Blit(null, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
+
+            // Can't use CoreUtils.DrawFullScreen yet because it doesn't support stereo texture arrays yet
+            SetRenderTarget(cmd, m_ScreenSpaceShadowMapRT);
+            cmd.DrawProcedural(Matrix4x4.identity, m_ScreenSpaceShadowsMaterial, 0, MeshTopology.Triangles, 3, 1);
 
             if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.Stereo))
                 context.StartMultiEye(m_CurrCamera);

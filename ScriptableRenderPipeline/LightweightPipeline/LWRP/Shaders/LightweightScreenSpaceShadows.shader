@@ -28,6 +28,12 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
+        struct FullScreenInput
+        {
+            uint vertexID : SV_VertexID;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
+        };
+
         struct Interpolators
         {
             half4  pos      : SV_POSITION;
@@ -36,20 +42,23 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             UNITY_VERTEX_OUTPUT_STEREO
         };
 
-        Interpolators Vertex(VertexInput i)
+        //Interpolators Vertex(VertexInput i)
+        Interpolators Vertex(FullScreenInput i)
         {
             Interpolators o;
             UNITY_SETUP_INSTANCE_ID(i);
             UNITY_TRANSFER_INSTANCE_ID(i, o);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-            o.pos = TransformObjectToHClip(i.vertex.xyz);
+            //o.pos = TransformObjectToHClip(i.vertex.xyz);
+            o.pos = GetFullScreenTriangleVertexPosition(i.vertexID);
 
             float4 projPos = o.pos * 0.5;
             projPos.xy = projPos.xy + projPos.w;
 
             //o.texcoord.xy = i.texcoord;
-            o.texcoord.xy = UnityStereoTransformScreenSpaceTex(i.texcoord.xy);
+            //o.texcoord.xy = UnityStereoTransformScreenSpaceTex(i.texcoord.xy);
+            o.texcoord.xy = GetFullScreenTriangleTexCoord(i.vertexID);
             o.texcoord.zw = projPos.xy;
 
             return o;
@@ -60,14 +69,15 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             UNITY_SETUP_INSTANCE_ID(i);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-            // TODO
-            // declare texture correctly as tex2darray
-            // pass in stereo eye index in correctly so it can sample texture
-            // Fix up sampling from a depth texture array
+            float2 adjTexCoords = UnityStereoTransformScreenSpaceTex(i.texcoord.xy);
+
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
-            float deviceDepth = SAMPLE_TEXTURE2D_ARRAY(_CameraDepthTexture, sampler_CameraDepthTexture, i.texcoord.xy, unity_StereoEyeIndex).r;
+            // Completely unclear why i.stereoTargetEyeIndex doesn't work here, considering
+            // this has to be correct in order for the texture array slices to be rasterized to
+            unity_StereoEyeIndex = i.instanceID;
+            float deviceDepth = SAMPLE_TEXTURE2D_ARRAY(_CameraDepthTexture, sampler_CameraDepthTexture, adjTexCoords, unity_StereoEyeIndex).r;
 #else
-            float deviceDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.texcoord.xy);
+            float deviceDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, adjTexCoords);
 #endif
 
 #if UNITY_REVERSED_Z
