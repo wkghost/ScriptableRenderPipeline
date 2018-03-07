@@ -42,6 +42,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             public static GUIContent shadowCascadeSplit = new GUIContent("Cascades Split",
                     "Percentages to split shadow volume");
 
+            public static GUIContent shadowCascadeBias = new GUIContent("Shadow Cascade Bias Offset", "Applies a global bias to shadow cascade");
+
             public static GUIContent hdrContent = new GUIContent("HDR", "Controls the global HDR settings.");
             public static GUIContent msaaContent = new GUIContent("Anti Aliasing (MSAA)", "Controls the global anti aliasing settings.");
 
@@ -68,6 +70,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private SerializedProperty m_ShadowCascade4SplitProp;
         private SerializedProperty m_HDR;
         private SerializedProperty m_MSAA;
+        private SerializedProperty m_ShadowCascadeBias;
 
         void OnEnable()
         {
@@ -85,6 +88,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_ShadowCascade4SplitProp = serializedObject.FindProperty("m_Cascade4Split");
             m_HDR = serializedObject.FindProperty("m_SupportsHDR");
             m_MSAA = serializedObject.FindProperty("m_MSAA");
+            m_ShadowCascadeBias = serializedObject.FindProperty("m_CascadeBiasOffset");
 
             m_ShowSoftParticles.valueChanged.AddListener(Repaint);
             m_ShowSoftParticles.value = m_RequireSoftParticlesProp.boolValue;
@@ -105,6 +109,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             using (var group = new EditorGUILayout.FadeGroupScope(animation.faded))
                 if (group.visible)
                     EditorGUILayout.PropertyField(prop, content);
+        }
+
+        void DrawShadowCascadeBias(int cascadeCount)
+        {
+            if (cascadeCount > 0)
+            {
+                EditorGUILayout.PropertyField(m_ShadowCascadeBias, Styles.shadowCascadeBias);
+            }
         }
 
         public override void OnInspectorGUI()
@@ -142,6 +154,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CoreEditorUtils.DrawPopup(Styles.shadowCascades, m_ShadowCascadesProp, Styles.shadowCascadeOptions);
 
             ShadowCascades cascades = (ShadowCascades)m_ShadowCascadesProp.intValue;
+            DrawShadowCascadeBias(m_ShadowCascadesProp.intValue);
             if (cascades == ShadowCascades.FOUR_CASCADES)
                 CoreEditorUtils.DrawCascadeSplitGUI<Vector3>(ref m_ShadowCascade4SplitProp);
             else if (cascades == ShadowCascades.TWO_CASCADES)

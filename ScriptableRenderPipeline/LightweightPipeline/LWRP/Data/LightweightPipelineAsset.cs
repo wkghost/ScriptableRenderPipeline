@@ -47,6 +47,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     public class LightweightPipelineAsset : RenderPipelineAsset
     {
         private const int PACKAGE_MANAGER_PATH_INDEX = 1;
+
+        private const float kDefaultBias = 0.05f;
         private Shader m_DefaultShader;
         public static readonly string m_SearchPathProject = "Assets";
         public static readonly string m_SearchPathPackage = "Packages/com.unity.render-pipelines.lightweight";
@@ -67,6 +69,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] private ShadowCascades m_ShadowCascades = ShadowCascades.FOUR_CASCADES;
         [SerializeField] private float m_Cascade2Split = 0.25f;
         [SerializeField] private Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
+        [SerializeField] private Vector3 m_CascadeBiasOffset = new Vector3(kDefaultBias, kDefaultBias, kDefaultBias);
 
         [SerializeField]
         private LightweightPipelineResources m_ResourcesAsset;
@@ -280,6 +283,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             get { return m_Cascade4Split; }
             private set { m_Cascade4Split = value; }
+        }
+
+        public Vector3 CascadeBiasOffset
+        {
+            get { return m_CascadeBiasOffset; }
         }
 
         public override Material GetDefaultMaterial()

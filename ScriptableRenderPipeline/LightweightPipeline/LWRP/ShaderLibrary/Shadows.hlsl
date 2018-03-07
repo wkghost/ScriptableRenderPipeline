@@ -28,6 +28,8 @@ half4       _ShadowData;    // (x: shadowStrength)
 float4      _ShadowmapSize; // (xy: 1/width and 1/height, zw: width and height)
 CBUFFER_END
 
+float4      _ShadowCascadeBiasOffset;
+
 #if UNITY_REVERSED_Z
 #define BEYOND_SHADOW_FAR(shadowCoord) shadowCoord.z <= UNITY_RAW_FAR_CLIP_VALUE
 #else
@@ -137,9 +139,17 @@ inline half ComputeCascadeIndex(float3 positionWS)
 
 float4 ComputeScreenSpaceShadowCoords(float3 positionWS)
 {
-    #ifdef _SHADOWS_CASCADE
+#ifdef _SHADOWS_CASCADE
     half cascadeIndex = ComputeCascadeIndex(positionWS);
-    return mul(_WorldToShadow[cascadeIndex], float4(positionWS, 1.0));
+    float4 coord = mul(_WorldToShadow[cascadeIndex], float4(positionWS, 1.0));
+
+#if UNITY_REVERSED_Z
+    coord.z += _ShadowCascadeBiasOffset[cascadeIndex];
+#else
+    coord.z -= _ShadowCascadeBiasOffset[cascadeIndex];
+#endif
+
+    return coord;
 #else
     return mul(_WorldToShadow[0], float4(positionWS, 1.0));
 #endif
