@@ -111,12 +111,18 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     EditorGUILayout.PropertyField(prop, content);
         }
 
-        void DrawShadowCascadeBias(int cascadeCount)
+        void DrawShadowCascadeBiasOffset(int cascadeCount)
         {
-            if (cascadeCount > 0)
+            Vector4 cascadeBiasOffset = m_ShadowCascadeBias.vector4Value;
+            EditorGUI.BeginChangeCheck();
+            for (int i = 0; i < cascadeCount; ++i)
             {
-                EditorGUILayout.PropertyField(m_ShadowCascadeBias, Styles.shadowCascadeBias);
+                EditorGUILayout.BeginHorizontal();
+                cascadeBiasOffset[i] = Mathf.Max(0.0f, EditorGUILayout.FloatField(string.Format("Cascade {0} Bias Offset: ", i), cascadeBiasOffset[i]));
+                EditorGUILayout.EndHorizontal();
             }
+            if (EditorGUI.EndChangeCheck())
+                m_ShadowCascadeBias.vector4Value = cascadeBiasOffset;
         }
 
         public override void OnInspectorGUI()
@@ -154,11 +160,18 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CoreEditorUtils.DrawPopup(Styles.shadowCascades, m_ShadowCascadesProp, Styles.shadowCascadeOptions);
 
             ShadowCascades cascades = (ShadowCascades)m_ShadowCascadesProp.intValue;
-            DrawShadowCascadeBias(m_ShadowCascadesProp.intValue);
+
+
             if (cascades == ShadowCascades.FOUR_CASCADES)
+            {
+                DrawShadowCascadeBiasOffset(4);
                 CoreEditorUtils.DrawCascadeSplitGUI<Vector3>(ref m_ShadowCascade4SplitProp);
+            }
             else if (cascades == ShadowCascades.TWO_CASCADES)
+            {
+                DrawShadowCascadeBiasOffset(2);
                 CoreEditorUtils.DrawCascadeSplitGUI<float>(ref m_ShadowCascade2SplitProp);
+            }
 
             EditorGUI.indentLevel--;
 

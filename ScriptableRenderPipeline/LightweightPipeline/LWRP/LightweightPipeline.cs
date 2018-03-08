@@ -1131,8 +1131,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset3, new Vector4(invHalfShadowResolution, invHalfShadowResolution, 0.0f, 0.0f));
             cmd.SetGlobalVector(ShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowResolution, invShadowResolution, m_Asset.ShadowAtlasResolution, m_Asset.ShadowAtlasResolution));
 
-            Vector3 cascadeBias = m_Asset.CascadeBiasOffset;
-            cmd.SetGlobalVector("_ShadowCascadeBiasOffset", new Vector4(cascadeBias.x, cascadeBias.y, cascadeBias.z, 0.05f));
+            cmd.SetGlobalVector("_ShadowCascadeBiasOffset", m_Asset.CascadeBiasOffset);
         }
 
         private void SetShaderKeywords(CommandBuffer cmd, ref LightData lightData, List<VisibleLight> visibleLights)
