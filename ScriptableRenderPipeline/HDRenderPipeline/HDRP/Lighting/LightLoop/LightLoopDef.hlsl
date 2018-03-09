@@ -206,9 +206,11 @@ uint FetchIndex(uint tileOffset, uint lightIndex)
 
 uint GetTileSize()
 {
+#ifndef _SURFACE_TYPE_TRANSPARENT // Transparent are always using cluster
     if (_UseTileLightList)
         return TILE_SIZE_FPTL;
     else
+#endif
         return TILE_SIZE_CLUSTERED;
 }
 
@@ -253,14 +255,17 @@ void GetCountAndStartCluster(PositionInputs posInput, uint lightCategory, out ui
 
 void GetCountAndStart(PositionInputs posInput, uint lightCategory, out uint start, out uint lightCount)
 {
+#ifndef _SURFACE_TYPE_TRANSPARENT // Transparent are always using cluster
     if (_UseTileLightList)
         GetCountAndStartTile(posInput, lightCategory, start, lightCount);
     else
+#endif
         GetCountAndStartCluster(posInput, lightCategory, start, lightCount);
 }
 
 uint FetchIndex(uint tileOffset, uint lightIndex)
 {
+#ifndef _SURFACE_TYPE_TRANSPARENT // Transparent are always using cluster
     uint offset = tileOffset + lightIndex;
     const uint lightIndexPlusOne = lightIndex + 1; // Add +1 as first slot is reserved to store number of light
 
@@ -273,6 +278,9 @@ uint FetchIndex(uint tileOffset, uint lightIndex)
 
     // Light index are store on 16bit
     return (_UseTileLightList ? ((value >> ((lightIndexPlusOne & 1) * DWORD_PER_TILE)) & 0xffff) : value);
+#else
+    return g_vLightListGlobal[tileOffset + lightIndex];
+#endif
 }
 
 #endif // USE_FPTL_LIGHTLIST
