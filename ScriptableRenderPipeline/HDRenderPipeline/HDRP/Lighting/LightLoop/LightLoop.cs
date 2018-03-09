@@ -1809,7 +1809,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_lightList.bounds.AddRange(m_lightList.rightEyeBounds);
                     m_lightList.lightVolumes.AddRange(m_lightList.rightEyeLightVolumes);
                 }
-                
+
                 UpdateDataBuffers();
 
                 return m_enableBakeShadowMask;
@@ -2410,8 +2410,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // say that we want to use tile of single loop
                     cmd.EnableShaderKeyword("LIGHTLOOP_TILE_PASS");
                     cmd.DisableShaderKeyword("LIGHTLOOP_SINGLE_PASS");
-                    CoreUtils.SetKeyword(cmd, "USE_FPTL_LIGHTLIST", useFptl);
-                    CoreUtils.SetKeyword(cmd, "USE_CLUSTERED_LIGHTLIST", !useFptl);
+                    cmd.SetGlobalFloat(HDShaderIDs._UseTileLightList, useFptl ? 1 : 0); // leaving this as a dynamic toggle to keep shader variants down.
                     cmd.SetGlobalBuffer(HDShaderIDs.g_vLightListGlobal, useFptl ? s_LightList : s_PerVoxelLightLists);
                 }
             }
@@ -2447,7 +2446,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             m_DebugViewTilesMaterial.SetBuffer(HDShaderIDs.g_TileList, s_TileList);
                             m_DebugViewTilesMaterial.SetBuffer(HDShaderIDs.g_DispatchIndirectBuffer, s_DispatchIndirectBuffer);
                             m_DebugViewTilesMaterial.EnableKeyword("USE_FPTL_LIGHTLIST");
-                            m_DebugViewTilesMaterial.DisableKeyword("USE_CLUSTERED_LIGHTLIST");
                             m_DebugViewTilesMaterial.DisableKeyword("SHOW_LIGHT_CATEGORIES");
                             m_DebugViewTilesMaterial.EnableKeyword("SHOW_FEATURE_VARIANTS");
                             cmd.DrawProcedural(Matrix4x4.identity, m_DebugViewTilesMaterial, 0, MeshTopology.Triangles, numTiles * 6);
@@ -2461,8 +2459,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         m_DebugViewTilesMaterial.SetInt(HDShaderIDs._ViewTilesFlags, (int)lightingDebug.tileClusterDebugByCategory);
                         m_DebugViewTilesMaterial.SetVector(HDShaderIDs._MousePixelCoord, HDUtils.GetMouseCoordinates(hdCamera));
                         m_DebugViewTilesMaterial.SetBuffer(HDShaderIDs.g_vLightListGlobal, bUseClustered ? s_PerVoxelLightLists : s_LightList);
-                        m_DebugViewTilesMaterial.EnableKeyword(bUseClustered ? "USE_CLUSTERED_LIGHTLIST" : "USE_FPTL_LIGHTLIST");
-                        m_DebugViewTilesMaterial.DisableKeyword(!bUseClustered ? "USE_CLUSTERED_LIGHTLIST" : "USE_FPTL_LIGHTLIST");
+                        if (bUseClustered)
+                            m_DebugViewTilesMaterial.DisableKeyword("USE_FPTL_LIGHTLIST");
+                        else
+                            m_DebugViewTilesMaterial.EnableKeyword("USE_FPTL_LIGHTLIST");
                         m_DebugViewTilesMaterial.EnableKeyword("SHOW_LIGHT_CATEGORIES");
                         m_DebugViewTilesMaterial.DisableKeyword("SHOW_FEATURE_VARIANTS");
 

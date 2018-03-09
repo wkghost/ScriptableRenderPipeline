@@ -12,7 +12,7 @@ uint _NumTileFtplY;
 
 // these uniforms are only needed for when OPAQUES_ONLY is NOT defined
 // but there's a problem with our front-end compilation of compute shaders with multiple kernels causing it to error
-//#ifdef USE_CLUSTERED_LIGHTLIST
+//#ifndef USE_FPTL_LIGHTLIST
 float4x4 g_mInvScrProjection;
 
 float g_fClustScale;
@@ -22,9 +22,8 @@ float g_fFarPlane;
 int g_iLog2NumClusters; // We need to always define these to keep constant buffer layouts compatible
 
 uint g_isLogBaseBufferEnabled;
-//#endif
+uint _UseTileLightList;
 
-//#ifdef USE_CLUSTERED_LIGHTLIST
 uint _NumTileClusteredX;
 uint _NumTileClusteredY;
 CBUFFER_END
@@ -136,7 +135,7 @@ float4 SampleEnv(LightLoopContext lightLoopContext, int index, float3 texCoord, 
 
             color.rgb = SAMPLE_TEXTURE2D_ARRAY_LOD(_Env2DTextures, s_trilinear_clamp_sampler, ndc.xy, index, 0).rgb;
             color.a = any(ndc.xyz < 0) || any(ndc.xyz > 1) ? 0.0 : 1.0;
-            
+
 #ifdef DEBUG_DISPLAY
             if (_DebugLightingMode == DEBUGLIGHTINGMODE_ENVIRONMENT_SAMPLE_COORDINATES)
                 color = float4(ndc.xy, 0, color.a);
@@ -201,13 +200,16 @@ uint FetchIndex(uint tileOffset, uint lightIndex)
     return (g_vLightListGlobal[DWORD_PER_TILE * tileOffset + (lightIndexPlusOne >> 1)] >> ((lightIndexPlusOne & 1) * DWORD_PER_TILE)) & 0xffff;
 }
 
-#elif defined(USE_CLUSTERED_LIGHTLIST)
+#else
 
 #include "ClusteredUtils.hlsl"
 
 uint GetTileSize()
 {
-    return TILE_SIZE_CLUSTERED;
+    if (_UseTileLightList)
+        return TILE_SIZE_FPTL;
+    else
+        return TILE_SIZE_CLUSTERED;
 }
 
 float GetLightClusterMinLinearDepth(uint2 tileIndex, uint clusterIndex)
@@ -251,12 +253,26 @@ void GetCountAndStartCluster(PositionInputs posInput, uint lightCategory, out ui
 
 void GetCountAndStart(PositionInputs posInput, uint lightCategory, out uint start, out uint lightCount)
 {
-    GetCountAndStartCluster(posInput, lightCategory, start, lightCount);
+    if (_UseTileLightList)
+        GetCountAndStartTile(posInput, lightCategory, start, lightCount);
+    else
+        GetCountAndStartCluster(posInput, lightCategory, start, lightCount);
 }
 
 uint FetchIndex(uint tileOffset, uint lightIndex)
 {
-    return g_vLightListGlobal[tileOffset + lightIndex];
+    uint offset = tileOffset + lightIndex;
+    const uint lightIndexPlusOne = lightIndex + 1; // Add +1 as first slot is reserved to store number of light
+
+    if (_UseTileLightList)
+        offset = DWORD_PER_TILE * tileOffset + (lightIndexPlusOne >> 1);
+
+    // Avoid generated HLSL bytecode to always access g_vLightListGlobal with
+    // two different offsets, fixes out of bounds issue
+    uint value = g_vLightListGlobal[offset];
+
+    // Light index are store on 16bit
+    return (_UseTileLightList ? ((value >> ((lightIndexPlusOne & 1) * DWORD_PER_TILE)) & 0xffff) : value);
 }
 
 #endif // USE_FPTL_LIGHTLIST

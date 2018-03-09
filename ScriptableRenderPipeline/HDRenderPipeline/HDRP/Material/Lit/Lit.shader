@@ -545,7 +545,6 @@ Shader "HDRenderPipeline/Lit"
             // #include "../../Lighting/Forward.hlsl"
             //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
             #define LIGHTLOOP_TILE_PASS
-            #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
 
             #define SHADERPASS SHADERPASS_FORWARD
             #include "../../ShaderVariables.hlsl"
@@ -589,7 +588,6 @@ Shader "HDRenderPipeline/Lit"
             // #include "../../Lighting/Forward.hlsl"
             //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
             #define LIGHTLOOP_TILE_PASS
-            #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
 
             #define SHADERPASS SHADERPASS_FORWARD
             // In case of opaque we don't want to perform the alpha test, it is done in depth prepass and we use depth equal for ztest (setup from UI)

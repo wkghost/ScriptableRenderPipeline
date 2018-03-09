@@ -5,8 +5,8 @@
 #pragma kernel DeferredDirectionalShadow_Contact_Normals	DEFERRED_DIRECTIONAL=DeferredDirectionalShadow_Contact_Normals  ENABLE_CONTACT_SHADOWS ENABLE_NORMALS
 
 #ifdef ENABLE_NORMALS
-#   define LIGHTLOOP_TILE_PASS 1
-#   define USE_FPTL_LIGHTLIST  1 // deferred opaque always use FPTL
+#   define LIGHTLOOP_TILE_PASS
+#   define USE_FPTL_LIGHTLIST // deferred opaque always use FPTL
 #   define UNITY_MATERIAL_LIT
 #else
 #   define SHADOW_USE_ONLY_VIEW_BASED_BIASING 1   // Enable only light view vector based biasing. If undefined, biasing will be based on the normal and calling code must provide a valid normal.
@@ -18,7 +18,7 @@
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "../ShaderVariables.hlsl"
-#include "Lighting.hlsl" 
+#include "Lighting.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal
 
@@ -74,7 +74,7 @@ float4 ScreenSpaceShadowRayCast(float3 positionWS, float3 rayDirection, float ra
 	float2 startUV = rayStartCS.xy * 0.5f + 0.5f;
 	startUV.y = 1.0 - startUV.y;
 
-	// Pixel to light ray in 
+	// Pixel to light ray in
 	float2 rayUV = rayCS.xy * 0.5f;
 	rayUV.y = -rayUV.y;
 

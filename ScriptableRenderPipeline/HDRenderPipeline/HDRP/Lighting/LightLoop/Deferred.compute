@@ -61,9 +61,9 @@
 #pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant26      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant26      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=26
 
 
-#define LIGHTLOOP_TILE_PASS 1
+#define LIGHTLOOP_TILE_PASS
 // deferred opaque always use FPTL
-#define USE_FPTL_LIGHTLIST 1
+#define USE_FPTL_LIGHTLIST
 
 //#pragma enable_d3d11_debug_symbols
 

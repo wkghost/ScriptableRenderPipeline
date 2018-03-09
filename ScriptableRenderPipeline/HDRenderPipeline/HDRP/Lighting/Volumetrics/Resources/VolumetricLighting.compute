@@ -4,8 +4,8 @@
 
 #pragma kernel VolumetricLightingAllLights       VolumetricLighting=VolumetricLightingAllLights       ENABLE_REPROJECTION=0 LIGHTLOOP_SINGLE_PASS
 #pragma kernel VolumetricLightingAllLightsReproj VolumetricLighting=VolumetricLightingAllLightsReproj ENABLE_REPROJECTION=1 LIGHTLOOP_SINGLE_PASS
-#pragma kernel VolumetricLightingClustered       VolumetricLighting=VolumetricLightingClustered       ENABLE_REPROJECTION=0 LIGHTLOOP_TILE_PASS   USE_CLUSTERED_LIGHTLIST
-#pragma kernel VolumetricLightingClusteredReproj VolumetricLighting=VolumetricLightingClusteredReproj ENABLE_REPROJECTION=1 LIGHTLOOP_TILE_PASS   USE_CLUSTERED_LIGHTLIST
+#pragma kernel VolumetricLightingClustered       VolumetricLighting=VolumetricLightingClustered       ENABLE_REPROJECTION=0 LIGHTLOOP_TILE_PASS
+#pragma kernel VolumetricLightingClusteredReproj VolumetricLighting=VolumetricLightingClusteredReproj ENABLE_REPROJECTION=1 LIGHTLOOP_TILE_PASS
 
 // #pragma enable_d3d11_debug_symbols
 
@@ -419,7 +419,7 @@ void FillVolumetricLightingBuffer(LightLoopContext context, uint featureFlags,
         float3 scattering = _GlobalScattering;
         float  extinction = max(_GlobalExtinction, FLT_MIN); // Avoid NaNs
         float  asymmetry  = _GlobalAsymmetry;
-        
+
         // TODO: define a function ComputeGlobalFogCoefficients(float3 centerWS),
         // which allows procedural definition of extinction and scattering.
 

@@ -15,4 +15,4 @@
 // #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS -> can't use a pragma from include... (for now)
 // For forward transparent are always cluster and opaque can be either cluster or fptl (sadly we have no to do multicompile only if opaque)
 // Moreover, we would like to do it only for LIGHTLOOP_TILE_PASS variant...
-// #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
+// #pragma multi_compile _ USE_FPTL_LIGHTLIST
