@@ -9,19 +9,33 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     public class HDRISkyEditor
         : SkySettingsEditor
     {
-        SerializedDataParameter m_hdriSky;
+        SerializedDataParameter m_HdriSky;
+        SerializedDataParameter m_Intensity;
+        SerializedDataParameter m_EnableIntensity;
 
         public override void OnEnable()
         {
             base.OnEnable();
 
             var o = new PropertyFetcher<HDRISky>(serializedObject);
-            m_hdriSky = Unpack(o.Find(x => x.hdriSky));
+            m_HdriSky = Unpack(o.Find(x => x.hdriSky));
+            m_Intensity = Unpack(o.Find(x => x.intensity));
+            m_EnableIntensity = Unpack(o.Find(x => x.enableIntensity));
         }
 
         public override void OnInspectorGUI()
         {
-            PropertyField(m_hdriSky);
+            EditorGUI.BeginChangeCheck();
+            PropertyField(m_HdriSky);
+            PropertyField(m_EnableIntensity);
+            using (new UnityEditor.EditorGUI.DisabledScope(m_EnableIntensity.value.boolValue))
+            {
+                PropertyField(m_Intensity);
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+              //  target. NeedComputeMultiplier();
+            }
 
             EditorGUILayout.Space();
 
