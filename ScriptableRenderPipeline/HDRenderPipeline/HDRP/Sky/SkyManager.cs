@@ -14,9 +14,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SkyResolution256 = 256,
         SkyResolution512 = 512,
         SkyResolution1024 = 1024,
-        // TODO: Anything above 1024 cause a crash in Unity...
-        //SkyResolution2048 = 2048,
-        //SkyResolution4096 = 4096
+        SkyResolution2048 = 2048,
+        SkyResolution4096 = 4096
     }
 
     public enum EnvironementUpdateMode
@@ -50,6 +49,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         bool                    m_UpdateRequired = false;
         bool                    m_NeedUpdateRealtimeEnv = false;
         bool                    m_NeedUpdateBakingSky = true;
+
+#if UNITY_EDITOR
+        // For Preview windows we want to have a 'fixed' sky, so we can display chrome metal and have always the same look
+        ProceduralSky           m_DefaultPreviewSky;
+#endif
 
         // This is the sky used for rendering in the main view. It will also be used for lighting if no lighting override sky is setup.
         // Ambient Probe: Only for real time GI (otherwise we use the baked one)
@@ -87,7 +91,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var visualEnv = stack.GetComponent<VisualEnvironment>();
             int skyID = visualEnv.skyType;
             Type skyType;
-            if(m_SkyTypesDict.TryGetValue(skyID, out skyType))
+            if (skyTypesDict.TryGetValue(skyID, out skyType))
             {
                 return (SkySettings)stack.GetComponent(skyType);
             }
@@ -99,29 +103,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         static void UpdateSkyTypes()
         {
-            if(m_SkyTypesDict == null)
+            if (m_SkyTypesDict == null)
             {
                 m_SkyTypesDict = new Dictionary<int, Type>();
 
                 var skyTypes = CoreUtils.GetAllAssemblyTypes().Where(t => t.IsSubclassOf(typeof(SkySettings)) && !t.IsAbstract);
-                foreach(Type skyType in skyTypes)
+                foreach (Type skyType in skyTypes)
                 {
                     var uniqueIDs = skyType.GetCustomAttributes(typeof(SkyUniqueID), false);
-                    if(uniqueIDs.Length == 0)
+                    if (uniqueIDs.Length == 0)
                     {
                         Debug.LogWarningFormat("Missing attribute SkyUniqueID on class {0}. Class won't be registered as an available sky.", skyType);
                     }
                     else
                     {
                         int uniqueID = ((SkyUniqueID)uniqueIDs[0]).uniqueID;
-                        if(uniqueID == 0)
+                        if (uniqueID == 0)
                         {
                             Debug.LogWarningFormat("0 is a reserved SkyUniqueID and is used in class {0}. Class won't be registered as an available sky.", skyType);
                             continue;
                         }
 
                         Type value;
-                        if(m_SkyTypesDict.TryGetValue(uniqueID, out value))
+                        if (m_SkyTypesDict.TryGetValue(uniqueID, out value))
                         {
                             Debug.LogWarningFormat("SkyUniqueID {0} used in class {1} is already used in class {2}. Class won't be registered as an available sky.", uniqueID, skyType, value);
                             continue;
@@ -133,11 +137,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void UpdateCurrentSkySettings(HDCamera camera)
+        public void UpdateCurrentSkySettings(HDCamera camera)
         {
             m_VisualSky.skySettings = GetSkySetting(VolumeManager.instance.stack);
+
+#if UNITY_EDITOR
+            if (camera.camera.cameraType == CameraType.Preview)
+            {
+                m_VisualSky.skySettings = m_DefaultPreviewSky;
+            }
+#endif
+
             m_BakingSky.skySettings = SkyManager.GetBakingSkySettings();
-            
+
             // Update needs to happen before testing if the component is active other internal data structure are not properly updated yet.
             VolumeManager.instance.Update(m_LightingOverrideVolumeStack, camera.camera.transform, m_LightingOverrideLayerMask);
             if(VolumeManager.instance.IsComponentActiveInMask<VisualEnvironment>(m_LightingOverrideLayerMask))
@@ -177,11 +189,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_LightingOverrideVolumeStack = VolumeManager.instance.CreateStack();
             m_LightingOverrideLayerMask = hdAsset.renderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask;
+
+#if UNITY_EDITOR
+            m_DefaultPreviewSky = ScriptableObject.CreateInstance<ProceduralSky>();
+#endif
         }
 
         public void Cleanup()
         {
             CoreUtils.Destroy(m_StandardSkyboxMaterial);
+            CoreUtils.Destroy(m_BlitCubemapMaterial);
+            CoreUtils.Destroy(m_OpaqueAtmScatteringMaterial);
 
             m_BakingSky.Cleanup();
             m_VisualSky.Cleanup();
@@ -256,9 +274,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 //DynamicGI.SetEnvironmentData();
                 m_NeedUpdateRealtimeEnv = false;
             }
-
-            UpdateSkyTypes();
-            UpdateCurrentSkySettings(camera);
 
             // For the baking sky, we don't want to take the sun into account because we usually won't include it (this would cause double highlight in the reflection for example).
             // So we pass null so that's it doesn't affect the hash and the rendering.
@@ -362,8 +377,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             result.Apply();
 
             UnityEngine.Graphics.SetRenderTarget(null);
-            Object.DestroyImmediate(temp);
-            Object.DestroyImmediate(tempRT);
+            CoreUtils.Destroy(temp);
+            CoreUtils.Destroy(tempRT);
 
             return result;
         }

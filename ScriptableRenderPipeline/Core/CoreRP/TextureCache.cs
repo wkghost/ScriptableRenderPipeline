@@ -1,4 +1,4 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
@@ -10,6 +10,11 @@ namespace UnityEngine.Experimental.Rendering
     public class TextureCache2D : TextureCache
     {
         private Texture2DArray m_Cache;
+
+        public TextureCache2D(string cacheName = "")
+            : base(cacheName)
+        {
+        }
 
         public override void TransferToSlice(CommandBuffer cmd, int sliceIndex, Texture texture)
         {
@@ -43,7 +48,8 @@ namespace UnityEngine.Experimental.Rendering
             m_Cache = new Texture2DArray(width, height, numTextures, format, isMipMapped)
             {
                 hideFlags = HideFlags.HideAndDontSave,
-                wrapMode = TextureWrapMode.Clamp
+                wrapMode = TextureWrapMode.Clamp,
+                name = CoreUtils.GetTextureAutoName(width, height, format, TextureDimension.Tex2DArray, depth: numTextures, name: m_CacheName)
             };
 
             return res;
@@ -51,7 +57,7 @@ namespace UnityEngine.Experimental.Rendering
 
         public void Release()
         {
-            Texture.DestroyImmediate(m_Cache);      // do I need this?
+            CoreUtils.Destroy(m_Cache);
         }
     }
 
@@ -66,6 +72,11 @@ namespace UnityEngine.Experimental.Rendering
         private Material m_CubeBlitMaterial;
         private int m_CubeMipLevelPropName;
         private int m_cubeSrcTexPropName;
+
+        public TextureCacheCubemap(string cacheName = "")
+            : base(cacheName)
+        {
+        }
 
         public override void TransferToSlice(CommandBuffer cmd, int sliceIndex, Texture texture)
         {
@@ -100,14 +111,14 @@ namespace UnityEngine.Experimental.Rendering
             return !TextureCache.supportsCubemapArrayTextures ? (Texture)m_CacheNoCubeArray : m_Cache;
         }
 
-        public bool AllocTextureArray(int numCubeMaps, int width, TextureFormat format, bool isMipMapped)
+        public bool AllocTextureArray(int numCubeMaps, int width, TextureFormat format, bool isMipMapped, Material cubeBlitMaterial)
         {
             var res = AllocTextureArray(numCubeMaps);
             m_NumMipLevels = GetNumMips(width, width);      // will calculate same way whether we have cube array or not
 
             if (!TextureCache.supportsCubemapArrayTextures)
             {
-                if (!m_CubeBlitMaterial) m_CubeBlitMaterial = new Material(Shader.Find("Hidden/CubeToPano")) { hideFlags = HideFlags.HideAndDontSave };
+                m_CubeBlitMaterial = cubeBlitMaterial;
 
                 int panoWidthTop = 4 * width;
                 int panoHeightTop = 2 * width;
@@ -120,7 +131,8 @@ namespace UnityEngine.Experimental.Rendering
                     wrapMode = TextureWrapMode.Repeat,
                     wrapModeV = TextureWrapMode.Clamp,
                     filterMode = FilterMode.Trilinear,
-                    anisoLevel = 0
+                    anisoLevel = 0,
+                    name = CoreUtils.GetTextureAutoName(panoWidthTop, panoHeightTop, format, TextureDimension.Tex2DArray, depth: numCubeMaps, name: m_CacheName)
                 };
 
                 m_NumPanoMipLevels = isMipMapped ? GetNumMips(panoWidthTop, panoHeightTop) : 1;
@@ -128,12 +140,14 @@ namespace UnityEngine.Experimental.Rendering
                 for (int m = 0; m < m_NumPanoMipLevels; m++)
                 {
                     m_StagingRTs[m] = new RenderTexture(Mathf.Max(1, panoWidthTop >> m), Mathf.Max(1, panoHeightTop >> m), 0, RenderTextureFormat.ARGBHalf) { hideFlags = HideFlags.HideAndDontSave };
+                    m_StagingRTs[m].name = CoreUtils.GetRenderTargetAutoName(Mathf.Max(1, panoWidthTop >> m), Mathf.Max(1, panoHeightTop >> m), RenderTextureFormat.ARGBHalf, String.Format("PanaCache{0}", m));
                 }
 
                 if (m_CubeBlitMaterial)
                 {
                     m_CubeMipLevelPropName = Shader.PropertyToID("_cubeMipLvl");
                     m_cubeSrcTexPropName = Shader.PropertyToID("_srcCubeTexture");
+
                 }
             }
             else
@@ -143,7 +157,8 @@ namespace UnityEngine.Experimental.Rendering
                     hideFlags = HideFlags.HideAndDontSave,
                     wrapMode = TextureWrapMode.Clamp,
                     filterMode = FilterMode.Trilinear,
-                    anisoLevel = 0 // It is important to set 0 here, else unity force anisotropy filtering
+                    anisoLevel = 0, // It is important to set 0 here, else unity force anisotropy filtering
+                    name = CoreUtils.GetTextureAutoName(width, width, format, TextureDimension.CubeArray, depth: numCubeMaps, name: m_CacheName)
                 };
             }
 
@@ -154,16 +169,16 @@ namespace UnityEngine.Experimental.Rendering
         {
             if (m_CacheNoCubeArray)
             {
-                Texture.DestroyImmediate(m_CacheNoCubeArray);
+                CoreUtils.Destroy(m_CacheNoCubeArray);
                 for (int m = 0; m < m_NumPanoMipLevels; m++)
                 {
                     m_StagingRTs[m].Release();
                 }
                 m_StagingRTs = null;
-                if (m_CubeBlitMaterial) Material.DestroyImmediate(m_CubeBlitMaterial);
+                CoreUtils.Destroy(m_CubeBlitMaterial);
             }
-            if (m_Cache)
-                Texture.DestroyImmediate(m_Cache);
+
+            CoreUtils.Destroy(m_Cache);
         }
 
         private void TransferToPanoCache(CommandBuffer cmd, int sliceIndex, Texture texture)
@@ -184,6 +199,7 @@ namespace UnityEngine.Experimental.Rendering
     public abstract class TextureCache
     {
         protected int m_NumMipLevels;
+        protected string m_CacheName;
 
         public static bool isMobileBuildTarget
         {
@@ -212,17 +228,10 @@ namespace UnityEngine.Experimental.Rendering
             get
             {
                 var format = TextureFormat.RGBAHalf;
-
                 var probeFormat = TextureFormat.BC6H;
 
-//                // On editor the texture is uncompressed when operating against mobile build targets
-//#if UNITY_2017_2_OR_NEWER
                 if (SystemInfo.SupportsTextureFormat(probeFormat) && !UnityEngine.Rendering.GraphicsSettings.HasShaderDefine(UnityEngine.Rendering.BuiltinShaderDefine.UNITY_NO_DXT5nm))
                     format = probeFormat;
-//#else
-//                if (SystemInfo.SupportsTextureFormat(probeFormat) && !TextureCache.isMobileBuildTarget)
-//                    format = probeFormat;
-//#endif
 
                 return format;
             }
@@ -232,11 +241,7 @@ namespace UnityEngine.Experimental.Rendering
         {
             get
             {
-//#if UNITY_2017_2_OR_NEWER
                 return !UnityEngine.Rendering.GraphicsSettings.HasShaderDefine(UnityEngine.Rendering.BuiltinShaderDefine.UNITY_NO_CUBEMAP_ARRAY);
-//#else
-//                return (SystemInfo.supportsCubemapArrayTextures && !TextureCache.isMobileBuildTarget);
-//#endif
             }
         }
 
@@ -334,7 +339,7 @@ namespace UnityEngine.Experimental.Rendering
 
         // In case the texture content with which we update the cache is not the input texture, we need to provide the right update count.
         public void UpdateSlice(CommandBuffer cmd, int sliceIndex, Texture content, uint textureHash)
-                {
+        {
             // transfer new slice to sliceIndex from source texture
             SetSliceHash(sliceIndex, textureHash);
             TransferToSlice(cmd, sliceIndex, content);
@@ -349,7 +354,7 @@ namespace UnityEngine.Experimental.Rendering
         public void UpdateSlice(CommandBuffer cmd, int sliceIndex, Texture content)
         {
             UpdateSlice(cmd, sliceIndex, content, GetTextureHash(content));
-                }
+        }
 
         public int FetchSlice(CommandBuffer cmd, Texture texture, bool forceReinject=false)
         {
@@ -402,8 +407,9 @@ namespace UnityEngine.Experimental.Rendering
             //    assert(m_SliceArray[m_SortedIdxArray[q-1]].CountLRU>=m_SliceArray[m_SortedIdxArray[q]].CountLRU);
         }
 
-        protected TextureCache()
+        protected TextureCache(string cacheName)
         {
+            m_CacheName = cacheName;
             m_NumTextures = 0;
             m_NumMipLevels = 0;
         }

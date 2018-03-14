@@ -1,16 +1,11 @@
 using System;
+using System.Collections.Generic;
+
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [Serializable]
     public class LightLoopSettings
     {
-        public static string kEnableFptlForForwardOpaque = "Enable Fptl for Forward Opaque";
-        public static string kEnableTileCluster = "Enable Tile/Cluster";
-        public static string kEnableBigTile = "Enable Big Tile";
-        public static string kEnableComputeLighting = "Enable Compute Lighting";
-        public static string kEnableLightclassification = "Enable Light Classification";
-        public static string kEnableMaterialClassification = "Enable Material Classification";
-
         // Setup by the users
         public bool enableTileAndCluster = true;
         public bool enableComputeLightEvaluation = true;
@@ -56,27 +51,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // When MSAA is enabled we disable Fptl as it become expensive compare to cluster
             // In HD, MSAA is only supported for forward only rendering, no MSAA in deferred mode (for code complexity reasons)
             aggregate.enableFptlForForwardOpaque = aggregate.enableFptlForForwardOpaque && !aggregateFrameSettings.enableMSAA;
+
+            // disable FPTL for stereo for now
+            aggregate.enableFptlForForwardOpaque = aggregate.enableFptlForForwardOpaque && !aggregateFrameSettings.enableStereo;
+
             // If Deferred, enable Fptl. If we are forward renderer only and not using Fptl for forward opaque, disable Fptl
             aggregate.isFptlEnabled = !aggregateFrameSettings.enableForwardRenderingOnly || aggregate.enableFptlForForwardOpaque;
         }
 
-        static public void RegisterDebug(String menuName, LightLoopSettings lightLoopSettings)
+        public static void RegisterDebug(LightLoopSettings lightLoopSettings, List<DebugUI.Widget> widgets)
         {
-            DebugMenuManager.instance.AddDebugItem<bool>(menuName, kEnableFptlForForwardOpaque, () => lightLoopSettings.enableFptlForForwardOpaque, (value) => lightLoopSettings.enableFptlForForwardOpaque = (bool)value);
-            DebugMenuManager.instance.AddDebugItem<bool>(menuName, kEnableTileCluster, () => lightLoopSettings.enableTileAndCluster, (value) => lightLoopSettings.enableTileAndCluster = (bool)value);
-            DebugMenuManager.instance.AddDebugItem<bool>(menuName, kEnableBigTile, () => lightLoopSettings.enableBigTilePrepass, (value) => lightLoopSettings.enableBigTilePrepass = (bool)value);
-            DebugMenuManager.instance.AddDebugItem<bool>(menuName, kEnableComputeLighting, () => lightLoopSettings.enableComputeLightEvaluation, (value) => lightLoopSettings.enableComputeLightEvaluation = (bool)value);
-            DebugMenuManager.instance.AddDebugItem<bool>(menuName, kEnableLightclassification, () => lightLoopSettings.enableComputeLightVariants, (value) => lightLoopSettings.enableComputeLightVariants = (bool)value);
-            DebugMenuManager.instance.AddDebugItem<bool>(menuName, kEnableMaterialClassification, () => lightLoopSettings.enableComputeMaterialVariants, (value) => lightLoopSettings.enableComputeMaterialVariants = (bool)value);
-        }
-
-        static public void UnRegisterDebug(String menuName)
-        {
-            DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableTileCluster);
-            DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableBigTile);
-            DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableComputeLighting);
-            DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableLightclassification);
-            DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableMaterialClassification);
+            widgets.AddRange(new []
+            {
+                new DebugUI.Container
+                {
+                    displayName = "Lighting Settings",
+                    children =
+                    {
+                        // Uncomment if you re-enable LIGHTLOOP_SINGLE_PASS multi_compile in lit*.shader
+                        //new DebugUI.BoolField { displayName = "Enable Tile/Cluster", getter = () => lightLoopSettings.enableTileAndCluster, setter = value => lightLoopSettings.enableTileAndCluster = value },
+                        new DebugUI.BoolField { displayName = "Enable Fptl for Forward Opaque", getter = () => lightLoopSettings.enableFptlForForwardOpaque, setter = value => lightLoopSettings.enableFptlForForwardOpaque = value },
+                        new DebugUI.BoolField { displayName = "Enable Big Tile", getter = () => lightLoopSettings.enableBigTilePrepass, setter = value => lightLoopSettings.enableBigTilePrepass = value },
+                        new DebugUI.BoolField { displayName = "Enable Compute Lighting", getter = () => lightLoopSettings.enableComputeLightEvaluation, setter = value => lightLoopSettings.enableComputeLightEvaluation = value },
+                        new DebugUI.BoolField { displayName = "Enable Light Classification", getter = () => lightLoopSettings.enableComputeLightVariants, setter = value => lightLoopSettings.enableComputeLightVariants = value },
+                        new DebugUI.BoolField { displayName = "Enable Material Classification", getter = () => lightLoopSettings.enableComputeMaterialVariants, setter = value => lightLoopSettings.enableComputeMaterialVariants = value }
+                    }
+                }
+            });
         }
     }
 }

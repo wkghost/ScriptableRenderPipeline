@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Rendering;
@@ -103,6 +103,22 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
+        static RenderTexture m_EmptyUAV;
+        public static RenderTexture emptyUAV
+        {
+            get
+            {
+                if(m_EmptyUAV == null)
+                {
+                    m_EmptyUAV = new RenderTexture(1, 1, 0);
+                    m_EmptyUAV.enableRandomWrite = true;
+                    m_EmptyUAV.Create();
+                }
+
+                return m_EmptyUAV;
+            }
+        }
+
         public static void ClearRenderTarget(CommandBuffer cmd, ClearFlag clearFlag, Color clearColor)
         {
             if (clearFlag != ClearFlag.None)
@@ -151,6 +167,31 @@ namespace UnityEngine.Experimental.Rendering
         {
             cmd.SetRenderTarget(colorBuffers, depthBuffer);
             ClearRenderTarget(cmd, clearFlag, clearColor);
+        }
+
+        public static string GetRenderTargetAutoName(int width, int height, RenderTextureFormat format, string name = "", bool mips = false, bool enableMSAA = false, MSAASamples msaaSamples = MSAASamples.None)
+        {
+            string temp;
+            if (enableMSAA)
+                temp = string.Format("{0}x{1}_{2}{3}_{4}", width, height, format, mips ? "_Mips"  : "", msaaSamples.ToString());
+            else
+                temp = string.Format("{0}x{1}_{2}{3}", width, height, format, mips ? "_Mips" : "");
+
+            temp = String.Format("{0}_{1}", name == "" ? "RenderTarget" : name, temp);
+
+            return temp;
+        }
+
+        public static string GetTextureAutoName(int width, int height, TextureFormat format, TextureDimension dim = TextureDimension.None, string name = "", bool mips = false, int depth = 0)
+        {
+            string temp;
+            if(depth == 0)
+                temp = string.Format("{0}x{1}_{2}{3}", width, height, format, mips ? "_Mips" : "");
+            else
+                temp = string.Format("{0}x{1}x{2}_{3}{4}", width, height, depth, format, mips ? "_Mips" : "");
+            temp = String.Format("{0}_{1}_{2}", name == "" ? "Texture" : name, (dim == TextureDimension.None) ? "" : dim.ToString(), temp);
+
+            return temp;
         }
 
         public static void ClearCubemap(CommandBuffer cmd, RenderTexture renderTexture, Color clearColor, bool clearMips = false)
@@ -306,20 +347,27 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
+        static IEnumerable<Type> m_AssemblyTypes;
+
         public static IEnumerable<Type> GetAllAssemblyTypes()
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(t =>
-                {
-                    // Ugly hack to handle mis-versioned dlls
-                    var innerTypes = new Type[0];
-                    try
+            if (m_AssemblyTypes == null)
+            {
+                m_AssemblyTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(t =>
                     {
-                        innerTypes = t.GetTypes();
-                    }
-                    catch { }
-                    return innerTypes;
-                });
+                        // Ugly hack to handle mis-versioned dlls
+                        var innerTypes = new Type[0];
+                        try
+                        {
+                            innerTypes = t.GetTypes();
+                        }
+                        catch { }
+                        return innerTypes;
+                    });
+            }
+
+            return m_AssemblyTypes;
         }
 
         public static void Destroy(params UnityObject[] objs)

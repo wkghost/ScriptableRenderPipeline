@@ -1,4 +1,5 @@
-﻿using UnityEngine.Rendering;
+﻿using System;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -22,11 +23,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RenderTexture           m_ConvolutionTargetTexture;
         ProbeFilteringState[]   m_ProbeBakingState;
         Material                m_ConvertTextureMaterial;
+        Material                m_CubeToPano;
         MaterialPropertyBlock   m_ConvertTextureMPB;
         bool                    m_PerformBC6HCompression;
 
-        public ReflectionProbeCache(IBLFilterGGX iblFilter, int cacheSize, int probeSize, TextureFormat probeFormat, bool isMipmaped)
+        public ReflectionProbeCache(HDRenderPipelineAsset hdAsset, IBLFilterGGX iblFilter, int cacheSize, int probeSize, TextureFormat probeFormat, bool isMipmaped)
         {
+            m_ConvertTextureMaterial = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.blitCubeTextureFace);
+            m_ConvertTextureMPB = new MaterialPropertyBlock();
+            m_CubeToPano = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.cubeToPanoShader);
+
             // BC6H requires CPP feature not yet available
             probeFormat = TextureFormat.RGBAHalf;
 
@@ -34,8 +40,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_ProbeSize = probeSize;
             m_CacheSize = cacheSize;
-            m_TextureCache = new TextureCacheCubemap();
-            m_TextureCache.AllocTextureArray(cacheSize, probeSize, probeFormat, isMipmaped);
+            m_TextureCache = new TextureCacheCubemap("ReflectionProbe");
+            m_TextureCache.AllocTextureArray(cacheSize, probeSize, probeFormat, isMipmaped, m_CubeToPano);
             m_IBLFilterGGX = iblFilter;
 
             m_PerformBC6HCompression = probeFormat == TextureFormat.BC6H;
@@ -45,23 +51,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void Initialize()
         {
-            if(m_TempRenderTexture == null)
+            if (m_TempRenderTexture == null)
             {
                 // Temporary RT used for convolution and compression
                 m_TempRenderTexture = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
+                m_TempRenderTexture.hideFlags = HideFlags.HideAndDontSave;
                 m_TempRenderTexture.dimension = TextureDimension.Cube;
                 m_TempRenderTexture.useMipMap = true;
                 m_TempRenderTexture.autoGenerateMips = false;
+                m_TempRenderTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, RenderTextureFormat.ARGBHalf, "ReflectionProbeTemp", mips : true);
                 m_TempRenderTexture.Create();
 
                 m_ConvolutionTargetTexture = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
+                m_ConvolutionTargetTexture.hideFlags = HideFlags.HideAndDontSave;
                 m_ConvolutionTargetTexture.dimension = TextureDimension.Cube;
                 m_ConvolutionTargetTexture.useMipMap = true;
                 m_ConvolutionTargetTexture.autoGenerateMips = false;
+                m_ConvolutionTargetTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, RenderTextureFormat.ARGBHalf, "ReflectionProbeConvolution", mips : true);
                 m_ConvolutionTargetTexture.Create();
-
-                m_ConvertTextureMaterial = CoreUtils.CreateEngineMaterial("Hidden/SRP/BlitCubeTextureFace");
-                m_ConvertTextureMPB = new MaterialPropertyBlock();
 
                 InitializeProbeBakingStates();
             }
@@ -76,17 +83,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void Release()
         {
-            if(m_TextureCache != null)
-            {
-                m_TextureCache.Release();
-                m_TextureCache = null;
-            }
-            if(m_TempRenderTexture != null)
-            {
-                m_TempRenderTexture.Release();
-                m_TempRenderTexture = null;
-            }
+            m_TextureCache.Release();
+            CoreUtils.Destroy(m_TempRenderTexture);
+            CoreUtils.Destroy(m_ConvolutionTargetTexture);
+
             m_ProbeBakingState = null;
+
+            CoreUtils.Destroy(m_ConvertTextureMaterial);
+            CoreUtils.Destroy(m_CubeToPano);
         }
 
         public void NewFrame()
@@ -118,20 +122,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RenderTexture convolutionSourceTexture = null;
             if (cubeTexture != null)
             {
-                // if the size if different from the cache probe size or if the input texture format is compressed, we need to convert it 
-                // 1) to a format for which we can generate mip maps 
+                // if the size if different from the cache probe size or if the input texture format is compressed, we need to convert it
+                // 1) to a format for which we can generate mip maps
                 // 2) to the proper reflection probe cache size
                 bool sizeMismatch = cubeTexture.width != m_ProbeSize || cubeTexture.height != m_ProbeSize;
                 bool formatMismatch = cubeTexture.format != TextureFormat.RGBAHalf; // Temporary RT for convolution is always FP16
                 if (formatMismatch || sizeMismatch)
                 {
+                    // We comment the following warning as they have no impact on the result but spam the console, it is just that we waste offline time and a bit of quality for nothing.
                     if (sizeMismatch)
                     {
-                        Debug.LogWarningFormat("Baked Reflection Probe {0} does not match HDRP Reflection Probe Cache size of {1}. Consider baking it at the same size for better loading performance.", texture.name, m_ProbeSize);
+                        // Debug.LogWarningFormat("Baked Reflection Probe {0} does not match HDRP Reflection Probe Cache size of {1}. Consider baking it at the same size for better loading performance.", texture.name, m_ProbeSize);
                     }
                     else if (cubeTexture.format == TextureFormat.BC6H)
                     {
-                        Debug.LogWarningFormat("Baked Reflection Probe {0} is compressed but the HDRP Reflection Probe Cache is not. Consider removing compression from the input texture for better quality.", texture.name);
+                        // Debug.LogWarningFormat("Baked Reflection Probe {0} is compressed but the HDRP Reflection Probe Cache is not. Consider removing compression from the input texture for better quality.", texture.name);
                     }
                     ConvertTexture(cmd, cubeTexture, m_TempRenderTexture);
                 }

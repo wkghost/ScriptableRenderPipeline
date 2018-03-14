@@ -33,7 +33,7 @@ namespace UnityEditor.Experimental.Rendering
         
             CED.Action(Drawer_ReflectionProbeMode),
             CED.FadeGroup((s, p, o, i) => s.IsSectionExpandedMode((ReflectionProbeMode)i),
-                true,
+                FadeOption.Indent,
                 CED.noop,                                      // Baked
                 CED.Action(Drawer_ModeSettingsRealtime),      // Realtime
                 CED.Action(Drawer_ModeSettingsCustom)         // Custom
@@ -50,10 +50,10 @@ namespace UnityEditor.Experimental.Rendering
         public static readonly CED.IDrawer SectionInfluenceVolumeSettings = CED.FoldoutGroup(
             "Influence volume settings",
             (s, p, o) => s.isSectionExpandedInfluenceVolume,
-            true,
+            FoldoutOption.Indent,
             CED.FadeGroup(
                 (s, p, o, i) => s.IsSectionExpandedShape((ShapeType)i),
-                false,
+                FadeOption.None,
                 CED.Action(Drawer_InfluenceBoxSettings),      // Box
                 CED.Action(Drawer_InfluenceSphereSettings)    // Sphere
             )/*,
@@ -62,14 +62,14 @@ namespace UnityEditor.Experimental.Rendering
 
         public static readonly CED.IDrawer SectionSeparateProjectionVolumeSettings = CED.FadeGroup(
             (s, p, o, i) => s.isSectionExpandedSeparateProjection,
-            false,
+            FadeOption.None,
             CED.FoldoutGroup(
                 "Reprojection volume settings",
                 (s, p, o) => s.isSectionExpandedSeparateProjection,
-                true,
+                FoldoutOption.Indent,
                 CED.FadeGroup(
                     (s, p, o, i) => s.IsSectionExpandedShape((ShapeType)i),
-                    false,
+                    FadeOption.None,
                     CED.Action(Drawer_ProjectionBoxSettings), // Box
                     CED.Action(Drawer_ProjectionSphereSettings) // Sphere
                 )
@@ -79,14 +79,14 @@ namespace UnityEditor.Experimental.Rendering
         public static readonly CED.IDrawer SectionCaptureSettings = CED.FoldoutGroup(
             "Capture settings",
             (s, p, o) => s.isSectionExpandedCaptureSettings,
-            true,
+            FoldoutOption.Indent,
             CED.Action(Drawer_CaptureSettings)
         );
 
         public static readonly CED.IDrawer SectionAdditionalSettings = CED.FoldoutGroup(
             "Additional settings",
             (s, p, o) => s.isSectionExpandedAdditional,
-            true,
+            FoldoutOption.Indent,
             CED.Action(Drawer_AdditionalSettings)
         );
 
@@ -107,7 +107,12 @@ namespace UnityEditor.Experimental.Rendering
 
         static void Drawer_AdditionalSettings(HDReflectionProbeUI s, SerializedHDReflectionProbe p, Editor owner)
         {
-            EditorGUILayout.PropertyField(p.dimmer);
+            EditorGUILayout.PropertyField(p.weight);
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(p.multiplier);
+            if (EditorGUI.EndChangeCheck())
+                p.multiplier.floatValue = Mathf.Max(0.0f, p.multiplier.floatValue);
 
             if (p.so.targetObjects.Length == 1)
             {
@@ -167,6 +172,7 @@ namespace UnityEditor.Experimental.Rendering
 
             var blendDistance = p.blendDistancePositive.vector3Value.x;
             EditorGUI.BeginChangeCheck();
+            EditorGUI.showMixedValue = p.blendDistancePositive.hasMultipleDifferentValues;
             blendDistance = EditorGUILayout.Slider(CoreEditorUtils.GetContent("Blend Distance|Area around the probe where it is blended with other probes. Only used in deferred probes."), blendDistance, 0, maxBlendDistance);
             if (EditorGUI.EndChangeCheck())
             {
@@ -176,12 +182,14 @@ namespace UnityEditor.Experimental.Rendering
 
             var blendNormalDistance = p.blendNormalDistancePositive.vector3Value.x;
             EditorGUI.BeginChangeCheck();
+            EditorGUI.showMixedValue = p.blendNormalDistancePositive.hasMultipleDifferentValues;
             blendNormalDistance = EditorGUILayout.Slider(CoreEditorUtils.GetContent("Blend Normal Distance|Area around the probe where the normals influence the probe. Only used in deferred probes."), blendNormalDistance, 0, maxBlendDistance);
             if (EditorGUI.EndChangeCheck())
             {
                 p.blendNormalDistancePositive.vector3Value = Vector3.one * blendNormalDistance;
                 p.blendNormalDistanceNegative.vector3Value = Vector3.one * blendNormalDistance;
             }
+            EditorGUI.showMixedValue = false;
 
             EditorGUILayout.PropertyField(p.influenceSphereRadius, CoreEditorUtils.GetContent("Radius"));
             EditorGUILayout.PropertyField(p.boxOffset, CoreEditorUtils.GetContent("Sphere Offset|The center of the sphere in which the reflections will be applied to objects. The value is relative to the position of the Game Object."));
@@ -341,7 +349,12 @@ namespace UnityEditor.Experimental.Rendering
         {
             EditorGUILayout.PropertyField(p.renderDynamicObjects, CoreEditorUtils.GetContent("Dynamic Objects|If enabled dynamic objects are also rendered into the cubemap"));
 
-            p.customBakedTexture.objectReferenceValue = EditorGUILayout.ObjectField(CoreEditorUtils.GetContent("Cubemap"), p.customBakedTexture.objectReferenceValue, typeof(Cubemap), false);
+            EditorGUI.showMixedValue = p.customBakedTexture.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            var customBakedTexture = EditorGUILayout.ObjectField(CoreEditorUtils.GetContent("Cubemap"), p.customBakedTexture.objectReferenceValue, typeof(Cubemap), false);
+            EditorGUI.showMixedValue = false;
+            if (EditorGUI.EndChangeCheck())
+                p.customBakedTexture.objectReferenceValue = customBakedTexture;
         }
 
         static void Drawer_ModeSettingsRealtime(HDReflectionProbeUI s, SerializedHDReflectionProbe p, Editor owner)

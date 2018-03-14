@@ -9,18 +9,22 @@ Shader "LightweightPipeline/Standard Unlit"
         _BumpMap("Normal Map", 2D) = "bump" {}
 
         // BlendMode
-        [HideInInspector] _Mode("Mode", Float) = 0.0
+        [HideInInspector] _Surface("__surface", Float) = 0.0
+        [HideInInspector] _Blend("__blend", Float) = 0.0
+        [HideInInspector] _AlphaClip("__clip", Float) = 0.0
         [HideInInspector] _SrcBlend("Src", Float) = 1.0
         [HideInInspector] _DstBlend("Dst", Float) = 0.0
         [HideInInspector] _ZWrite("ZWrite", Float) = 1.0
+        [HideInInspector] _Cull("__cull", Float) = 2.0
     }
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "IgnoreProjectors" = "True" "RenderPipeline" = "LightweightPipeline" }
+        Tags { "RenderType" = "Opaque" "IgnoreProjectors" = "True" "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "True"}
         LOD 100
 
         Blend [_SrcBlend][_DstBlend]
         ZWrite [_ZWrite]
+        Cull [_Cull]
 
         Pass
         {
@@ -31,8 +35,13 @@ Shader "LightweightPipeline/Standard Unlit"
             #pragma fragment frag
             #pragma multi_compile_fog
             #pragma shader_feature _SAMPLE_GI
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON
+            #pragma shader_feature _ALPHATEST_ON
             #pragma multi_compile_instancing
+
+            // -------------------------------------
+            // Unity defined keywords
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_ON
 
             // Lighting include is needed because of GI
             #include "LWRP/ShaderLibrary/Lighting.hlsl"
@@ -62,6 +71,7 @@ Shader "LightweightPipeline/Standard Unlit"
                 float4 vertex : SV_POSITION;
 
                 UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             VertexOutput vert(VertexInput v)
@@ -70,6 +80,7 @@ Shader "LightweightPipeline/Standard Unlit"
 
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_TRANSFER_INSTANCE_ID(v, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 
                 o.vertex = TransformObjectToHClip(v.vertex.xyz);
                 o.uv0AndFogCoord.xy = TRANSFORM_TEX(v.uv, _MainTex);
@@ -77,9 +88,8 @@ Shader "LightweightPipeline/Standard Unlit"
 
 #if _SAMPLE_GI
                 OUTPUT_NORMAL(v, o);
-                half3 normalWS = o.normal;
                 OUTPUT_LIGHTMAP_UV(v.lightmapUV, unity_LightmapST, o.lightmapOrVertexSH.xy);
-                OUTPUT_SH(normalWS, o.lightmapOrVertexSH);
+                OUTPUT_SH(o.normal, o.lightmapOrVertexSH);
 #endif
                 return o;
             }
@@ -91,8 +101,7 @@ Shader "LightweightPipeline/Standard Unlit"
                 half2 uv = IN.uv0AndFogCoord.xy;
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
                 half3 color = texColor.rgb * _Color.rgb;
-                half alpha = texColor.a * _Color.a;
-
+                half alpha = texColor.a * _Color.a;     
                 AlphaDiscard(alpha, _Cutoff);
 
 #if _SAMPLE_GI
@@ -101,15 +110,11 @@ Shader "LightweightPipeline/Standard Unlit"
     #else
                 half3 normalWS = normalize(IN.normal);
     #endif
-                color += SampleGI(IN.lightmapOrVertexSH, normalWS);
+                color *= SampleGI(IN.lightmapOrVertexSH, normalWS);
 #endif
                 ApplyFog(color, IN.uv0AndFogCoord.z);
-
-#ifdef _ALPHABLEND_ON
+       
                 return half4(color, alpha);
-#else
-                return half4(color, 1.0);
-#endif
             }
             ENDHLSL
         }

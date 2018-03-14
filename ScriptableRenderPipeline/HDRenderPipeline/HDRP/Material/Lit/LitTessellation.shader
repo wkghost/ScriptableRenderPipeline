@@ -60,6 +60,12 @@ Shader "HDRenderPipeline/LitTessellation"
         _ThicknessMap("Thickness Map", 2D) = "white" {}
         _ThicknessRemap("Thickness Remap", Vector) = (0, 1, 0, 0)
 
+        _IridescenceThickness("Iridescence Thickness", Range(0.0, 1.0)) = 1.0
+        _IridescenceThicknessMap("Iridescence Thickness Map", 2D) = "white" {}
+        _IridescenceThicknessRemap("Iridescence Thickness Remap", Vector) = (0, 1, 0, 0)
+        _IridescenceMask("Iridescence Mask", Range(0.0, 1.0)) = 1.0
+        _IridescenceMaskMap("Iridescence Mask Map", 2D) = "white" {}
+
         _CoatMask("Coat Mask", Range(0.0, 1.0)) = 0.0
         _CoatMaskMap("CoatMaskMap", 2D) = "white" {}
 
@@ -104,7 +110,7 @@ Shader "HDRenderPipeline/LitTessellation"
 
         // Transparency
         [Enum(None, 0, Plane, 1, Sphere, 2)]_RefractionMode("Refraction Mode", Int) = 0
-        _IOR("Indice Of Refraction", Range(1.0, 2.5)) = 1.0
+        _Ior("Index Of Refraction", Range(1.0, 2.5)) = 1.0
         _ThicknessMultiplier("Thickness Multiplier", Float) = 1.0
         _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)
         _TransmittanceColorMap("TransmittanceColorMap", 2D) = "white" {}
@@ -125,13 +131,15 @@ Shader "HDRenderPipeline/LitTessellation"
         [HideInInspector] _ZWrite("__zw", Float) = 1.0
         [HideInInspector] _CullMode("__cullmode", Float) = 2.0
         [HideInInspector] _CullModeForward("__cullmodeForward", Float) = 2.0 // This mode is dedicated to Forward to correctly handle backface then front face rendering thin transparent
-        [HideInInspector] _ZTestMode("_ZTestMode", Int) = 8
+        [HideInInspector] _ZTestDepthEqualForOpaque("_ZTestDepthEqualForOpaque", Int) = 4 // Less equal
+        [HideInInspector] _ZTestModeDistortion("_ZTestModeDistortion", Int) = 8
+        [HideInInspector] _ZTestGBuffer("_ZTestGBuffer", Int) = 4
 
         [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
         [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
 
         [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
-        [Enum(Flip, 0, Mirror, 1)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1
+        [Enum(Flip, 0, Mirror, 1, None, 2)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1
         [HideInInspector] _DoubleSidedConstants("_DoubleSidedConstants", Vector) = (1, 1, -1, 0)
 
         [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3, Planar, 4, Triplanar, 5)] _UVBase("UV Set for base", Float) = 0
@@ -143,8 +151,8 @@ Shader "HDRenderPipeline/LitTessellation"
         // Following enum should be material feature flags (i.e bitfield), however due to Gbuffer encoding constrain many combination exclude each other
         // so we use this enum as "material ID" which can be interpreted as preset of bitfield of material feature
         // The only material feature flag that can be added in all cases is clear coat
-        [Enum(Subsurface Scattering and Transmissison, 0, Standard, 1, Anisotropy, 2, Iridescence, 3, Specular Color, 4)] _MaterialID("MaterialId", Int) = 1 // MaterialId.Standard
-        [Enum(Both, 0, SSS only, 1, Transmission only, 2)] _SSSAndTransmissionType("SSSandTransmissionType", Int) = 0 // SSSandTransmissionType.Both
+        [Enum(Subsurface Scattering, 0, Standard, 1, Anisotropy, 2, Iridescence, 3, Specular Color, 4, Translucent, 5)] _MaterialID("MaterialId", Int) = 1 // MaterialId.Standard
+        [ToggleUI] _TransmissionEnable("_TransmissionEnable", Float) = 1.0
 
         [Enum(None, 0, Tessellation displacement, 3)] _DisplacementMode("DisplacementMode", Int) = 3
         [ToggleUI] _DisplacementLockObjectScale("displacement lock object scale", Float) = 1.0
@@ -237,6 +245,7 @@ Shader "HDRenderPipeline/LitTessellation"
     #pragma shader_feature _DETAIL_MAP
     #pragma shader_feature _SUBSURFACE_MASK_MAP
     #pragma shader_feature _THICKNESSMAP
+    #pragma shader_feature _IRIDESCENCE_THICKNESSMAP
     #pragma shader_feature _SPECULARCOLORMAP
     #pragma shader_feature _TRANSMITTANCECOLORMAP
 
@@ -304,6 +313,9 @@ Shader "HDRenderPipeline/LitTessellation"
 
     SubShader
     {
+        // This tags allow to use the shader replacement features
+        Tags{ "RenderPipeline" = "HDRenderPipeline" "RenderType" = "HDLitShader" }
+
         // Caution: The outline selection in the editor use the vertex shader/hull/domain shader of the first pass declare. So it should not bethe  meta pass.
         Pass
         {
@@ -311,6 +323,7 @@ Shader "HDRenderPipeline/LitTessellation"
             Tags { "LightMode" = "GBuffer" } // This will be only for opaque object based on the RenderQueue index
 
             Cull [_CullMode]
+            ZTest[_ZTestGBuffer]
 
             Stencil
             {
@@ -331,49 +344,12 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
 
-            #define SHADERPASS SHADERPASS_GBUFFER
-            #include "../../ShaderVariables.hlsl"
-            #ifdef DEBUG_DISPLAY
-            #include "../../Debug/DebugDisplay.hlsl"
-            #endif
-            #include "../../Material/Material.hlsl"
-            #include "ShaderPass/LitSharePass.hlsl"
-            #include "LitData.hlsl"
-            #include "../../ShaderPass/ShaderPassGBuffer.hlsl"
-
-            ENDHLSL
-        }
-
-        // This pass is the same as GBuffer only it does not do alpha test (the clip instruction is removed)
-        // This is due to the fact that on GCN, any shader with a clip instruction cannot benefit from HiZ so when we do a prepass, in order to get the most performance, we need to make a special case in the subsequent GBuffer pass.
-        Pass
-        {
-            Name "GBufferWithPrepass"  // Name is not used
-            Tags { "LightMode" = "GBufferWithPrepass" } // This will be only for opaque object based on the RenderQueue index
-
-            Cull [_CullMode]
-
-            Stencil
-            {
-                WriteMask [_StencilWriteMask]
-                Ref  [_StencilRef]
-                Comp Always
-                Pass Replace
-            }
-
-            HLSLPROGRAM
-
-            #pragma hull Hull
-            #pragma domain Domain
-
-            #pragma multi_compile _ DEBUG_DISPLAY
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
+        #ifdef _ALPHATEST_ON
+            // When we have alpha test, we will force a depth prepass so we always bypass the clip instruction in the GBuffer
+            #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST 
+        #endif
 
             #define SHADERPASS SHADERPASS_GBUFFER
-            #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
             #include "../../ShaderVariables.hlsl"
             #ifdef DEBUG_DISPLAY
             #include "../../Debug/DebugDisplay.hlsl"
@@ -510,7 +486,7 @@ Shader "HDRenderPipeline/LitTessellation"
 
             Blend [_DistortionSrcBlend] [_DistortionDstBlend], [_DistortionBlurSrcBlend] [_DistortionBlurDstBlend]
             BlendOp Add, [_DistortionBlurBlendOp]
-            ZTest [_ZTestMode]
+            ZTest [_ZTestModeDistortion]
             ZWrite off
             Cull [_CullMode]
 
@@ -575,7 +551,8 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
-            #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+            //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+            #define LIGHTLOOP_TILE_PASS
             #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
 
             #define SHADERPASS SHADERPASS_FORWARD
@@ -605,8 +582,10 @@ Shader "HDRenderPipeline/LitTessellation"
             }
 
             Blend [_SrcBlend] [_DstBlend]
+            // In case of forward we want to have depth equal for opaque mesh
+            ZTest [_ZTestDepthEqualForOpaque]
             ZWrite [_ZWrite]
-            Cull[_CullModeForward]
+            Cull [_CullModeForward]
 
             HLSLPROGRAM
 
@@ -619,10 +598,15 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
-            #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+            //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+            #define LIGHTLOOP_TILE_PASS
             #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
 
             #define SHADERPASS SHADERPASS_FORWARD
+            // In case of opaque we don't want to perform the alpha test, it is done in depth prepass and we use depth equal for ztest (setup from UI)
+            #ifndef _SURFACE_TYPE_TRANSPARENT
+                #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+            #endif
             #include "../../ShaderVariables.hlsl"
             #ifdef DEBUG_DISPLAY
             #include "../../Debug/DebugDisplay.hlsl"

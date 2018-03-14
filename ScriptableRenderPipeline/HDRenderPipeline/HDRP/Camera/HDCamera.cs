@@ -16,13 +16,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Matrix4x4 projMatrix;
         public Matrix4x4 nonJitteredProjMatrix;
         public Vector4 screenSize;
-        public Plane[] frustumPlanes;
+        public Frustum frustum;
         public Vector4[] frustumPlaneEquations;
         public Camera camera;
         public uint taaFrameIndex;
         public Vector2 taaFrameRotation;
         public Vector4 viewParam;
         public PostProcessRenderContext postprocessRenderContext;
+
+        public Matrix4x4[] viewMatrixStereo;
+        public Matrix4x4[] projMatrixStereo;
+        public Vector4 centerEyeTranslationOffset;
 
         // Non oblique projection matrix (RHS)
         public Matrix4x4 nonObliqueProjMatrix
@@ -58,6 +62,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get { return nonJitteredProjMatrix * viewMatrix; }
         }
 
+        public Matrix4x4 GetViewProjMatrixStereo(uint eyeIndex)
+        {
+            return (projMatrixStereo[eyeIndex] * viewMatrixStereo[eyeIndex]);
+        }
+
         // Always true for cameras that just got added to the pool - needed for previous matrices to
         // avoid one-frame jumps/hiccups with temporal effects (motion blur, TAA...)
         public bool isFirstFrame { get; private set; }
@@ -91,6 +100,43 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // happen, but you never know...
         int m_LastFrameActive;
 
+        public bool clearDepth
+        {
+            get { return m_AdditionalCameraData != null ? m_AdditionalCameraData.clearDepth : camera.clearFlags != CameraClearFlags.Nothing; }
+        }
+
+        public HDAdditionalCameraData.ClearColorMode clearColorMode
+        {
+            get
+            {
+                if (m_AdditionalCameraData != null)
+                {
+                    return m_AdditionalCameraData.clearColorMode;
+                }
+
+                if (camera.clearFlags == CameraClearFlags.Skybox)
+                    return HDAdditionalCameraData.ClearColorMode.Sky;
+                else if (camera.clearFlags == CameraClearFlags.SolidColor)
+                    return HDAdditionalCameraData.ClearColorMode.BackgroundColor;
+                else // None
+                    return HDAdditionalCameraData.ClearColorMode.None;
+            }
+        }
+
+        public Color backgroundColorHDR
+        {
+            get
+            {
+                if (m_AdditionalCameraData != null)
+                {
+                    return m_AdditionalCameraData.backgroundColorHDR;
+                }
+
+                // The scene view has no additional data so this will correctly pick the editor preference backround color here.
+                return camera.backgroundColor.linear;
+            }
+        }
+
         static Dictionary<Camera, HDCamera> s_Cameras = new Dictionary<Camera, HDCamera>();
         static List<Camera> s_Cleanup = new List<Camera>(); // Recycled to reduce GC pressure
 
@@ -99,8 +145,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public HDCamera(Camera cam)
         {
             camera = cam;
-            frustumPlanes = new Plane[6];
+            frustum = new Frustum();
             frustumPlaneEquations = new Vector4[6];
+
+            viewMatrixStereo = new Matrix4x4[2];
+            projMatrixStereo = new Matrix4x4[2];
+
             postprocessRenderContext = new PostProcessRenderContext();
             m_AdditionalCameraData = cam.GetComponent<HDAdditionalCameraData>();
             Reset();
@@ -110,7 +160,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // If TAA is enabled projMatrix will hold a jittered projection matrix. The original,
             // non-jittered projection matrix can be accessed via nonJitteredProjMatrix.
-            bool taaEnabled = Application.isPlaying && camera.cameraType == CameraType.Game &&
+            bool taaEnabled = camera.cameraType == CameraType.Game &&
                 CoreUtils.IsTemporalAntialiasingActive(postProcessLayer);
 
             var nonJitteredCameraProj = camera.projectionMatrix;
@@ -124,14 +174,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var gpuView = camera.worldToCameraMatrix;
             var gpuNonJitteredProj = GL.GetGPUProjectionMatrix(nonJitteredCameraProj, true);
 
+            // In stereo, this corresponds to the center eye position
             var pos = camera.transform.position;
-            var relPos = pos; // World-origin-relative
 
             if (ShaderConfig.s_CameraRelativeRendering != 0)
             {
                 // Zero out the translation component.
                 gpuView.SetColumn(3, new Vector4(0, 0, 0, 1));
-                relPos = Vector3.zero; // Camera-relative
             }
 
             var gpuVP = gpuNonJitteredProj * gpuView;
@@ -153,8 +202,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 isFirstFrame = false;
             }
 
-            const uint taaFrameCount = 8;
-            taaFrameIndex = taaEnabled ? (uint)Time.renderedFrameCount % taaFrameCount : 0;
+            taaFrameIndex = taaEnabled ? (uint)postProcessLayer.temporalAntialiasing.sampleIndex : 0;
             taaFrameRotation = new Vector2(Mathf.Sin(taaFrameIndex * (0.5f * Mathf.PI)),
                                            Mathf.Cos(taaFrameIndex * (0.5f * Mathf.PI)));
 
@@ -170,30 +218,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 prevViewProjMatrix *= cameraDisplacement; // Now prevViewProjMatrix correctly transforms this frame's camera-relative positionWS
             }
 
-            // Warning: near and far planes appear to be broken (or rather far plane seems broken)
-            GeometryUtility.CalculateFrustumPlanes(viewProjMatrix, frustumPlanes);
+            frustum = Frustum.Create(viewProjMatrix, true, true);
 
-            for (int i = 0; i < 4; i++)
+            // Left, right, top, bottom, near, far.
+            for (int i = 0; i < 6; i++)
             {
-                // Left, right, top, bottom.
-                frustumPlaneEquations[i] = new Vector4(frustumPlanes[i].normal.x, frustumPlanes[i].normal.y, frustumPlanes[i].normal.z, frustumPlanes[i].distance);
+                frustumPlaneEquations[i] = new Vector4(frustum.planes[i].normal.x, frustum.planes[i].normal.y, frustum.planes[i].normal.z, frustum.planes[i].distance);
             }
-
-            // Near, far.
-            Vector4 forward = (camera.cameraType == CameraType.Reflection) ? camera.worldToCameraMatrix.GetRow(2) : new Vector4(camera.transform.forward.x, camera.transform.forward.y, camera.transform.forward.z, 0.0f);
-            // We need to switch forward direction based on handness (Reminder: Regular camera have a negative determinant in Unity and reflection probe follow DX convention and have a positive determinant)
-            forward = viewParam.x < 0.0f ? forward : -forward;
-            frustumPlaneEquations[4] = new Vector4( forward.x,  forward.y,  forward.z, -Vector3.Dot(forward, relPos) - camera.nearClipPlane);
-            frustumPlaneEquations[5] = new Vector4(-forward.x, -forward.y, -forward.z,  Vector3.Dot(forward, relPos) + camera.farClipPlane);
 
             m_LastFrameActive = Time.frameCount;
 
             m_ActualWidth = camera.pixelWidth;
             m_ActualHeight = camera.pixelHeight;
+            var screenWidth = m_ActualWidth;
+            var screenHeight = m_ActualHeight;
             if (frameSettings.enableStereo)
             {
-                m_ActualWidth = XRSettings.eyeTextureWidth;
-                m_ActualHeight = XRSettings.eyeTextureHeight;
+                screenWidth = XRSettings.eyeTextureWidth;
+                screenHeight = XRSettings.eyeTextureHeight;
+
+                var xrDesc = XRSettings.eyeTextureDesc;
+                m_ActualWidth = xrDesc.width;
+                m_ActualHeight = xrDesc.height;
+
+                ConfigureStereoMatrices();
             }
 
             // Unfortunately sometime (like in the HDCameraEditor) HDUtils.hdrpSettings can be null because of scripts that change the current pipeline...
@@ -205,7 +253,91 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_CameraScaleBias.x = (float)m_ActualWidth / maxWidth;
             m_CameraScaleBias.y = (float)m_ActualHeight / maxHeight;
 
-            screenSize = new Vector4(m_ActualWidth, m_ActualHeight, 1.0f / m_ActualWidth, 1.0f / m_ActualHeight);
+            screenSize = new Vector4(screenWidth, screenHeight, 1.0f / screenWidth, 1.0f / screenHeight);
+        }
+
+        // Stopgap method used to extract stereo combined matrix state.
+        public void UpdateStereoDependentState(FrameSettings frameSettings, ref ScriptableCullingParameters cullingParams)
+        {
+            if (!frameSettings.enableStereo)
+                return;
+
+            // What constants in UnityPerPass need updating for stereo considerations?
+            // _ViewProjMatrix - It is used directly for generating tesselation factors. This should be the same
+            //                   across both eyes for consistency, and to keep shadow-generation eye-independent
+            // _ViewParam -      Used for isFrontFace determination, should be the same for both eyes. There is the scenario
+            //                   where there might be multi-eye sets that are divergent enough where this assumption is not valid,
+            //                   but that's a future problem
+            // _InvProjParam -   Intention was for generating linear depths, but not currently used.  Will need to be stereo-ized if
+            //                   actually needed.
+            // _FrustumPlanes -  Also used for generating tesselation factors.  Should be fine to use the combined stereo VP
+            //                   to calculate frustum planes.
+
+            // TODO: Would it be worth calculating my own combined view/proj matrix in Update?
+            // In engine, we modify the view and proj matrices accordingly in order to generate the single cull
+            // * Get the center eye view matrix, and pull it back to cover both eyes
+            // * Generated an expanded projection matrix (one method - max bound of left/right proj matrices)
+            //   and move near/far planes to match near/far locations of proj matrices located at eyes.
+            // I think using the cull matrices is valid, as long as I only use them for tess factors in shader.
+            // Using them for other calculations (like light list generation) could be problematic.
+
+            var stereoCombinedViewMatrix = cullingParams.cullStereoView;
+
+            if (ShaderConfig.s_CameraRelativeRendering != 0)
+            {
+                // This is pulled back from the center eye, so set the offset
+                var translation = stereoCombinedViewMatrix.GetColumn(3);
+                translation += centerEyeTranslationOffset;
+                stereoCombinedViewMatrix.SetColumn(3, translation);
+            }
+
+            viewMatrix = stereoCombinedViewMatrix;
+            var stereoCombinedProjMatrix = cullingParams.cullStereoProj;
+            projMatrix = GL.GetGPUProjectionMatrix(stereoCombinedProjMatrix, true);
+
+            viewParam = new Vector4(viewMatrix.determinant, 0.0f, 0.0f, 0.0f);
+
+            frustum = Frustum.Create(viewProjMatrix, true, true);
+
+            // Left, right, top, bottom, near, far.
+            for (int i = 0; i < 6; i++)
+            {
+                frustumPlaneEquations[i] = new Vector4(frustum.planes[i].normal.x, frustum.planes[i].normal.y, frustum.planes[i].normal.z, frustum.planes[i].distance);
+            }
+        }
+
+        void ConfigureStereoMatrices()
+        {
+            for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+            {
+                viewMatrixStereo[eyeIndex] = camera.GetStereoViewMatrix((Camera.StereoscopicEye)eyeIndex);
+
+                projMatrixStereo[eyeIndex] = camera.GetStereoProjectionMatrix((Camera.StereoscopicEye)eyeIndex);
+                projMatrixStereo[eyeIndex] = GL.GetGPUProjectionMatrix(projMatrixStereo[eyeIndex], true);
+            }
+
+            if (ShaderConfig.s_CameraRelativeRendering != 0)
+            {
+                var leftTranslation = viewMatrixStereo[0].GetColumn(3);
+                var rightTranslation = viewMatrixStereo[1].GetColumn(3);
+                var centerTranslation = (leftTranslation + rightTranslation) / 2;
+                var centerOffset = -centerTranslation;
+                centerOffset.w = 0;
+
+                // TODO: Grabbing the CenterEye transform would be preferable, but XRNode.CenterEye
+                // doesn't always seem to be valid.
+
+                for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+                {
+                    var translation = viewMatrixStereo[eyeIndex].GetColumn(3);
+                    translation += centerOffset;
+                    viewMatrixStereo[eyeIndex].SetColumn(3, translation);
+                }
+
+                centerEyeTranslationOffset = centerOffset;
+            }
+
+            // TODO: Fetch the single cull matrix stuff
         }
 
         // Warning: different views can use the same camera!
@@ -280,6 +412,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVectorArray(HDShaderIDs._FrustumPlanes, frustumPlaneEquations);
             cmd.SetGlobalInt(HDShaderIDs._TaaFrameIndex, (int)taaFrameIndex);
             cmd.SetGlobalVector(HDShaderIDs._TaaFrameRotation, taaFrameRotation);
+        }
+
+        public void SetupGlobalStereoParams(CommandBuffer cmd)
+        {
+            var viewProjStereo = new Matrix4x4[2];
+            var invViewStereo = new Matrix4x4[2];
+            var invProjStereo = new Matrix4x4[2];
+            var invViewProjStereo = new Matrix4x4[2];
+
+            for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+            {
+                var proj = projMatrixStereo[eyeIndex];
+                invProjStereo[eyeIndex] = proj.inverse;
+
+                var view = viewMatrixStereo[eyeIndex];
+                invViewStereo[eyeIndex] = view.inverse;
+
+                viewProjStereo[eyeIndex] = proj * view;
+                invViewProjStereo[eyeIndex] = viewProjStereo[eyeIndex].inverse;
+            }
+
+            // corresponds to UnityPerPassStereo
+            // TODO: Migrate the other stereo matrices to HDRP-managed UnityPerPassStereo?
+            cmd.SetGlobalMatrixArray(HDShaderIDs._ViewMatrixStereo, viewMatrixStereo);
+            cmd.SetGlobalMatrixArray(HDShaderIDs._ViewProjMatrixStereo, viewProjStereo);
+            cmd.SetGlobalMatrixArray(HDShaderIDs._InvViewMatrixStereo, invViewStereo);
+            cmd.SetGlobalMatrixArray(HDShaderIDs._InvProjMatrixStereo, invProjStereo);
+            cmd.SetGlobalMatrixArray(HDShaderIDs._InvViewProjMatrixStereo, invViewProjStereo);
         }
 
         // TODO: We should set all the value below globally and not let it under the control of Unity,

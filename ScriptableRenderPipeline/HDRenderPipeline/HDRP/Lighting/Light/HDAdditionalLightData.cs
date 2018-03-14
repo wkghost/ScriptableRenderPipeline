@@ -29,6 +29,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         float m_Version = 1.0f;
  #pragma warning restore 414
 
+        // To be able to have correct default values for our lights and to also control the conversion of intensity from the light editor (so it is compatible with GI)
+        // we add intensity (for each type of light we want to manage).
+        public float directionalIntensity   = Mathf.PI; // In Lux
+        public float punctualIntensity      = 600.0f;   // Light default to 600 lumen, i.e ~48 candela
+        public float areaIntensity          = 200.0f;   // Light default to 200 lumen to better match point light
+
         [Range(0.0f, 100.0f)]
         public float m_InnerSpotPercent = 0.0f; // To display this field in the UI this need to be public
 
@@ -152,6 +158,61 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DrawGizmos(true);
         }
 #endif
+
+        // Caution: this function must match the one in HDLightEditor.UpdateLightIntensity - any change need to be replicated
+        public void ConvertPhysicalLightIntensityToLightIntensity()
+        {
+            var light = gameObject.GetComponent<Light>();
+
+            if (lightTypeExtent == LightTypeExtent.Punctual)
+            {
+                switch (light.type)
+                {
+                    case LightType.Directional:
+                        light.intensity = directionalIntensity;
+                        break;
+
+                    case LightType.Point:
+                        light.intensity = LightUtils.ConvertPointLightIntensity(punctualIntensity);
+                        break;
+
+                    case LightType.Spot:
+                        // Spot should used conversion which take into account the angle, and thus the intensity vary with angle.
+                        // This is not easy to manipulate for lighter, so we simply consider any spot light as just occluded point light. So reuse the same code.
+                        light.intensity = LightUtils.ConvertPointLightIntensity(punctualIntensity);
+                        // TODO: What to do with box shape ?
+                        // var spotLightShape = (SpotLightShape)m_AdditionalspotLightShape.enumValueIndex;
+                        break;
+
+                }
+            }
+            else if (lightTypeExtent == LightTypeExtent.Rectangle)
+            {
+                light.intensity = LightUtils.ConvertRectLightIntensity(areaIntensity, shapeWidth, shapeHeight);
+            }
+            else if (lightTypeExtent == LightTypeExtent.Line)
+            {
+                light.intensity = LightUtils.CalculateLineLightIntensity(areaIntensity, shapeWidth);
+            }
+        }
+
+        // As we have our own default value, we need to initialize the light intensity correctly
+        public static void InitDefaultHDAdditionalLightData(HDAdditionalLightData lightData)
+        {
+            // At first init we need to initialize correctly the default value
+            lightData.ConvertPhysicalLightIntensityToLightIntensity();
+
+            // Special treatment for Unity builtin area light. Change it to our rectangle light
+
+            var light = lightData.gameObject.GetComponent<Light>();
+
+            // Sanity check: lightData.lightTypeExtent is init to LightTypeExtent.Punctual (in case for unknow reasons we recreate additional data on an existing line)
+            if (light.type == LightType.Area && lightData.lightTypeExtent == LightTypeExtent.Punctual)
+            {
+                lightData.lightTypeExtent = LightTypeExtent.Rectangle;
+                light.type = LightType.Point; // Same as in HDLightEditor
+            }
+        }
 
     }
 }

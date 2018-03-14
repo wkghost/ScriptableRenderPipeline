@@ -1,4 +1,4 @@
-﻿using UnityEngine.Serialization;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -32,9 +32,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Unlit  // Hard coded path
         };
 
+        public enum ClearColorMode
+        {
+            Sky,
+            BackgroundColor,
+            None
+        };
+
+        public ClearColorMode clearColorMode = ClearColorMode.Sky;
+        [ColorUsage(true, true)]
+        public Color backgroundColorHDR = new Color(0.025f, 0.07f, 0.19f, 0.0f);
+        public bool clearDepth = true;
+
         public RenderingPath    renderingPath;
         [Tooltip("Layer Mask used for the volume interpolation for this camera.")]
         public LayerMask        volumeLayerMask = -1;
+
+        // Physical parameters
+        public float aperture = 8f;
+        public float shutterSpeed = 1f / 200f;
+        public float iso = 400f;
 
         // To be able to turn on/off FrameSettings properties at runtime for debugging purpose without affecting the original one
         // we create a runtime copy (m_ActiveFrameSettings that is used, and any parametrization is done on serialized frameSettings)
@@ -113,6 +130,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void UnRegisterDebug()
         {
+            if (m_camera == null) 
+                return;
+
             if (m_IsDebugRegistered)
             {
                 if (m_camera.cameraType != CameraType.Preview && m_camera.cameraType != CameraType.Reflection)
@@ -130,6 +150,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // When LDR, unity render in 8bitSRGB, then do a final shader with sRGB conversion
             // What should be done is just in our Post process we convert to sRGB and store in a linear 10bit, but require C++ change...
             m_camera = GetComponent<Camera>();
+            if (m_camera == null) 
+                return;
+                
             m_camera.allowHDR = false;
 
             //  Tag as dirty so frameSettings are correctly initialize at next HDRenderPipeline.Render() call

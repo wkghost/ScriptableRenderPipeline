@@ -10,6 +10,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public const RendererConfiguration k_RendererConfigurationBakedLighting = RendererConfiguration.PerObjectLightProbe | RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbeProxyVolume;
         public const RendererConfiguration k_RendererConfigurationBakedLightingWithShadowMask = k_RendererConfigurationBakedLighting | RendererConfiguration.PerObjectOcclusionProbe | RendererConfiguration.PerObjectOcclusionProbeProxyVolume | RendererConfiguration.PerObjectShadowMask;
 
+        static public HDAdditionalReflectionData s_DefaultHDAdditionalReflectionData { get { return ComponentSingleton<HDAdditionalReflectionData>.instance; } }
+        static public HDAdditionalLightData s_DefaultHDAdditionalLightData { get { return ComponentSingleton<HDAdditionalLightData>.instance; } }
+        static public HDAdditionalCameraData s_DefaultHDAdditionalCameraData { get { return ComponentSingleton<HDAdditionalCameraData>.instance; } }
+
         public static Material GetBlitMaterial()
         {
             HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
@@ -234,7 +238,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.Blit(source, destination, new Vector2(camera.scaleBias.x, camera.scaleBias.y), Vector2.zero);
         }
 
-        // This particular case is for blitting a camera-scaled texture into a non scaling texture. So we setup the full viewport (implicit in cmd.Blit) but have to scale the input UVs.
+        // This particular case is for blitting a non-scaled texture into a scaled texture. So we setup the partial viewport but don't scale the input UVs.
         public static void BlitCameraTexture(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier source, RTHandle destination)
         {
             // Will set the correct camera viewport as well.

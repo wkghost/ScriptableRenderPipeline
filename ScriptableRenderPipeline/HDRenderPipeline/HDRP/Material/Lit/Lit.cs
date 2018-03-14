@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -45,7 +46,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Specular Occlusion")]
             public float specularOcclusion;
 
-            [SurfaceDataAttributes("Normal", true)]
+            [SurfaceDataAttributes(new string[]{"Normal", "Normal View Space"}, true)]
             public Vector3 normalWS;
             [SurfaceDataAttributes("Smoothness")]
             public float perceptualSmoothness;
@@ -83,7 +84,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float anisotropy; // anisotropic ratio(0->no isotropic; 1->full anisotropy in tangent direction, -1->full anisotropy in bitangent direction)
 
             // Iridescence
-            public float thicknessIrid;
+            [SurfaceDataAttributes("Iridescence Layer Thickness")]
+            public float iridescenceThickness;
+            [SurfaceDataAttributes("Iridescence Mask")]
+            public float iridescenceMask;
 
             // Forward property only
 
@@ -115,7 +119,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public float specularOcclusion;
 
-            [SurfaceDataAttributes("", true)]
+            [SurfaceDataAttributes(new string[] { "Normal WS", "Normal View Space" }, true)]
             public Vector3 normalWS;
             public float perceptualRoughness;
 
@@ -145,7 +149,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float anisotropy;
 
             // Iridescence
-            public float thicknessIrid;
+            public float iridescenceThickness;
+            public float iridescenceMask;
 
             // ClearCoat
             public float coatRoughness; // Automatically fill
@@ -261,16 +266,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_InitPreFGD = CoreUtils.CreateEngineMaterial("Hidden/HDRenderPipeline/PreIntegratedFGD");
 
             m_PreIntegratedFGD = new RenderTexture(128, 128, 0, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear);
+            m_PreIntegratedFGD.hideFlags = HideFlags.HideAndDontSave;
             m_PreIntegratedFGD.filterMode = FilterMode.Bilinear;
             m_PreIntegratedFGD.wrapMode = TextureWrapMode.Clamp;
             m_PreIntegratedFGD.hideFlags = HideFlags.DontSave;
+            m_PreIntegratedFGD.name = CoreUtils.GetRenderTargetAutoName(128, 128, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD");
             m_PreIntegratedFGD.Create();
 
             m_LtcData = new Texture2DArray(k_LtcLUTResolution, k_LtcLUTResolution, 3, TextureFormat.RGBAHalf, false /*mipmap*/, true /* linear */)
             {
                 hideFlags = HideFlags.HideAndDontSave,
                 wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear
+                filterMode = FilterMode.Bilinear,
+                name = CoreUtils.GetTextureAutoName(k_LtcLUTResolution, k_LtcLUTResolution, TextureFormat.RGBAHalf, depth: 3, dim: TextureDimension.Tex2DArray, name: "LTC_LUT")
             };
 
             LoadLUT(m_LtcData, 0, TextureFormat.RGBAHalf,   s_LtcGGXMatrixData);
@@ -286,6 +294,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Cleanup()
         {
             CoreUtils.Destroy(m_InitPreFGD);
+            CoreUtils.Destroy(m_PreIntegratedFGD);
+            CoreUtils.Destroy(m_LtcData);
 
             // TODO: how to delete RenderTexture ? or do we need to do it ?
             m_isInit = false;

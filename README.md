@@ -11,7 +11,7 @@ This feature is currently a work in progress. We cannot promise that features wi
 __Note: The Master branch is our current development branch and may not work on the latest publicly available version of Unity. You should always use the latest release tag and latest Unity beta version for testing purposes.__
 To use the latest version of the SRP, follow the instructions below:
 
-This repository consists of a folder that needs to be placed in the Assets\ folder of your Unity project. We recommend creating a new project to test SRP. Do not clone this repo into an existing project unless you want to break it, or unless you are updating to a newer version of the SRP repo.
+This repository consists of a folder that needs to be placed in the Assets\ folder of your Unity project. We recommend creating a new project to test SRP. Do not clone this repo into an existing project unless you want to break it, or unless you are updating to a newer version of the SRP repo. Your project's `packages.json` file (in either `UnityPackageManager/` or `Packages/`) does not have a dependency on any of the packages in this repository or the contained submodules.
 
 You can use the GitHub desktop app to clone the latest version of the SRP repo or you can use GitHub console commands.
 
@@ -26,7 +26,7 @@ After the repo has been cloned you will need to run the following console comman
 
 ```
 > git checkout Unity-2018.1.0b2 (or the latest tag)
-> git submodule update --init --recursive --remote (This command fetches the Postprocessing module, which is needed to use SRP)
+> git submodule update --init (This command fetches the Postprocessing module, which is needed to use SRP)
 
 ```
 ### To download the repo using console commands:
@@ -37,7 +37,7 @@ Enter the following commands in your console application of choice:
 > git clone https://github.com/Unity-Technologies/ScriptableRenderPipeline
 > cd ScriptableRenderPipeline
 > git checkout Unity-2018.1.0b2 (or the latest tag)
-> git submodule update --init --recursive --remote (This command fetches the Postprocessing module, which is needed to use SRP)
+> git submodule update --init (This command fetches the Postprocessing module, which is needed to use SRP)
 
 ```
 ## Scriptable Render Pipeline Assets
@@ -72,3 +72,11 @@ To use the Lightweight Pipeline you must edit your project’s __Graphics__ sett
 2. Navigate to ___Edit > Project Settings > Graphics___ and add the Lightweight Render Pipeline Asset you created to the __Render Pipeline Settings__ field.
 
 Note: Always store your new Render Pipeline Asset outside of the Scriptable Render Pipeline folder. This ensures that your Lightweight settings are not lost when merging new changes from the SRP repo.
+
+## Sample Scenes in ScriptableRenderPipelineData
+
+If you want some sample scenes to use with SRP, you can find them at the [ScriptableRenderPipelineData GitHub repository](https://github.com/Unity-Technologies/ScriptableRenderPipelineData).
+
+Clone the repo into your project's Assets\ folder, likely alongside your ScriptableRenderPipeline clone folder.  You can use the same cloning process as described above for the main ScriptableRenderPipeline repo.
+
+Previous iterations of the ScriptableRenderPipeline repo owned this sample scene data, in case you noticed it before, and wondered where it went.

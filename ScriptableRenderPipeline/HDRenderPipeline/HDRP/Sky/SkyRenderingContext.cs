@@ -56,12 +56,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Reallocate everything
             if (m_SkyboxCubemapRT == null)
             {
-                m_SkyboxCubemapRT = RTHandle.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear);
+                m_SkyboxCubemapRT = RTHandle.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear, name: "SkyboxCubemap");
             }
 
             if (m_SkyboxGGXCubemapRT == null && m_SupportsConvolution)
             {
-                m_SkyboxGGXCubemapRT = RTHandle.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear);
+                m_SkyboxGGXCubemapRT = RTHandle.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear, name: "SkyboxGGXCubemap");
             }
 
             if (m_SupportsMIS && (m_SkyboxConditionalCdfRT == null))
@@ -71,10 +71,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int height = (int)LightSamplingParameters.TextureHeight;
 
                 // + 1 because we store the value of the integral of the cubemap at the end of the texture.
-                m_SkyboxMarginalRowCdfRT = RTHandle.Alloc(height + 1, 1, colorFormat: RenderTextureFormat.RFloat, sRGB: false, useMipMap: false, enableRandomWrite: true, filterMode: FilterMode.Point);
+                m_SkyboxMarginalRowCdfRT = RTHandle.Alloc(height + 1, 1, colorFormat: RenderTextureFormat.RFloat, sRGB: false, useMipMap: false, enableRandomWrite: true, filterMode: FilterMode.Point, name: "SkyboxMarginalRowCdf");
 
                 // TODO: switch the format to R16 (once it's available) to save some bandwidth.
-                m_SkyboxMarginalRowCdfRT = RTHandle.Alloc(width, height, colorFormat: RenderTextureFormat.RFloat, sRGB: false, useMipMap: false, enableRandomWrite: true, filterMode: FilterMode.Point);
+                m_SkyboxMarginalRowCdfRT = RTHandle.Alloc(width, height, colorFormat: RenderTextureFormat.RFloat, sRGB: false, useMipMap: false, enableRandomWrite: true, filterMode: FilterMode.Point, name: "SkyboxMarginalRowCdf");
             }
 
             m_CubemapScreenSize = new Vector4((float)resolution, (float)resolution, 1.0f / (float)resolution, 1.0f / (float)resolution);
@@ -138,6 +138,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        // We do our own hash here because Unity does not provide correct hash for builtin types
+        // Moreover, we don't want to test every single parameters of the light so we filter them here in this specific function.
+        int GetSunLightHashCode(Light light)
+        {
+            HDAdditionalLightData ald = light.GetComponent<HDAdditionalLightData>();
+            unchecked
+            {
+                int hash = 13;
+                hash = hash * 23 + (light.GetHashCode() * 23 + light.transform.position.GetHashCode()) * 23 + light.transform.rotation.GetHashCode();
+                hash = hash * 23 + light.color.GetHashCode();
+                hash = hash * 23 + light.colorTemperature.GetHashCode();
+                hash = hash * 23 + light.intensity.GetHashCode();
+                hash = hash * 23 + light.range.GetHashCode();
+                if (light.cookie != null)
+                {
+                    hash = hash * 23 + (int)light.cookie.updateCount;
+                    hash = hash * 23 + (int)light.cookie.GetInstanceID();
+                }
+                if (ald != null)
+                {
+                    hash = hash * 23 + ald.lightDimmer.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+
         public bool UpdateEnvironment(SkyUpdateContext skyContext, HDCamera camera, Light sunLight, bool updateRequired, CommandBuffer cmd)
         {
             bool result = false;
@@ -153,7 +180,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 int sunHash = 0;
                 if (sunLight != null)
-                    sunHash = (sunLight.GetHashCode() * 23 + sunLight.transform.position.GetHashCode()) * 23 + sunLight.transform.rotation.GetHashCode();
+                    sunHash = GetSunLightHashCode(sunLight);
                 int skyHash = sunHash * 23 + skyContext.skySettings.GetHashCode();
 
                 bool forceUpdate = (updateRequired || skyContext.updatedFramesRequired > 0 || m_NeedUpdate);
@@ -208,21 +235,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return result;
         }
 
-        public void RenderSky(SkyUpdateContext skyContext, HDCamera camera, Light sunLight, RTHandle colorBuffer, RTHandle depthBuffer, CommandBuffer cmd)
+        public void RenderSky(SkyUpdateContext skyContext, HDCamera hdCamera, Light sunLight, RTHandle colorBuffer, RTHandle depthBuffer, CommandBuffer cmd)
         {
-            if (skyContext.IsValid())
+            if (skyContext.IsValid() && hdCamera.clearColorMode == HDAdditionalCameraData.ClearColorMode.Sky)
             {
                 using (new ProfilingSample(cmd, "Sky Pass"))
                 {
                     m_BuiltinParameters.commandBuffer = cmd;
                     m_BuiltinParameters.sunLight = sunLight;
-                    m_BuiltinParameters.pixelCoordToViewDirMatrix = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(camera.camera.fieldOfView * Mathf.Deg2Rad, camera.screenSize, camera.viewMatrix, false);
-                    m_BuiltinParameters.invViewProjMatrix = camera.viewProjMatrix.inverse;
-                    m_BuiltinParameters.screenSize = camera.screenSize;
-                    m_BuiltinParameters.cameraPosWS = camera.camera.transform.position;
+                    m_BuiltinParameters.pixelCoordToViewDirMatrix = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(hdCamera.camera.fieldOfView * Mathf.Deg2Rad, hdCamera.screenSize, hdCamera.viewMatrix, false);
+                    m_BuiltinParameters.invViewProjMatrix = hdCamera.viewProjMatrix.inverse;
+                    m_BuiltinParameters.screenSize = hdCamera.screenSize;
+                    m_BuiltinParameters.cameraPosWS = hdCamera.camera.transform.position;
                     m_BuiltinParameters.colorBuffer = colorBuffer;
                     m_BuiltinParameters.depthBuffer = depthBuffer;
-                    m_BuiltinParameters.hdCamera = camera;
+                    m_BuiltinParameters.hdCamera = hdCamera;
 
                     skyContext.renderer.SetRenderTargets(m_BuiltinParameters);
                     skyContext.renderer.RenderSky(m_BuiltinParameters, false);

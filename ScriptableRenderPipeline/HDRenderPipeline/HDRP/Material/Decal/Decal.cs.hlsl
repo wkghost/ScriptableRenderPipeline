@@ -8,7 +8,7 @@
 // UnityEngine.Experimental.Rendering.HDPipeline.Decal+DecalSurfaceData:  static fields
 //
 #define DEBUGVIEW_DECAL_DECALSURFACEDATA_BASE_COLOR (10000)
-#define DEBUGVIEW_DECAL_DECALSURFACEDATA_NORMAL_WS (10001)
+#define DEBUGVIEW_DECAL_DECALSURFACEDATA_NORMAL (10001)
 #define DEBUGVIEW_DECAL_DECALSURFACEDATA_MASK (10002)
 #define DEBUGVIEW_DECAL_DECALSURFACEDATA_HTILE_MASK (10003)
 
@@ -31,8 +31,28 @@ struct DecalSurfaceData
     float4 baseColor;
     float4 normalWS;
     float4 mask;
-    int HTileMask;
+    uint HTileMask;
 };
+
+// Generated from UnityEngine.Experimental.Rendering.HDPipeline.DecalData
+// PackingRules = Exact
+struct DecalData
+{
+    float4x4 worldToDecal;
+    float4x4 normalToWorld;
+};
+
+//
+// Accessors for UnityEngine.Experimental.Rendering.HDPipeline.DecalData
+//
+float4x4 GetWorldToDecal(DecalData value)
+{
+	return value.worldToDecal;
+}
+float4x4 GetNormalToWorld(DecalData value)
+{
+	return value.normalToWorld;
+}
 
 //
 // Debug functions
@@ -45,7 +65,7 @@ void GetGeneratedDecalSurfaceDataDebug(uint paramId, DecalSurfaceData decalsurfa
             result = decalsurfacedata.baseColor.xyz;
             needLinearToSRGB = true;
             break;
-        case DEBUGVIEW_DECAL_DECALSURFACEDATA_NORMAL_WS:
+        case DEBUGVIEW_DECAL_DECALSURFACEDATA_NORMAL:
             result = decalsurfacedata.normalWS.xyz;
             break;
         case DEBUGVIEW_DECAL_DECALSURFACEDATA_MASK:

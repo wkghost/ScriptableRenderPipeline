@@ -1,11 +1,12 @@
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class GBufferManager : MRTBufferManager
     {
         int m_GBufferCount = 0;
-        bool m_EnableShadowMask = false;
+        bool m_SupportShadowMask = false;
         RenderPipelineMaterial m_DeferredMaterial;
         protected RenderTargetIdentifier[] m_RTIDsNoShadowMask;
 
@@ -16,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DeferredMaterial = deferredMaterial;
             m_GBufferCount = deferredMaterial.GetMaterialGBufferCount();
-            m_EnableShadowMask = enableBakeShadowMask;
+            m_SupportShadowMask = enableBakeShadowMask;
 
             m_RTIDsNoShadowMask = new RenderTargetIdentifier[m_GBufferCount];
         }
@@ -29,17 +30,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             for (int gbufferIndex = 0; gbufferIndex < m_GBufferCount; ++gbufferIndex)
             {
-                m_RTs[gbufferIndex] = RTHandle.Alloc(Vector2.one, colorFormat: rtFormat[gbufferIndex], sRGB: sRGBFlags[gbufferIndex], filterMode: FilterMode.Point);
+                m_RTs[gbufferIndex] = RTHandle.Alloc(Vector2.one, colorFormat: rtFormat[gbufferIndex], sRGB: sRGBFlags[gbufferIndex], filterMode: FilterMode.Point, name: string.Format("GBuffer{0}", gbufferIndex));
                 m_RTIDs[gbufferIndex] = m_RTs[gbufferIndex].nameID;
                 m_TextureShaderIDs[gbufferIndex] = HDShaderIDs._GBufferTexture[gbufferIndex];
                 m_RTIDsNoShadowMask[gbufferIndex] = HDShaderIDs._GBufferTexture[gbufferIndex];
             }
 
-            if (m_EnableShadowMask)
+            if (m_SupportShadowMask)
             {
-                m_RTs[m_GBufferCount] = RTHandle.Alloc(Vector2.one, colorFormat: Builtin.GetShadowMaskBufferFormat(), sRGB: Builtin.GetShadowMaskSRGBFlag(), filterMode: FilterMode.Point);
+                m_RTs[m_GBufferCount] = RTHandle.Alloc(Vector2.one, colorFormat: Builtin.GetShadowMaskBufferFormat(), sRGB: Builtin.GetShadowMaskSRGBFlag(), filterMode: FilterMode.Point, name: "GBufferShadowMask");
                 m_RTIDs[m_GBufferCount] = new RenderTargetIdentifier(m_RTs[m_GBufferCount]);
                 m_TextureShaderIDs[m_GBufferCount] = HDShaderIDs._ShadowMaskTexture;
+            }
+        }
+
+        public override void BindBufferAsTextures(CommandBuffer cmd)
+        {
+            for (int i = 0; i < m_BufferCount; ++i)
+            {
+                cmd.SetGlobalTexture(m_TextureShaderIDs[i], m_RTs[i]);
+            }
+
+            // When shadow mask are disabled (i.e we haven't created shadow mask texture, bind a white texture).
+            if (!m_SupportShadowMask)
+            {
+                cmd.SetGlobalTexture(HDShaderIDs._ShadowMaskTexture, RuntimeUtilities.whiteTexture);
             }
         }
 

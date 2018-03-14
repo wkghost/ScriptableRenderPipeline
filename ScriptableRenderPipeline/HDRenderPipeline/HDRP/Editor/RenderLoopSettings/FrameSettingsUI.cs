@@ -28,41 +28,38 @@ namespace UnityEditor.Experimental.Rendering
         public static CED.IDrawer SectionRenderingPasses = CED.FoldoutGroup(
             "Rendering Passes",
             (s, p, o) => s.isSectionExpandedRenderingPasses,
-            true,
+            FoldoutOption.Indent,
             CED.LabelWidth(200, CED.Action(Drawer_SectionRenderingPasses))
             );
 
         public static CED.IDrawer SectionRenderingSettings = CED.FoldoutGroup(
             "Rendering Settings",
             (s, p, o) => s.isSectionExpandedRenderingSettings,
-            true,
+            FoldoutOption.Indent,
             CED.LabelWidth(300,
                 CED.Action(Drawer_FieldForwardRenderingOnly),
                 CED.FadeGroup(
                     (s, d, o, i) => s.isSectionExpandedUseForwardOnly,
-                    false,
-                    CED.Action(Drawer_FieldUseDepthPrepassWithDefferedRendering),
-                    CED.FadeGroup(
-                        (s, d, o, i) => s.isSectionExpandedUseDepthPrepass,
-                        true,
-                        CED.Action(Drawer_FieldRenderAlphaTestOnlyInDeferredPrepass))),
+                    FadeOption.None,
+                    CED.Action(Drawer_FieldUseDepthPrepassWithDefferedRendering)
+                    ),
                 CED.Action(Drawer_SectionOtherRenderingSettings)
             )
         );
 
         public static CED.IDrawer SectionXRSettings = CED.FadeGroup(
             (s, d, o, i) => s.isSectionExpandedXRSupported,
-            false,
+            FadeOption.None,
             CED.FoldoutGroup(
                 "XR Settings",
                 (s, p, o) => s.isSectionExpandedXRSettings,
-                true,
+                FoldoutOption.Indent,
                 CED.LabelWidth(200, CED.Action(Drawer_FieldStereoEnabled))));
 
         public static CED.IDrawer SectionLightingSettings = CED.FoldoutGroup(
             "Lighting Settings",
             (s, p, o) => s.isSectionExpandedLightingSettings,
-            true,
+            FoldoutOption.Indent,
             CED.LabelWidth(250, CED.Action(Drawer_SectionLightingSettings)));
 
         public AnimBool isSectionExpandedRenderingPasses { get { return m_AnimBools[0]; } }
@@ -71,7 +68,6 @@ namespace UnityEditor.Experimental.Rendering
         public AnimBool isSectionExpandedXRSettings { get { return m_AnimBools[3]; } }
         public AnimBool isSectionExpandedXRSupported { get { return m_AnimBools[4]; } }
         public AnimBool isSectionExpandedUseForwardOnly { get { return m_AnimBools[5]; } }
-        public AnimBool isSectionExpandedUseDepthPrepass { get { return m_AnimBools[6]; } }
 
         public LightLoopSettingsUI lightLoopSettings = new LightLoopSettingsUI();
 
@@ -90,7 +86,6 @@ namespace UnityEditor.Experimental.Rendering
         {
             isSectionExpandedXRSupported.target = PlayerSettings.virtualRealitySupported;
             isSectionExpandedUseForwardOnly.target = !data.enableForwardRenderingOnly.boolValue;
-            isSectionExpandedUseDepthPrepass.target = data.enableDepthPrepassWithDeferredRendering.boolValue;
             lightLoopSettings.Update();
         }
 
@@ -107,20 +102,6 @@ namespace UnityEditor.Experimental.Rendering
             EditorGUILayout.PropertyField(p.enablePostprocess, _.GetContent("Enable Postprocess"));
         }
 
-        static void Drawer_SectionRenderingSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)
-        {
-            EditorGUILayout.PropertyField(p.enableForwardRenderingOnly, _.GetContent("Enable Forward Rendering Only"));
-            EditorGUILayout.PropertyField(p.enableDepthPrepassWithDeferredRendering, _.GetContent("Enable Depth Prepass With Deferred Rendering"));
-            EditorGUILayout.PropertyField(p.enableAlphaTestOnlyInDeferredPrepass, _.GetContent("Enable Alpha Test Only In Deferred Prepass"));
-
-            EditorGUILayout.PropertyField(p.enableAsyncCompute, _.GetContent("Enable Async Compute"));
-
-            EditorGUILayout.PropertyField(p.enableOpaqueObjects, _.GetContent("Enable Opaque Objects"));
-            EditorGUILayout.PropertyField(p.enableTransparentObjects, _.GetContent("Enable Transparent Objects"));
-
-            EditorGUILayout.PropertyField(p.enableMSAA, _.GetContent("Enable MSAA"));
-        }
-
         static void Drawer_FieldForwardRenderingOnly(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)
         {
             EditorGUILayout.PropertyField(p.enableForwardRenderingOnly, _.GetContent("Enable Forward Rendering Only"));
@@ -129,11 +110,6 @@ namespace UnityEditor.Experimental.Rendering
         static void Drawer_FieldUseDepthPrepassWithDefferedRendering(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)
         {
             EditorGUILayout.PropertyField(p.enableDepthPrepassWithDeferredRendering, _.GetContent("Enable Depth Prepass With Deferred Rendering"));
-        }
-
-        static void Drawer_FieldRenderAlphaTestOnlyInDeferredPrepass(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)
-        {
-            EditorGUILayout.PropertyField(p.enableAlphaTestOnlyInDeferredPrepass, _.GetContent("Enable Alpha Test Only In Deferred Prepass"));
         }
 
         static void Drawer_SectionOtherRenderingSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)

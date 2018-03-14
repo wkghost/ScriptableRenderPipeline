@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.21215841, g: 0.21215841, b: 0.21215841, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -625,12 +625,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -662,6 +666,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 0
   lightDimmer: 1
   fadeDistance: 10000
@@ -904,12 +911,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -941,6 +952,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 0
   lightDimmer: 1
   fadeDistance: 10000
@@ -1037,10 +1051,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  clearColorMode: 0
+  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearDepth: 1
   renderingPath: 0
   volumeLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  aperture: 8
+  shutterSpeed: 0.005
+  iso: 400
   m_FrameSettings:
     enableShadow: 1
     enableContactShadows: 1
@@ -1052,7 +1072,6 @@ MonoBehaviour:
     specularGlobalDimmer: 1
     enableForwardRenderingOnly: 0
     enableDepthPrepassWithDeferredRendering: 0
-    enableAlphaTestOnlyInDeferredPrepass: 0
     enableTransparentPrepass: 1
     enableMotionVectors: 1
     enableObjectMotionVectors: 1
@@ -1244,12 +1263,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -1281,6 +1304,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 0
   lightDimmer: 1
   fadeDistance: 10000
@@ -1651,12 +1677,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -1688,6 +1718,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 0
   lightDimmer: 1
   fadeDistance: 10000
@@ -1842,10 +1875,10 @@ Material:
     RenderType: TransparentCutout
   disabledShaderPasses:
   - DistortionVectors
+  - TransparentBackfaceDebugDisplay
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
-  - TransparentBackfaceDebugDisplay
   - MOTIONVECTORS
   m_SavedProperties:
     serializedVersion: 3
@@ -1884,6 +1917,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
         m_Texture: {fileID: 2800000, guid: 765ed877b92d01c4f8d6c6d2be61fd99, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _IridescenceMaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _IridescenceThicknessMap:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -1988,6 +2029,9 @@ Material:
     - _IOR: 1
     - _InitialBend: 1
     - _InvTilingScale: 1
+    - _Ior: 1
+    - _IridescenceMask: 1
+    - _IridescenceThickness: 1
     - _LinkDetailsWithBase: 1
     - _MaterialID: 1
     - _Metallic: 0
@@ -2026,6 +2070,7 @@ Material:
     - _TexWorldScaleEmissive: 1
     - _Thickness: 1
     - _ThicknessMultiplier: 1
+    - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentDepthPostpassEnable: 0
     - _TransparentDepthPrepassEnable: 0
@@ -2033,7 +2078,10 @@ Material:
     - _UVBase: 0
     - _UVDetail: 0
     - _UVEmissive: 0
+    - _ZTestDepthEqualForOpaque: 3
+    - _ZTestGBuffer: 3
     - _ZTestMode: 4
+    - _ZTestModeDistortion: 4
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2042,6 +2090,7 @@ Material:
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissiveColor: {r: 1, g: 1, b: 1, a: 1}
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
+    - _IridescenceThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
     - _TransmittanceColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2453,10 +2502,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  clearColorMode: 0
+  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearDepth: 1
   renderingPath: 0
   volumeLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  aperture: 8
+  shutterSpeed: 0.005
+  iso: 400
   m_FrameSettings:
     enableShadow: 1
     enableContactShadows: 1
@@ -2468,7 +2523,6 @@ MonoBehaviour:
     specularGlobalDimmer: 1
     enableForwardRenderingOnly: 0
     enableDepthPrepassWithDeferredRendering: 0
-    enableAlphaTestOnlyInDeferredPrepass: 0
     enableTransparentPrepass: 1
     enableMotionVectors: 1
     enableObjectMotionVectors: 1
@@ -2730,10 +2784,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  clearColorMode: 0
+  backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
+  clearDepth: 1
   renderingPath: 0
   volumeLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  aperture: 8
+  shutterSpeed: 0.005
+  iso: 400
   m_FrameSettings:
     enableShadow: 1
     enableContactShadows: 1
@@ -2745,7 +2805,6 @@ MonoBehaviour:
     specularGlobalDimmer: 1
     enableForwardRenderingOnly: 0
     enableDepthPrepassWithDeferredRendering: 0
-    enableAlphaTestOnlyInDeferredPrepass: 0
     enableTransparentPrepass: 1
     enableMotionVectors: 1
     enableObjectMotionVectors: 1
@@ -3289,6 +3348,11 @@ Prefab:
     m_Modifications:
     - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
         type: 2}
+      propertyPath: renderPipelines.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 2}
       propertyPath: thingToDoBeforeTest.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -3367,6 +3431,23 @@ Prefab:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 2}
+      propertyPath: renderPipelines.Array.data[1]
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 2}
+      propertyPath: renderPipelines.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: ae88914339ad0504eaca3f858706b8ad,
+        type: 2}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 2}
+      propertyPath: renderPipelines.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: d206727e1fcd98842b54b98db4dfce28,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 2}
   m_IsPrefabParent: 0
@@ -3526,12 +3607,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -3563,6 +3648,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 0
   lightDimmer: 1
   fadeDistance: 10000
@@ -3733,12 +3821,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -3770,6 +3862,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 0
   lightDimmer: 1
   fadeDistance: 10000
@@ -3868,12 +3963,16 @@ MonoBehaviour:
   shadowResolution: 512
   shadowDimmer: 1
   shadowFadeDistance: 10000
-  enableContactShadows: 0
-  contactShadowLength: 0
-  contactShadowDistanceScaleFactor: 0.5
-  contactShadowMaxDistance: 50
-  contactShadowFadeDistance: 5
-  contactShadowSampleCount: 8
+  viewBiasMin: 0.5
+  viewBiasMax: 10
+  viewBiasScale: 1
+  normalBiasMin: 0.2
+  normalBiasMax: 4
+  normalBiasScale: 1
+  sampleBiasScale: 1
+  edgeLeakFixup: 1
+  edgeToleranceNormal: 1
+  edgeTolerance: 1
   shadowCascadeCount: 4
   shadowCascadeRatios:
   - 0.05
@@ -3905,6 +4004,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
+  directionalIntensity: 3.1415927
+  punctualIntensity: 600
+  areaIntensity: 200
   m_InnerSpotPercent: 65
   lightDimmer: 1
   fadeDistance: 10000

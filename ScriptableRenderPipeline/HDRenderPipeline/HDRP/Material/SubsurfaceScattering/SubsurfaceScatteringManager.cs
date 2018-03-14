@@ -43,7 +43,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
                 // TODO: Provide a way to reuse a render target
-                m_ColorMRTs[0] = RTHandle.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: true);
+                m_ColorMRTs[0] = RTHandle.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: true, name: "SSSBuffer");
                 m_ExternalBuffer[0] = false;
             }
             else
@@ -56,11 +56,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (ShaderConfig.k_UseDisneySSS == 0 || NeedTemporarySubsurfaceBuffer())
             {
                 // Caution: must be same format as m_CameraSssDiffuseLightingBuffer
-                m_CameraFilteringBuffer = RTHandle.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, enableMSAA: true); // Enable UAV
+                m_CameraFilteringBuffer = RTHandle.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, enableMSAA: true, name: "SSSCameraFiltering"); // Enable UAV
             }
 
             // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
-            m_HTile = RTHandle.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true); // Enable UAV
+            m_HTile = RTHandle.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile"); // Enable UAV
         }
 
         public RTHandle GetSSSBuffer(int index)
@@ -72,8 +72,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void Build(HDRenderPipelineAsset hdAsset)
         {
             // Disney SSS (compute + combine)
+            string kernelName = hdAsset.renderPipelineSettings.enableUltraQualitySSS ? "SubsurfaceScatteringQualityUltra" : "SubsurfaceScatteringQualityNormal";
             m_SubsurfaceScatteringCS = hdAsset.renderPipelineResources.subsurfaceScatteringCS;
-            m_SubsurfaceScatteringKernel = m_SubsurfaceScatteringCS.FindKernel("SubsurfaceScattering");
+            m_SubsurfaceScatteringKernel = m_SubsurfaceScatteringCS.FindKernel(kernelName);
             m_CombineLightingPass = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.combineLighting);
             m_CombineLightingPass.SetInt(HDShaderIDs._StencilMask, (int)HDRenderPipeline.StencilBitMask.LightingMask);
 
@@ -211,8 +212,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, m_SubsurfaceScatteringKernel, HDShaderIDs._CameraFilteringBuffer, m_CameraFilteringBuffer);
 
                         // Perform the SSS filtering pass which fills 'm_CameraFilteringBufferRT'.
-                        // We dispatch 4x swizzled 16x16 groups per a 32x32 macro tile.
-                        cmd.DispatchCompute(m_SubsurfaceScatteringCS, m_SubsurfaceScatteringKernel, 4, ((int)hdCamera.screenSize.x + 31) / 32, ((int)hdCamera.screenSize.y + 31) / 32);
+                        cmd.DispatchCompute(m_SubsurfaceScatteringCS, m_SubsurfaceScatteringKernel, ((int)hdCamera.screenSize.x + 15) / 16, ((int)hdCamera.screenSize.y + 15) / 16, 1);
 
                         cmd.SetGlobalTexture(HDShaderIDs._IrradianceSource, m_CameraFilteringBuffer);  // Cannot set a RT on a material
 
@@ -224,8 +224,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, m_SubsurfaceScatteringKernel, HDShaderIDs._CameraColorTexture, colorBufferRT);
 
                         // Perform the SSS filtering pass which performs an in-place update of 'colorBuffer'.
-                        // We dispatch 4x swizzled 16x16 groups per a 32x32 macro tile.
-                        cmd.DispatchCompute(m_SubsurfaceScatteringCS, m_SubsurfaceScatteringKernel, 4, ((int)hdCamera.screenSize.x + 31) / 32, ((int)hdCamera.screenSize.y + 31) / 32);
+                        cmd.DispatchCompute(m_SubsurfaceScatteringCS, m_SubsurfaceScatteringKernel, ((int)hdCamera.screenSize.x + 15) / 16, ((int)hdCamera.screenSize.y + 15) / 16, 1);
                     }
                 }
                 else

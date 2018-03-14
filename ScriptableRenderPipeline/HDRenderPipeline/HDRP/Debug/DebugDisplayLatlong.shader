@@ -2,9 +2,10 @@ Shader "Hidden/HDRenderPipeline/DebugDisplayLatlong"
 {
     SubShader
     {
+        Tags{ "RenderPipeline" = "HDRenderPipeline" }
         Pass
         {
-            ZWrite Off
+            ZWrite On
             ZTest Always
             Blend Off
             Cull Off
