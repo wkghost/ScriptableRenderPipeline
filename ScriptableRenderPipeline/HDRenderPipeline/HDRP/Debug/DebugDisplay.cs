@@ -246,7 +246,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 list.Add(new DebugUI.Container
                 {
                     children =
-        {
+                    {
                         new DebugUI.UIntField { displayName = "Shadow Atlas Index", getter = () => lightingDebugSettings.shadowAtlasIndex, setter = value => lightingDebugSettings.shadowAtlasIndex = value, min = () => 0u, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetShadowAtlasCount() - 1u }
                     }
                 });
@@ -261,18 +261,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 list.Add(new DebugUI.Container
                 {
                     children =
-                {
+                    {
                         new DebugUI.FloatField { displayName = "Debug Environment Proxy Depth Scale", getter = () => lightingDebugSettings.environmentProxyDepthScale, setter = value => lightingDebugSettings.environmentProxyDepthScale = value, min = () => 0.1f, max = () => 50f }
                     }
                 });
             }
 
             list.Add(new DebugUI.EnumField { displayName = "Fullscreen Debug Mode", getter = () => (int)fullScreenDebugMode, setter = value => fullScreenDebugMode = (FullScreenDebugMode)value, enumNames = lightingFullScreenDebugStrings, enumValues = lightingFullScreenDebugValues, onValueChanged = RefreshLightingDebug });
-                    switch (fullScreenDebugMode)
-                    {
+            switch (fullScreenDebugMode)
+            {
                 case FullScreenDebugMode.PreRefractionColorPyramid:
                 case FullScreenDebugMode.FinalColorPyramid:
-                        case FullScreenDebugMode.DepthPyramid:
+                case FullScreenDebugMode.DepthPyramid:
                 {
                     list.Add(new DebugUI.Container
                     {
@@ -286,52 +286,52 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     int id;
                                     switch (fullScreenDebugMode)
                                     {
-                        case FullScreenDebugMode.FinalColorPyramid:
-                        case FullScreenDebugMode.PreRefractionColorPyramid:
-                            id = HDShaderIDs._GaussianPyramidColorMipSize;
-                            break;
+                                        case FullScreenDebugMode.FinalColorPyramid:
+                                        case FullScreenDebugMode.PreRefractionColorPyramid:
+                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            break;
                                         default:
                                             id = HDShaderIDs._DepthPyramidMipSize;
                                             break;
-                    }
-                    var size = Shader.GetGlobalVector(id);
+                                    }
+                                    var size = Shader.GetGlobalVector(id);
                                     float lodCount = size.z;
-                    return (uint)(fullscreenDebugMip * lodCount);
-                },
+                                    return (uint)(fullscreenDebugMip * lodCount);
+                                },
                                 setter = value =>
-                {
+                                {
                                     int id;
-                    switch (fullScreenDebugMode)
-                    {
-                        case FullScreenDebugMode.FinalColorPyramid:
-                        case FullScreenDebugMode.PreRefractionColorPyramid:
-                            id = HDShaderIDs._GaussianPyramidColorMipSize;
-                            break;
+                                    switch (fullScreenDebugMode)
+                                    {
+                                        case FullScreenDebugMode.FinalColorPyramid:
+                                        case FullScreenDebugMode.PreRefractionColorPyramid:
+                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            break;
                                         default:
                                             id = HDShaderIDs._DepthPyramidMipSize;
                                             break;
-                    }
-                    var size = Shader.GetGlobalVector(id);
+                                    }
+                                    var size = Shader.GetGlobalVector(id);
                                     float lodCount = size.z;
                                     fullscreenDebugMip = (float)Convert.ChangeType(value, typeof(float)) / lodCount;
-                }, 
+                                },
                                 min = () => 0u,
                                 max = () =>
-                    {
+                                {
                                     int id;
-                        switch (fullScreenDebugMode)
-                        {
-                            case FullScreenDebugMode.FinalColorPyramid:
-                            case FullScreenDebugMode.PreRefractionColorPyramid:
-                                id = HDShaderIDs._GaussianPyramidColorMipSize;
-                                break;
+                                    switch (fullScreenDebugMode)
+                                    {
+                                        case FullScreenDebugMode.FinalColorPyramid:
+                                        case FullScreenDebugMode.PreRefractionColorPyramid:
+                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            break;
                                         default:
                                             id = HDShaderIDs._DepthPyramidMipSize;
                                             break;
-                        }
-                        var size = Shader.GetGlobalVector(id);
+                                    }
+                                    var size = Shader.GetGlobalVector(id);
                                     float lodCount = size.z;
-                        return (uint)lodCount;
+                                    return (uint)lodCount;
                                 }
                             }
                         }

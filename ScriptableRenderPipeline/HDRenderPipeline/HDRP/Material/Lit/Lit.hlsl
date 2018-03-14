@@ -265,15 +265,15 @@ void FillMaterialTransmission(uint diffusionProfile, float thickness, inout BSDF
     // in the auto-thickness mode (but is always be used for indirect lighting).
 #if SHADEROPTIONS_USE_DISNEY_SSS
     bsdfData.transmittance = ComputeTransmittanceDisney(_ShapeParams[diffusionProfile].rgb,
-                                                            _TransmissionTintsAndFresnel0[diffusionProfile].rgb,
-                                                            bsdfData.thickness);
+                                                        _TransmissionTintsAndFresnel0[diffusionProfile].rgb,
+                                                        bsdfData.thickness);
 #else
     bsdfData.transmittance = ComputeTransmittanceJimenez(_HalfRcpVariancesAndWeights[diffusionProfile][0].rgb,
-                                                            _HalfRcpVariancesAndWeights[diffusionProfile][0].a,
-                                                            _HalfRcpVariancesAndWeights[diffusionProfile][1].rgb,
-                                                            _HalfRcpVariancesAndWeights[diffusionProfile][1].a,
-                                                            _TransmissionTintsAndFresnel0[diffusionProfile].rgb,
-                                                            bsdfData.thickness);
+                                                         _HalfRcpVariancesAndWeights[diffusionProfile][0].a,
+                                                         _HalfRcpVariancesAndWeights[diffusionProfile][1].rgb,
+                                                         _HalfRcpVariancesAndWeights[diffusionProfile][1].a,
+                                                         _TransmissionTintsAndFresnel0[diffusionProfile].rgb,
+                                                         bsdfData.thickness);
 #endif
 }
 
@@ -870,29 +870,29 @@ struct PreLightData
     float3 iblR;                     // Dominant specular direction, used for IBL in EvaluateBSDF_Env()
     float  iblPerceptualRoughness;
 
-    float3 specularFGD;                  // Store preconvoled BRDF for both specular and diffuse
-    float diffuseFGD;
+    float3 specularFGD;              // Store preconvoled BRDF for both specular and diffuse
+    float  diffuseFGD;
 
     // Area lights (17 VGPRs)
     // TODO: 'orthoBasisViewNormal' is just a rotation around the normal and should thus be just 1x VGPR.
-    float3x3 orthoBasisViewNormal; // Right-handed view-dependent orthogonal basis around the normal (6x VGPRs)
-    float3x3 ltcTransformDiffuse;  // Inverse transformation for Lambertian or Disney Diffuse        (4x VGPRs)
-    float3x3 ltcTransformSpecular; // Inverse transformation for GGX                                 (4x VGPRs)
+    float3x3 orthoBasisViewNormal;   // Right-handed view-dependent orthogonal basis around the normal (6x VGPRs)
+    float3x3 ltcTransformDiffuse;    // Inverse transformation for Lambertian or Disney Diffuse        (4x VGPRs)
+    float3x3 ltcTransformSpecular;   // Inverse transformation for GGX                                 (4x VGPRs)
     float    ltcMagnitudeDiffuse;
     float3   ltcMagnitudeFresnel;
 
     // Clear coat
     float    coatPartLambdaV;
     float3   coatIblR;
-    float    coatIblF;                 // Fresnel term for view vector
-    float3x3 ltcTransformCoat;  // Inverse transformation for GGX                                 (4x VGPRs)
+    float    coatIblF;               // Fresnel term for view vector
+    float3x3 ltcTransformCoat;       // Inverse transformation for GGX                                 (4x VGPRs)
     float    ltcMagnitudeCoatFresnel;
 
     // Refraction
-    float3 transparentRefractV;            // refracted view vector after exiting the shape
-    float3 transparentPositionWS;          // start of the refracted ray after exiting the shape
-    float3 transparentTransmittance;       // transmittance due to absorption
-    float transparentSSMipLevel;           // mip level of the screen space gaussian pyramid for rough refraction
+    float3 transparentRefractV;      // refracted view vector after exiting the shape
+    float3 transparentPositionWS;    // start of the refracted ray after exiting the shape
+    float3 transparentTransmittance; // transmittance due to absorption
+    float transparentSSMipLevel;     // mip level of the screen space gaussian pyramid for rough refraction
 };
 
 PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData bsdfData)
@@ -1179,10 +1179,10 @@ void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData pre
     float3 N = bsdfData.normalWS;
 
     // Optimized math. Ref: PBR Diffuse Lighting for GGX + Smith Microsurfaces (slide 114).
-    float LdotV = dot(L, V);
+    float LdotV    = dot(L, V);
     float invLenLV = rsqrt(max(2.0 * LdotV + 2.0, FLT_EPS));            // invLenLV = rcp(length(L + V)), clamp to avoid rsqrt(0) = NaN
     float NdotH    = saturate((NdotL + preLightData.NdotV) * invLenLV); // Do not clamp NdotV here
-    float LdotH = saturate(invLenLV * LdotV + invLenLV);
+    float LdotH    = saturate(invLenLV * LdotV + invLenLV);
     float NdotV    = ClampNdotV(preLightData.NdotV);
 
     float3 F = F_Schlick(bsdfData.fresnel0, LdotH);
@@ -1441,7 +1441,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
         float3 transmittance = bsdfData.transmittance;
 
         if (mixedThicknessMode)
-    {
+        {
             // Recompute transmittance using the thickness value computed from the shadow map.
 
             // Compute the distance from the light to the back face of the object along the light direction.
@@ -1795,6 +1795,13 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
         case GPUIMAGEBASEDLIGHTINGTYPE_REFRACTION:
         {
 #if HAS_REFRACTION
+            // Refraction process:
+            //  1. Depending on the shape model, we calculate the refracted point in world space and the optical depth
+            //  2. We calculate the screen space position of the refracted point
+            //  3. If this point is available (ie: in color buffer and point is not in front of the object)
+            //    a. Get the corresponding color depending on the roughness from the gaussian pyramid of the color buffer
+            //    b. Multiply by the transmittance for absorption (depends on the optical depth)
+
 
     // Refraction process:
     //  1. Depending on the shape model, we calculate the refracted point in world space and the optical depth
@@ -1874,15 +1881,15 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
     lighting.specularTransmitted = hit.linearDepth;
 
 #else
-    // No refraction, no need to go further
-    hierarchyWeight = 1.0;
+            // No refraction, no need to go further
+            hierarchyWeight = 1.0;
 #endif
             break;
         }
         case GPUIMAGEBASEDLIGHTINGTYPE_REFLECTION:
-    {
+        {
             break;
-    }
+        }
     }
 
     return lighting;
