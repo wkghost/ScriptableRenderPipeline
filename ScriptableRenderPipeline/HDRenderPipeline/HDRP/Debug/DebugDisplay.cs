@@ -44,6 +44,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public uint iteration;
         public uint iterationMax;
 
+        public float hitDistance;
+        public float hitLinearDepth;
+        public Vector2 hitPositionSS;
+
         public override string ToString()
         {
             return string.Format(

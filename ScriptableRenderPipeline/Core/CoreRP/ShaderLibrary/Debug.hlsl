@@ -70,15 +70,21 @@ bool SampleDebugFont(int2 pixCoord, uint digit)
 
 bool SampleDebugFontNumber(int2 pixCoord, uint number)
 {
-    pixCoord.y -= 4;
-    if (number <= 9)
+    // Maximum 10 digits
+    for (int i = 10; i >= 0; ++i)
     {
-        return SampleDebugFont(pixCoord - int2(6, 0), number);
+        uint toTest = number % 10;
+        if (SampleDebugFont(pixCoord, toTest))
+            return true;
+
+        if (number <= 9)
+            return false;
+
+        number = number / 10;
+        pixCoord += int2(6, 0);
     }
-    else
-    {
-        return (SampleDebugFont(pixCoord, number / 10) | SampleDebugFont(pixCoord - int2(6, 0), number % 10));
-    }
+
+    return false;
 }
 
 float4 GetStreamingMipColor(uint mipCount, float4 mipInfo)

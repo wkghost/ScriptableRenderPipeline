@@ -35,6 +35,9 @@ struct ScreenSpaceTracingDebug
     uint levelMax;
     uint iteration;
     uint iterationMax;
+    float hitDistance;
+    float hitLinearDepth;
+    float2 hitPositionSS;
 };
 
 //
@@ -79,6 +82,18 @@ uint GetIteration(ScreenSpaceTracingDebug value)
 uint GetIterationMax(ScreenSpaceTracingDebug value)
 {
 	return value.iterationMax;
+}
+float GetHitDistance(ScreenSpaceTracingDebug value)
+{
+	return value.hitDistance;
+}
+float GetHitLinearDepth(ScreenSpaceTracingDebug value)
+{
+	return value.hitLinearDepth;
+}
+float2 GetHitPositionSS(ScreenSpaceTracingDebug value)
+{
+	return value.hitPositionSS;
 }
 
 

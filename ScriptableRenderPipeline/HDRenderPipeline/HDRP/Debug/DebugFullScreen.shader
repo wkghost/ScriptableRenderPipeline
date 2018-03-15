@@ -19,6 +19,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
 
             #include "CoreRP/ShaderLibrary/Common.hlsl"
             #include "CoreRP/ShaderLibrary/Color.hlsl"
+            #include "CoreRP/ShaderLibrary/Debug.hlsl"
             #include "../ShaderVariables.hlsl"
             #include "../Debug/DebugDisplay.cs.hlsl"
 
@@ -201,6 +202,8 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 }
                 if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_SCREEN_SPACE_TRACING_REFRACTION)
                 {
+                    const float circleRadius = 3.5;
+                    const float ringSize = 1.5;
                     float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
 
                     uint4 v01 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 0));
@@ -214,23 +217,51 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
 
                     uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
 
-                    float2 distanceToCell = abs(float2(posInput.positionSS % cellSize) - float2(cellSize) / float2(2, 2));
+                    // Grid rendering
+                    float2 distanceToCell = float2(posInput.positionSS % cellSize);
+                    distanceToCell = min(distanceToCell, float2(cellSize) - distanceToCell);
                     distanceToCell = clamp(1 - distanceToCell, 0, 1);
                     float cellSDF = max(distanceToCell.x, distanceToCell.y);
 
+                    // Position dot rendering
                     float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionTXS.xy));
-                    float positionSDF = clamp(4 - distanceToPosition, 0, 1);
+                    float positionSDF = clamp(circleRadius - distanceToPosition, 0, 1);
 
+                    // Start position dot rendering
                     float distanceToStartPosition = length(int2(posInput.positionSS) - int2(startPositionSS));
-                    float startPositionSDF = clamp(4 - distanceToStartPosition, 0, 1);
+                    float startPositionSDF = clamp(circleRadius - distanceToStartPosition, 0, 1);
 
+                    // Aggregated sdf colors
                     float3 debugColor = float3(
                         startPositionSDF,
                         positionSDF,
                         cellSDF
                     );
-                    
-                    return float4(debugColor * 0.5 + color.rgb * 0.5, 1);
+
+                    // Combine debug color with background (with opacity)
+                    float4 col = float4(debugColor * 0.5 + color.rgb * 0.5, 1);
+
+                    // Calculate SDF to draw a ring on both dots
+                    float startPositionRingDistance = abs(distanceToStartPosition - circleRadius);
+                    float startPositionRingSDF = clamp(ringSize - startPositionRingDistance, 0, 1);
+                    float positionRingDistance = abs(distanceToPosition - circleRadius);
+                    float positionRingSDF = clamp(ringSize - positionRingDistance, 0, 1);
+                    float w = clamp(1 - startPositionRingSDF - positionRingSDF, 0, 1);
+                    col = col * w + float4(1, 1, 1, 1) * (1 - w);
+
+                    if (posInput.positionSS.y < 200)
+                    {
+                        // Draw debug statistics
+                        uint depth = uint(debug.startLinearDepth * 1000);
+                        if (SampleDebugFontNumber(posInput.positionSS - uint2(100, 10), depth))
+                            col = float4(1, 1, 1, 1);
+
+                        uint hitLinearDepth = uint(debug.hitLinearDepth * 1000);
+                        if (SampleDebugFontNumber(posInput.positionSS - uint2(100, 30), hitLinearDepth))
+                            col = float4(1, 1, 1, 1);
+                    }
+
+                    return col;
                 }
 
                 return float4(0.0, 0.0, 0.0, 0.0);
