@@ -1822,7 +1822,7 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             ssInput.maxLevel = int(_PyramidDepthMipSize.z);
 
 #ifdef DEBUG_DISPLAY
-            ssInput.writeStepDebug = (uint2(_MouseClickPixelCoord.xy) == posInput.positionSS);
+            ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
 #endif
 
             bool hitSuccessful = ScreenSpaceRaymarch(ssInput, hit);

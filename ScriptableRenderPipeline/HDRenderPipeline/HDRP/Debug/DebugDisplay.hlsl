@@ -24,6 +24,7 @@ float _DebugEnvironmentProxyDepthScale;
 CBUFFER_END
 
 RW_TEXTURE2D(float4, _DebugScreenSpaceTracing) : register(u1);
+RWStructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData : register(u2);
 
 TEXTURE2D(_DebugFont); // Debug font to write string in shader
 

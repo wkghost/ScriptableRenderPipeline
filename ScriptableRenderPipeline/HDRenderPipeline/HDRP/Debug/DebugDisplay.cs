@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine.Experimental.Rendering.HDPipeline.Attributes;
+using System.Linq;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -42,6 +43,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public uint levelMax;
         public uint iteration;
         public uint iterationMax;
+
+        public override string ToString()
+        {
+            return string.Format(
+                @"startPositionSS     : ({0}, {1})
+positionTXS         : ({2}, {3})
+positionDepth       : {4}
+cellSize            : ({5}, {6})
+level               : {7}
+levelMax            : {8}
+iteration           : {9}
+iterationMax        : {10}
+",
+                startPositionSSX, startPositionSSY,
+                positionTXS.x, positionTXS.y,
+                positionTXS.z,
+                cellSizeW, cellSizeH,
+                level,
+                levelMax,
+                iteration,
+                iterationMax
+            );
+        }
     }
 
     public class DebugDisplaySettings
@@ -69,11 +93,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static int[] lightingFullScreenDebugValues = null;
         public static GUIContent[] renderingFullScreenDebugStrings = null;
         public static int[] renderingFullScreenDebugValues = null;
+        public static GUIContent[] debugScreenSpaceTracingStrings = null;
+        public static int[] debugScreenSpaceTracingValues = null;
 
         public DebugDisplaySettings()
         {
             FillFullScreenDebugEnum(ref lightingFullScreenDebugStrings, ref lightingFullScreenDebugValues, FullScreenDebugMode.MinLightingFullScreenDebug, FullScreenDebugMode.MaxLightingFullScreenDebug);
             FillFullScreenDebugEnum(ref renderingFullScreenDebugStrings, ref renderingFullScreenDebugValues, FullScreenDebugMode.MinRenderingFullScreenDebug, FullScreenDebugMode.MaxRenderingFullScreenDebug);
+            debugScreenSpaceTracingStrings = Enum.GetNames(typeof(DebugScreenSpaceTracing)).Select(s => new GUIContent(s)).ToArray();
+            debugScreenSpaceTracingValues = (int[])Enum.GetValues(typeof(DebugScreenSpaceTracing));
         }
 
         public int GetDebugMaterialIndex()
@@ -256,15 +284,39 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             list.Add(new DebugUI.FloatField { displayName = "Shadow Range Max Value", getter = () => lightingDebugSettings.shadowMaxValue, setter = value => lightingDebugSettings.shadowMaxValue = value });
 
             list.Add(new DebugUI.EnumField { displayName = "Lighting Debug Mode", getter = () => (int)lightingDebugSettings.debugLightingMode, setter = value => SetDebugLightingMode((DebugLightingMode)value), autoEnum = typeof(DebugLightingMode), onValueChanged = RefreshLightingDebug });
-            if (lightingDebugSettings.debugLightingMode == DebugLightingMode.EnvironmentProxyVolume)
+
+            switch (lightingDebugSettings.debugLightingMode)
             {
-                list.Add(new DebugUI.Container
+                case DebugLightingMode.EnvironmentProxyVolume:
                 {
-                    children =
+                    list.Add(new DebugUI.Container
                     {
-                        new DebugUI.FloatField { displayName = "Debug Environment Proxy Depth Scale", getter = () => lightingDebugSettings.environmentProxyDepthScale, setter = value => lightingDebugSettings.environmentProxyDepthScale = value, min = () => 0.1f, max = () => 50f }
-                    }
-                });
+                        children =
+                        {
+                            new DebugUI.FloatField { displayName = "Debug Environment Proxy Depth Scale", getter = () => lightingDebugSettings.environmentProxyDepthScale, setter = value => lightingDebugSettings.environmentProxyDepthScale = value, min = () => 0.1f, max = () => 50f }
+                        }
+                    });
+                    break;
+                }
+                case DebugLightingMode.ScreenSpaceTracingRefraction:
+                {
+                    list.Add(new DebugUI.Container
+                    {
+                        children =
+                        {
+                            new DebugUI.EnumField
+                            {
+                                displayName = "Screen Space Tracing Debug Mode",
+                                getter = GetDebugLightingSubMode,
+                                setter = value => lightingDebugSettings.debugScreenSpaceTracingMode = (DebugScreenSpaceTracing)value,
+                                enumNames = debugScreenSpaceTracingStrings,
+                                enumValues = debugScreenSpaceTracingValues,
+                                onValueChanged = RefreshLightingDebug
+                            }
+                        }
+                    });
+                    break;
+                }
             }
 
             list.Add(new DebugUI.EnumField { displayName = "Fullscreen Debug Mode", getter = () => (int)fullScreenDebugMode, setter = value => fullScreenDebugMode = (FullScreenDebugMode)value, enumNames = lightingFullScreenDebugStrings, enumValues = lightingFullScreenDebugValues, onValueChanged = RefreshLightingDebug });
@@ -336,6 +388,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             }
                         }
                     });
+                    break;
+                }
+                case FullScreenDebugMode.ScreenSpaceTracingRefraction:
+                {
+                    
                     break;
                 }
                 default:

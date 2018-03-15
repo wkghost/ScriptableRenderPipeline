@@ -23,6 +23,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
             #include "../Debug/DebugDisplay.cs.hlsl"
 
             TEXTURE2D(_DebugFullScreenTexture);
+            StructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData;
             float _FullScreenDebugMode;
             float _RequireToFlipInputTexture;
             TEXTURE2D(_DebugScreenSpaceTracing);
@@ -205,26 +206,30 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     uint4 v01 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 0));
                     uint4 v02 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(1, 0));
                     uint4 v03 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 1));
-                    ScreenSpaceTracingDebug debug;
-                    UnpackScreenSpaceTracingDebug(v01, v02, v03, debug);
+                    ScreenSpaceTracingDebug debug = _DebugScreenSpaceTracingData[0];
 
-                    uint2 positionTXS = uint2((input.positionCS.xy * 0.5 + 0.5) * _ScreenParams.zw);
+                    uint2 startPositionSS = uint2(debug.startPositionSSX, debug.startPositionSSY);
+
+                    PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, 10, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP);
 
                     uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
 
-                    float2 distanceToCell = abs(float2(positionTXS % cellSize) - float2(cellSize) / float2(2, 2));
+                    float2 distanceToCell = abs(float2(posInput.positionSS % cellSize) - float2(cellSize) / float2(2, 2));
                     distanceToCell = clamp(1 - distanceToCell, 0, 1);
                     float cellSDF = max(distanceToCell.x, distanceToCell.y);
 
-                    float distanceToPosition = length(positionTXS - debug.positionTXS.xy);
-                    float positionSDF = clamp(2 - distanceToPosition, 0, 1);
+                    float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionTXS.xy));
+                    float positionSDF = clamp(4 - distanceToPosition, 0, 1);
+
+                    float distanceToStartPosition = length(int2(posInput.positionSS) - int2(startPositionSS));
+                    float startPositionSDF = clamp(4 - distanceToStartPosition, 0, 1);
 
                     float3 debugColor = float3(
-                        0,
+                        startPositionSDF,
                         positionSDF,
                         cellSDF
                     );
-
+                    
                     return float4(debugColor * 0.5 + color.rgb * 0.5, 1);
                 }
 

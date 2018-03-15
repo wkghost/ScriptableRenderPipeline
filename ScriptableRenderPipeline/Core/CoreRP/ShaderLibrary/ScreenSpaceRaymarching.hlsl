@@ -13,6 +13,8 @@ struct ScreenSpaceRaymarchInput
 
 #ifdef DEBUG_DISPLAY
     bool writeStepDebug;
+    uint2 sourcePositionSS;
+    float sourceDepth;
 #endif
 };
 
@@ -156,18 +158,9 @@ bool ScreenSpaceRaymarch(
     debug.level = maxUsedLevel;
     debug.iteration = iteration;
 
-    //if (input.writeStepDebug)
+    if (input.writeStepDebug)
     {
-        debug.cellSizeW = 16;
-        debug.cellSizeH = 16;
-
-        uint4 v01 = 0;
-        uint4 v02 = 0;
-        uint4 v03 = 0;
-        PackScreenSpaceTracingDebug(debug, v01, v02, v03);
-        _DebugScreenSpaceTracing[uint2(0, 0)] = v01;
-        _DebugScreenSpaceTracing[uint2(1, 0)] = v02;
-        _DebugScreenSpaceTracing[uint2(0, 1)] = v03;
+        _DebugScreenSpaceTracingData[0] = debug;
     }
 
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)

@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.GlobalIllumination;
 
@@ -170,6 +171,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         FrameSettings m_FrameSettings; // Init every frame
 
         RTHandle m_DebugScreenSpaceTracing = null;
+        ComputeBuffer m_DebugScreenSpaceTracingData = null;
 
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
@@ -237,6 +239,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #endif
 
             m_DebugScreenSpaceTracing = RTHandle.Alloc(2, 2, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, enableRandomWrite: true);
+            m_DebugScreenSpaceTracingData = new ComputeBuffer(1, Marshal.SizeOf(typeof(ScreenSpaceTracingDebug)));
 
             InitializeRenderTextures();
 
@@ -320,6 +323,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandle.Release(m_DebugFullScreenTempBuffer);
 
             RTHandle.Release(m_DebugScreenSpaceTracing);
+            m_DebugScreenSpaceTracingData.Release();
         }
 
 
@@ -869,7 +873,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderGaussianPyramidColor(hdCamera, cmd, renderContext, true);
 
                         cmd.SetGlobalTexture(HDShaderIDs._DebugScreenSpaceTracing, m_DebugScreenSpaceTracing);
+                        cmd.SetGlobalBuffer(HDShaderIDs._DebugScreenSpaceTracingData, m_DebugScreenSpaceTracingData);
                         cmd.SetRandomWriteTarget(1, m_DebugScreenSpaceTracing);
+                        cmd.SetRandomWriteTarget(2, m_DebugScreenSpaceTracingData);
                         // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
                         RenderForward(m_CullResults, hdCamera, renderContext, cmd, ForwardPass.Transparent);
                         cmd.ClearRandomWriteTargets();

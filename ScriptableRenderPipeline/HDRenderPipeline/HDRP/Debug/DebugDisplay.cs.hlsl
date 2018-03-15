@@ -83,3 +83,4 @@ uint GetIterationMax(ScreenSpaceTracingDebug value)
 
 
 #endif
+#include "DebugDisplay.cs.custom.hlsl"
