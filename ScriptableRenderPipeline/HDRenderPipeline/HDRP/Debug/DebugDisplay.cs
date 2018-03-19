@@ -322,6 +322,13 @@ iterationMax        : {10}
                     break;
                 }
             }
+            list.Add(
+                new DebugUI.FloatField
+                {
+                    displayName = "SST Crossing Offset",
+                    getter = () => lightingDebugSettings.sstCrossingOffset,
+                    setter = value => lightingDebugSettings.sstCrossingOffset = value,
+                });
 
             list.Add(new DebugUI.EnumField { displayName = "Fullscreen Debug Mode", getter = () => (int)fullScreenDebugMode, setter = value => fullScreenDebugMode = (FullScreenDebugMode)value, enumNames = lightingFullScreenDebugStrings, enumValues = lightingFullScreenDebugValues, onValueChanged = RefreshLightingDebug });
             switch (fullScreenDebugMode)

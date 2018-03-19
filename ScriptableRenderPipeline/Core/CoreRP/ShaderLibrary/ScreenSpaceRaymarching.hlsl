@@ -29,6 +29,8 @@ struct ScreenSpaceRayHit
 #endif
 };
 
+float _SSTCrossingOffset = 1;
+
 void CalculateRayTXS(ScreenSpaceRaymarchInput input, out float3 positionTXS, out float3 rayTXS)
 {
     float3 positionVS = input.startPositionVS;
@@ -63,7 +65,7 @@ bool ScreenSpaceRaymarch(
     ScreenSpaceRaymarchInput input,
     out ScreenSpaceRayHit hit)
 {
-    const float2 CROSS_OFFSET = float2(2, 2);
+    const float2 CROSS_OFFSET = float2(1, 1);
     const int MAX_ITERATIONS = 32;
 
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
@@ -81,8 +83,6 @@ bool ScreenSpaceRaymarch(
     debug.startPositionSSX = uint(startPositionTXS.x);
     debug.startPositionSSY = uint(startPositionTXS.y);
     debug.startLinearDepth = 1 / startPositionTXS.z;
-    debug.levelMax = input.maxLevel;
-    debug.iterationMax = MAX_ITERATIONS;
 #endif
 
     bool hitSuccessful = true;
@@ -99,7 +99,7 @@ bool ScreenSpaceRaymarch(
 
         // Calculate planes to intersect for each cell
         int2 cellPlanes = sign(rayTXS.xy);
-        float2 crossOffset = CROSS_OFFSET * cellPlanes;
+        float2 crossOffset = CROSS_OFFSET * cellPlanes * _SSTCrossingOffset;
         cellPlanes = clamp(cellPlanes, 0, 1);
 
         // Initialize loop
@@ -125,6 +125,8 @@ bool ScreenSpaceRaymarch(
                 debug.positionTXS = positionTXS;
                 debug.hitLinearDepth = 1 / positionTXS.z;
                 debug.hitPositionSS = uint2(positionTXS.xy);
+                debug.iteration = iteration;
+                debug.level = currentLevel;
             }
 #endif
 
@@ -186,8 +188,8 @@ bool ScreenSpaceRaymarch(
     }
     
 #ifdef DEBUG_DISPLAY
-    debug.level = maxUsedLevel;
-    debug.iteration = iteration;
+    debug.levelMax = maxUsedLevel;
+    debug.iterationMax = iteration;
     debug.hitDistance = hit.distance;
 
     if (input.writeStepDebug)

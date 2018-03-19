@@ -1528,6 +1528,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
+                cmd.SetGlobalFloat("_SSTCrossingOffset", m_CurrentDebugDisplaySettings.lightingDebugSettings.sstCrossingOffset);
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.fullScreenDebugMode != FullScreenDebugMode.None ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)

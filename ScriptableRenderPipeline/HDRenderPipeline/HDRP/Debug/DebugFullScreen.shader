@@ -251,14 +251,43 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
 
                     if (posInput.positionSS.y < 200)
                     {
-                        // Draw debug statistics
-                        uint depth = uint(debug.startLinearDepth * 1000);
-                        if (SampleDebugFontNumber(posInput.positionSS - uint2(100, 10), depth))
-                            col = float4(1, 1, 1, 1);
+                        const uint kStartDepthString[] = { 'S', 't', 'a', 'r', 't', ' ', 'D', 'e', 'p', 't', 'h', ':', ' ', 0u };
+                        const uint kDepthString[] = { 'D', 'e', 'p', 't', 'h', ':', ' ', 0u };
+                        const uint kLevelString[] = { 'L', 'e', 'v', 'e', 'l', ':', ' ', 0u };
+                        const uint kIterationString[] = { 'I', 't', 'e', 'r', 'a', 't', 'i', 'o', 'n', ':', ' ', 0u };
 
-                        uint hitLinearDepth = uint(debug.hitLinearDepth * 1000);
-                        if (SampleDebugFontNumber(posInput.positionSS - uint2(100, 30), hitLinearDepth))
+                        uint2 p = uint2(70, 10);
+                        bool isValid = false;
+                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kStartDepthString, isValid);
+                        if (isValid)
                             col = float4(1, 1, 1, 1);
+                        if (SampleDebugFloatNumber(posInput.positionSS - p - uint2(100, 00), debug.startLinearDepth))
+                            col = float4(1, 1, 1, 1);
+                        p += uint2(00, 20);
+
+                        isValid = false;
+                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kDepthString, isValid);
+                        if (isValid)
+                            col = float4(1, 1, 1, 1);
+                        if (SampleDebugFloatNumber(posInput.positionSS - p - uint2(100, 00), debug.hitLinearDepth))
+                            col = float4(1, 1, 1, 1);
+                        p += uint2(00, 20);
+
+                        isValid = false;
+                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kLevelString, isValid);
+                        if (isValid)
+                            col = float4(1, 1, 1, 1);
+                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.level))
+                            col = float4(1, 1, 1, 1);
+                        p += uint2(00, 20);
+
+                        isValid = false;
+                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kIterationString, isValid);
+                        if (isValid)
+                            col = float4(1, 1, 1, 1);
+                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.iteration))
+                            col = float4(1, 1, 1, 1); 
+                        p += uint2(00, 20);
                     }
 
                     return col;
