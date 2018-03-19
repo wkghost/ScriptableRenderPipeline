@@ -279,14 +279,22 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                             col = float4(1, 1, 1, 1);
                         if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.level))
                             col = float4(1, 1, 1, 1);
+                        if (SampleDebugLetter(posInput.positionSS - p - uint2(112, 00), '/'))
+                            col = float4(1, 1, 1, 1);
+                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(124, 00), debug.levelMax))
+                            col = float4(1, 1, 1, 1);
                         p += uint2(00, 20);
 
                         isValid = false;
                         SAMPLE_DEBUG_STRING(posInput.positionSS - p, kIterationString, isValid);
                         if (isValid)
                             col = float4(1, 1, 1, 1);
-                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.iteration))
-                            col = float4(1, 1, 1, 1); 
+                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.iteration + 1))
+                            col = float4(1, 1, 1, 1);
+                        if (SampleDebugLetter(posInput.positionSS - p - uint2(112, 00), '/'))
+                            col = float4(1, 1, 1, 1);
+                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(124, 00), debug.iterationMax))
+                            col = float4(1, 1, 1, 1);
                         p += uint2(00, 20);
                     }
 
