@@ -18,6 +18,10 @@ namespace UnityEditor.Experimental.Rendering
         public SerializedProperty supportStereo;
         public SerializedProperty enableUltraQualitySSS;
 
+        public SerializedProperty ssRayMinLevel;
+        public SerializedProperty ssRayMaxLevel;
+
+
         public SerializedGlobalLightLoopSettings lightLoopSettings;
         public SerializedShadowInitParameters shadowInitParams;
 		public SerializedGlobalDecalSettings decalSettings;
@@ -37,6 +41,9 @@ namespace UnityEditor.Experimental.Rendering
             supportMotionVectors = root.Find((RenderPipelineSettings s) => s.supportMotionVectors);
             supportStereo = root.Find((RenderPipelineSettings s) => s.supportStereo);
             enableUltraQualitySSS = root.Find((RenderPipelineSettings s) => s.enableUltraQualitySSS);
+
+            ssRayMinLevel = root.Find((RenderPipelineSettings s) => s.ssRayMinLevel);
+            ssRayMaxLevel = root.Find((RenderPipelineSettings s) => s.ssRayMaxLevel);
 
             lightLoopSettings = new SerializedGlobalLightLoopSettings(root.Find((RenderPipelineSettings s) => s.lightLoopSettings));
             shadowInitParams = new SerializedShadowInitParameters(root.Find((RenderPipelineSettings s) => s.shadowInitParams));

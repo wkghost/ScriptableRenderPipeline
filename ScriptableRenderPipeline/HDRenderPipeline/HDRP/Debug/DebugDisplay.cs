@@ -48,28 +48,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float hitLinearDepth;
         public Vector2 hitPositionSS;
 
-        public override string ToString()
-        {
-            return string.Format(
-                @"startPositionSS     : ({0}, {1})
-positionTXS         : ({2}, {3})
-positionDepth       : {4}
-cellSize            : ({5}, {6})
-level               : {7}
-levelMax            : {8}
-iteration           : {9}
-iterationMax        : {10}
-",
-                startPositionSSX, startPositionSSY,
-                positionTXS.x, positionTXS.y,
-                positionTXS.z,
-                cellSizeW, cellSizeH,
-                level,
-                levelMax,
-                iteration,
-                iterationMax
-            );
-        }
+        public float iterationDistance;
+        public float hiZLinearDepth;
+        public float unused01;
+        public float unused02;
     }
 
     public class DebugDisplaySettings

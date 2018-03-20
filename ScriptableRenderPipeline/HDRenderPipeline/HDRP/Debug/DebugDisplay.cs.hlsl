@@ -38,6 +38,10 @@ struct ScreenSpaceTracingDebug
     float hitDistance;
     float hitLinearDepth;
     float2 hitPositionSS;
+    float iterationDistance;
+    float hiZLinearDepth;
+    float unused01;
+    float unused02;
 };
 
 //
@@ -94,6 +98,22 @@ float GetHitLinearDepth(ScreenSpaceTracingDebug value)
 float2 GetHitPositionSS(ScreenSpaceTracingDebug value)
 {
 	return value.hitPositionSS;
+}
+float GetIterationDistance(ScreenSpaceTracingDebug value)
+{
+	return value.iterationDistance;
+}
+float GetHiZLinearDepth(ScreenSpaceTracingDebug value)
+{
+	return value.hiZLinearDepth;
+}
+float GetUnused01(ScreenSpaceTracingDebug value)
+{
+	return value.unused01;
+}
+float GetUnused02(ScreenSpaceTracingDebug value)
+{
+	return value.unused02;
 }
 
 

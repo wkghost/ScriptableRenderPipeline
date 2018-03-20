@@ -37,5 +37,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public GlobalLightLoopSettings  lightLoopSettings = new GlobalLightLoopSettings();
         public ShadowInitParameters     shadowInitParams = new ShadowInitParameters();
 		public GlobalDecalSettings		decalSettings = new GlobalDecalSettings();
+
+        public int ssRayMinLevel = 2;
+        public int ssRayMaxLevel = 10;
     }
 }

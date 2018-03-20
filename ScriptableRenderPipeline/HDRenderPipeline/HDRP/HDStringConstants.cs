@@ -326,5 +326,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _VBufferLightingHistory     = Shader.PropertyToID("_VBufferLightingHistory");
         public static readonly int _VBufferLightingFeedback    = Shader.PropertyToID("_VBufferLightingFeedback");
         public static readonly int _VBufferSampleOffset        = Shader.PropertyToID("_VBufferSampleOffset");
+
+        public static readonly int _SSRayMinLevel = Shader.PropertyToID("_SSRayMinLevel");
+        public static readonly int _SSRayMaxLevel = Shader.PropertyToID("_SSRayMaxLevel");
     }
 }

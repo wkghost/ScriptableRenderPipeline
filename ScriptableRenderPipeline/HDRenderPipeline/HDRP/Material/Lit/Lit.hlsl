@@ -1,4 +1,4 @@
-﻿// SurfaceData is define in Lit.cs which generate Lit.cs.hlsl
+// SurfaceData is define in Lit.cs which generate Lit.cs.hlsl
 #include "Lit.cs.hlsl"
 #include "../SubsurfaceScattering/SubsurfaceScattering.hlsl"
 #include "CoreRP/ShaderLibrary/VolumeRendering.hlsl"
@@ -1807,8 +1807,11 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
 
             uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
 
-            ScreenSpaceRaymarchInput ssInput;
-            ZERO_INITIALIZE(ScreenSpaceRaymarchInput, ssInput);
+            ScreenSpaceLinearRaymarchInput ssInput;
+            ZERO_INITIALIZE(ScreenSpaceLinearRaymarchInput, ssInput);
+
+            //ScreenSpaceHiZRaymarchInput ssInput;
+            //ZERO_INITIALIZE(ScreenSpaceHiZRaymarchInput, ssInput);
 
             ScreenSpaceRayHit hit;
             ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
@@ -1818,14 +1821,14 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             ssInput.dirVS = transparentRefractVVS;
             ssInput.projectionMatrix = UNITY_MATRIX_P;
             ssInput.bufferSize = depthSize;
-            ssInput.minLevel = 2;
-            ssInput.maxLevel = int(_PyramidDepthMipSize.z);
+            //ssInput.minLevel = 0;
+            //ssInput.maxLevel = int(_PyramidDepthMipSize.z);
 
 #ifdef DEBUG_DISPLAY
             ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
 #endif
 
-            bool hitSuccessful = ScreenSpaceRaymarch(ssInput, hit);
+            bool hitSuccessful = ScreenSpaceLinearRaymarch(ssInput, hit);
 
 #ifdef DEBUG_DISPLAY
             if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)
@@ -1843,15 +1846,15 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             // Exit if texel is out of color buffer
             // Or if the texel is from an object in front of the object
             if (hit.linearDepth < posInput.linearDepth
-                || any(hit.positionSS < 0.0)
-                || any(hit.positionSS > 1.0))
+                || any(hit.positionNDC < 0.0)
+                || any(hit.positionNDC > 1.0))
             {
                 // Do nothing and don't update the hierarchy weight so we can fall back on refraction probe
                 return lighting;
             }
 
             // Map the roughness to the correct mip map level of the color pyramid
-            lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_GaussianPyramidColorTexture, s_trilinear_clamp_sampler, hit.positionSS * _GaussianPyramidColorMipSize.xy, preLightData.transparentSSMipLevel).rgb;
+            lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_GaussianPyramidColorTexture, s_trilinear_clamp_sampler, hit.positionNDC * _GaussianPyramidColorMipSize.xy, preLightData.transparentSSMipLevel).rgb;
 
             // Beer-Lamber law for absorption
             lighting.specularTransmitted *= preLightData.transparentTransmittance;
@@ -1860,7 +1863,6 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             UpdateLightingHierarchyWeights(hierarchyWeight, weight); // Shouldn't be needed, but safer in case we decide to change hierarchy priority
                                                                      // We use specularFGD as an approximation of the fresnel effect (that also handle smoothness), so take the remaining for transmission
             lighting.specularTransmitted *= (1.0 - preLightData.specularFGD) * weight;
-
 #else
             // No refraction, no need to go further
             hierarchyWeight = 1.0;

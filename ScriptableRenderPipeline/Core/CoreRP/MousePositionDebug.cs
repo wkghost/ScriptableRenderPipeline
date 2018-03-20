@@ -50,11 +50,9 @@ namespace UnityEngine.Experimental.Rendering
                     {
                         case KeyCode.PageUp:
                             ++m_DebugStep;
-                            Debug.LogFormat("DebugStep: {0}", m_DebugStep);
                             break;
                         case KeyCode.PageDown:
                             m_DebugStep = Mathf.Max(0, m_DebugStep - 1);
-                            Debug.LogFormat("DebugStep: {0}", m_DebugStep);
                             break;
                     }
                     break;

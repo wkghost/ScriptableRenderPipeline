@@ -49,6 +49,34 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 return output;
             }
 
+            // String debug utilities
+            bool SampleFloatValue(uint2 pixelSS, uint2 positionSS, uint stringVal[16], float value)
+            {
+                bool isValid = false;
+                SAMPLE_DEBUG_STRING(pixelSS - positionSS, stringVal, isValid);
+                
+                if (!isValid)
+                    isValid = SampleDebugFloatNumber(pixelSS - positionSS - uint2(100, 00), value);
+
+                return isValid;
+            }
+
+            bool SampleIntOverIntValue(uint2 pixelSS, uint2 positionSS, uint stringVal[16], int valueA, int valueB)
+            {
+                bool isValid = false;
+                SAMPLE_DEBUG_STRING(pixelSS - positionSS, stringVal, isValid);
+
+                if (!isValid)
+                    isValid = SampleDebugFontNumber(pixelSS - positionSS - uint2(100, 00), valueA);
+                if (!isValid)
+                    isValid = SampleDebugLetter(pixelSS - positionSS - uint2(112, 00), '/');
+                if (!isValid)
+                    isValid = SampleDebugFontNumber(pixelSS - positionSS - uint2(124, 00), valueB);
+
+                return isValid;
+            }
+            //
+
             // Motion vector debug utilities
             float DistanceToLine(float2 p, float2 p1, float2 p2)
             {
@@ -204,35 +232,35 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 {
                     const float circleRadius = 3.5;
                     const float ringSize = 1.5;
-                    float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
+                    const float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
 
-                    uint4 v01 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 0));
-                    uint4 v02 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(1, 0));
-                    uint4 v03 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 1));
+                    const uint4 v01 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 0));
+                    const uint4 v02 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(1, 0));
+                    const uint4 v03 = LOAD_TEXTURE2D(_DebugScreenSpaceTracing, uint2(0, 1));
                     ScreenSpaceTracingDebug debug = _DebugScreenSpaceTracingData[0];
 
-                    uint2 startPositionSS = uint2(debug.startPositionSSX, debug.startPositionSSY);
+                    const uint2 startPositionSS = uint2(debug.startPositionSSX, debug.startPositionSSY);
 
                     PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, 10, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP);
 
-                    uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
+                    const uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
 
                     // Grid rendering
                     float2 distanceToCell = float2(posInput.positionSS % cellSize);
                     distanceToCell = min(distanceToCell, float2(cellSize) - distanceToCell);
                     distanceToCell = clamp(1 - distanceToCell, 0, 1);
-                    float cellSDF = max(distanceToCell.x, distanceToCell.y);
+                    const float cellSDF = max(distanceToCell.x, distanceToCell.y);
 
                     // Position dot rendering
-                    float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionTXS.xy));
-                    float positionSDF = clamp(circleRadius - distanceToPosition, 0, 1);
+                    const float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionTXS.xy));
+                    const float positionSDF = clamp(circleRadius - distanceToPosition, 0, 1);
 
                     // Start position dot rendering
-                    float distanceToStartPosition = length(int2(posInput.positionSS) - int2(startPositionSS));
-                    float startPositionSDF = clamp(circleRadius - distanceToStartPosition, 0, 1);
+                    const float distanceToStartPosition = length(int2(posInput.positionSS) - int2(startPositionSS));
+                    const float startPositionSDF = clamp(circleRadius - distanceToStartPosition, 0, 1);
 
                     // Aggregated sdf colors
-                    float3 debugColor = float3(
+                    const float3 debugColor = float3(
                         startPositionSDF,
                         positionSDF,
                         cellSDF
@@ -242,60 +270,31 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     float4 col = float4(debugColor * 0.5 + color.rgb * 0.5, 1);
 
                     // Calculate SDF to draw a ring on both dots
-                    float startPositionRingDistance = abs(distanceToStartPosition - circleRadius);
-                    float startPositionRingSDF = clamp(ringSize - startPositionRingDistance, 0, 1);
-                    float positionRingDistance = abs(distanceToPosition - circleRadius);
-                    float positionRingSDF = clamp(ringSize - positionRingDistance, 0, 1);
-                    float w = clamp(1 - startPositionRingSDF - positionRingSDF, 0, 1);
+                    const float startPositionRingDistance = abs(distanceToStartPosition - circleRadius);
+                    const float startPositionRingSDF = clamp(ringSize - startPositionRingDistance, 0, 1);
+                    const float positionRingDistance = abs(distanceToPosition - circleRadius);
+                    const float positionRingSDF = clamp(ringSize - positionRingDistance, 0, 1);
+                    const float w = clamp(1 - startPositionRingSDF - positionRingSDF, 0, 1);
                     col = col * w + float4(1, 1, 1, 1) * (1 - w);
 
                     if (posInput.positionSS.y < 200)
                     {
-                        const uint kStartDepthString[] = { 'S', 't', 'a', 'r', 't', ' ', 'D', 'e', 'p', 't', 'h', ':', ' ', 0u };
-                        const uint kDepthString[] = { 'D', 'e', 'p', 't', 'h', ':', ' ', 0u };
-                        const uint kLevelString[] = { 'L', 'e', 'v', 'e', 'l', ':', ' ', 0u };
-                        const uint kIterationString[] = { 'I', 't', 'e', 'r', 'a', 't', 'i', 'o', 'n', ':', ' ', 0u };
+                        const uint kStrings1[16] = { 'S', 't', 'a', 'r', 't', ' ', 'D', 'e', 'p', 't', 'h', ':', ' ', 0u, ' ', ' ' };
+                        const uint kStrings2[16] = { 'D', 'e', 'p', 't', 'h', ':', ' ', 0u, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+                        const uint kStrings3[16] = { 'L', 'e', 'v', 'e', 'l', ':', ' ', 0u, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+                        const uint kStrings4[16] = { 'I', 't', 'e', 'r', 'a', 't', 'i', 'o', 'n', ':', ' ', 0u, ' ', ' ', ' ', ' ' };
+                        const uint kStrings5[16] = { 'I', 't', '.', ' ', 'D', 'i', 's', 't', 'a', 'n', 'c', 'e', ':', ' ', 0u, ' ' };
+                        const uint kStrings6[16] = { 'I', 't', '.', ' ', 'H', 'i', 'Z', ' ', 'D', 'e', 'p', 't', 'h', ':', ' ', 0u };
+                        if (
+                            //   SampleFloatValue     (posInput.positionSS, uint2(70, 10), kStrings1, debug.startLinearDepth)
+                             SampleFloatValue     (posInput.positionSS, uint2(70, 30), kStrings2, debug.hitLinearDepth)
+                            //|| SampleIntOverIntValue(posInput.positionSS, uint2(70, 50), kStrings3, debug.level, debug.levelMax)
+                            || SampleIntOverIntValue(posInput.positionSS, uint2(70, 70), kStrings4, debug.iteration + 1, debug.iterationMax)
 
-                        uint2 p = uint2(70, 10);
-                        bool isValid = false;
-                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kStartDepthString, isValid);
-                        if (isValid)
+                            || SampleFloatValue     (posInput.positionSS, uint2(300, 10), kStrings5, debug.iterationDistance)
+                            || SampleFloatValue     (posInput.positionSS, uint2(300, 30), kStrings6, debug.hiZLinearDepth)
+                            )
                             col = float4(1, 1, 1, 1);
-                        if (SampleDebugFloatNumber(posInput.positionSS - p - uint2(100, 00), debug.startLinearDepth))
-                            col = float4(1, 1, 1, 1);
-                        p += uint2(00, 20);
-
-                        isValid = false;
-                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kDepthString, isValid);
-                        if (isValid)
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugFloatNumber(posInput.positionSS - p - uint2(100, 00), debug.hitLinearDepth))
-                            col = float4(1, 1, 1, 1);
-                        p += uint2(00, 20);
-
-                        isValid = false;
-                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kLevelString, isValid);
-                        if (isValid)
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.level))
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugLetter(posInput.positionSS - p - uint2(112, 00), '/'))
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(124, 00), debug.levelMax))
-                            col = float4(1, 1, 1, 1);
-                        p += uint2(00, 20);
-
-                        isValid = false;
-                        SAMPLE_DEBUG_STRING(posInput.positionSS - p, kIterationString, isValid);
-                        if (isValid)
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(100, 00), debug.iteration + 1))
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugLetter(posInput.positionSS - p - uint2(112, 00), '/'))
-                            col = float4(1, 1, 1, 1);
-                        if (SampleDebugFontNumber(posInput.positionSS - p - uint2(124, 00), debug.iterationMax))
-                            col = float4(1, 1, 1, 1);
-                        p += uint2(00, 20);
                     }
 
                     return col;
