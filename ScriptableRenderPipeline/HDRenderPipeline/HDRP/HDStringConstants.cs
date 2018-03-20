@@ -329,5 +329,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _SSRayMinLevel = Shader.PropertyToID("_SSRayMinLevel");
         public static readonly int _SSRayMaxLevel = Shader.PropertyToID("_SSRayMaxLevel");
+        public static readonly int _SSRayAlgorithm = Shader.PropertyToID("_SSRayAlgorithm");
     }
 }

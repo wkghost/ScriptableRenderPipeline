@@ -4,6 +4,7 @@
 CBUFFER_START(ScreenSpaceRaymarching)
 int _SSRayMinLevel;
 int _SSRayMaxLevel;
+int _SSRayAlgorithm;
 CBUFFER_END
 
 struct ScreenSpaceHiZRaymarchInput

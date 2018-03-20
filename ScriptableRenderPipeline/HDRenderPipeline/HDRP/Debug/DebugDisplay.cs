@@ -307,10 +307,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             list.Add(
                 new DebugUI.FloatField
                 {
-                    displayName = "SST Crossing Offset",
-                    getter = () => lightingDebugSettings.sstCrossingOffset,
-                    setter = value => lightingDebugSettings.sstCrossingOffset = value,
-                });
+                    displayName = "SSRayAlgorithm",
+                    getter = () => lightingDebugSettings.ssRayAlgorithm,
+                    setter = value => lightingDebugSettings.ssRayAlgorithm = value,
+                }
+            );
 
             list.Add(new DebugUI.EnumField { displayName = "Fullscreen Debug Mode", getter = () => (int)fullScreenDebugMode, setter = value => fullScreenDebugMode = (FullScreenDebugMode)value, enumNames = lightingFullScreenDebugStrings, enumValues = lightingFullScreenDebugValues, onValueChanged = RefreshLightingDebug });
             switch (fullScreenDebugMode)

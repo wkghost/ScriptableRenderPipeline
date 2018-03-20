@@ -49,7 +49,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public DebugScreenSpaceTracing debugScreenSpaceTracingMode = DebugScreenSpaceTracing.None;
-        public float sstCrossingOffset;
+        public float ssRayAlgorithm;
         public DebugLightingMode    debugLightingMode = DebugLightingMode.None;
         public ShadowMapDebugMode   shadowDebugMode = ShadowMapDebugMode.None;
         public bool                 shadowDebugUseSelection = false;

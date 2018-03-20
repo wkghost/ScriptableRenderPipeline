@@ -1531,6 +1531,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
+            cmd.SetGlobalInt(HDShaderIDs._SSRayAlgorithm, (int)m_CurrentDebugDisplaySettings.lightingDebugSettings.ssRayAlgorithm);
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.fullScreenDebugMode != FullScreenDebugMode.None ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
