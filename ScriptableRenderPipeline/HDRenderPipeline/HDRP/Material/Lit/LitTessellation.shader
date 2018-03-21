@@ -110,7 +110,7 @@ Shader "HDRenderPipeline/LitTessellation"
 
         // Transparency
         [Enum(None, 0, Plane, 1, Sphere, 2)]_RefractionMode("Refraction Mode", Int) = 0
-        [Enum(HiZ, 0, Linear, 1)]_SSRayRefractionMethod("SS Ray Refraction Method", Int) = 0
+        [Enum(HiZ, 0, Linear, 1, Estimate, 2)]_SSRayRefractionMethod("SS Ray Refraction Method", Int) = 0
         _SSRayMinLevel ("SS Ray Min Mip Level", Int) = 1
         _SSRayMaxLevel ("SS Ray Max Mip Level", Int) = 10
         _Ior("Index Of Refraction", Range(1.0, 2.5)) = 1.0
@@ -268,7 +268,7 @@ Shader "HDRenderPipeline/LitTessellation"
     #pragma shader_feature _MATERIAL_FEATURE_IRIDESCENCE
     #pragma shader_feature _MATERIAL_FEATURE_SPECULAR_COLOR
 
-    #pragma shader_feature SSRAY_REFRACTION_HIZ SSRAY_REFRACTION_LINEAR
+    #pragma shader_feature SSRAY_REFRACTION_HIZ SSRAY_REFRACTION_LINEAR SSRAY_REFRACTION_ESTIMATE
 
     // enable dithering LOD crossfade
     #pragma multi_compile _ LOD_FADE_CROSSFADE

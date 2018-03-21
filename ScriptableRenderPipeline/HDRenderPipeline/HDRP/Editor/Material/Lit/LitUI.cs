@@ -823,9 +823,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                     m_MaterialEditor.ShaderProperty(ssRayMaxLevel, Styles.ssRayMaxLevel);
                                 break;
                             case Lit.SSRayMethod.Linear:
+                            case Lit.SSRayMethod.Estimate:
+                            {
                                 if (ssRayMinLevel != null)
                                     m_MaterialEditor.ShaderProperty(ssRayMinLevel, Styles.ssRayLevel);
                                 break;
+                            }
                             default:
                                 break;
                         }
@@ -999,6 +1002,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_TRANSMITTANCECOLORMAP", material.GetTexture(kTransmittanceColorMap) && canHaveRefraction);
             CoreUtils.SetKeyword(material, "SSRAY_REFRACTION_HIZ", ssRayMethod == Lit.SSRayMethod.HiZ);
             CoreUtils.SetKeyword(material, "SSRAY_REFRACTION_LINEAR", ssRayMethod ==  Lit.SSRayMethod.Linear);
+            CoreUtils.SetKeyword(material, "SSRAY_REFRACTION_ESTIMATE", ssRayMethod ==  Lit.SSRayMethod.Estimate);
         }
     }
 } // namespace UnityEditor

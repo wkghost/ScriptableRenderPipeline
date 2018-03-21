@@ -189,29 +189,6 @@ uint TileVariantToFeatureFlags(uint variant, uint tileIndex)
 # endif
 #endif
 
-float3 EstimateRaycast(float3 V, PositionInputs posInputs, float3 positionWS, float3 rayWS)
-{
-    // For all refraction approximation, to calculate the refracted point in world space,
-    //   we approximate the scene as a plane (back plane) with normal -V at the depth hit point.
-    //   (We avoid to raymarch the depth texture to get the refracted point.)
-
-    uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
-
-    // Get the depth of the approximated back plane
-    float pyramidDepth = LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, posInputs.positionNDC * (depthSize >> 2), 2).r;
-    float depth = LinearEyeDepth(pyramidDepth, _ZBufferParams);
-
-    // Distance from point to the back plane
-    float depthFromPositionInput = depth - posInputs.linearDepth;
-
-    float offset = dot(-V, positionWS - posInputs.positionWS);
-    float depthFromPosition = depthFromPositionInput - offset;
-
-    float hitDistanceFromPosition = depthFromPosition / dot(-V, rayWS);
-
-    return positionWS + rayWS * hitDistanceFromPosition;
-}
-
 // This method allows us to know at compile time what material features should be removed from the code by Tile (Indepenently of the value of material feature flag per pixel).
 // This is only useful for classification during lighting, so it's not needed in EncodeIntoGBuffer and ConvertSurfaceDataToBSDFData (where we always know exactly what the material feature is)
 bool HasFeatureFlag(uint featureFlags, uint flag)
@@ -1802,47 +1779,50 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             //    a. Get the corresponding color depending on the roughness from the gaussian pyramid of the color buffer
             //    b. Multiply by the transmittance for absorption (depends on the optical depth)
 
+            ScreenSpaceRayHit hit;
+            ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
+            bool hitSuccessful = false;
+
+            // Allocate screen space raymarch input
+#if SSRAY_REFRACTION_ESTIMATE
+# define SSRAY_MARCH ScreenSpaceEstimateRaycast
+            ScreenSpaceEstimateRaycastInput ssInput;
+            ZERO_INITIALIZE(ScreenSpaceEstimateRaycastInput, ssInput);
+#elif SSRAY_REFRACTION_HIZ
+# define SSRAY_MARCH ScreenSpaceHiZRaymarch
+            ScreenSpaceHiZRaymarchInput ssInput;
+            ZERO_INITIALIZE(ScreenSpaceHiZRaymarchInput, ssInput);
+#elif SSRAY_REFRACTION_LINEAR
+# define SSRAY_MARCH ScreenSpaceLinearRaymarch
+            ScreenSpaceLinearRaymarchInput ssInput;
+            ZERO_INITIALIZE(ScreenSpaceLinearRaymarchInput, ssInput);
+#endif
+
+            // Initialize screen space raymarch input
+#if SSRAY_REFRACTION_HIZ || SSRAY_REFRACTION_LINEAR
             float3 positionVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentPositionWS, 1)).xyz;
             float3 transparentRefractVVS = mul(UNITY_MATRIX_V, float4(preLightData.transparentRefractV, 0)).xyz;
 
-            uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
-
-            ScreenSpaceRayHit hit;
-            ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
-
-            bool hitSuccessful = false;
-
-#if SSRAY_REFRACTION_HIZ
-            ScreenSpaceHiZRaymarchInput ssInput;
-            ZERO_INITIALIZE(ScreenSpaceHiZRaymarchInput, ssInput);
-            ssInput.startPositionVS = positionVS;
-            ssInput.startLinearDepth = posInput.linearDepth;
-            ssInput.dirVS = transparentRefractVVS;
+            ssInput.rayOriginVS = positionVS;
+            ssInput.rayDirVS = transparentRefractVVS;
             ssInput.projectionMatrix = UNITY_MATRIX_P;
-            ssInput.bufferSize = depthSize;
-            ssInput.minLevel = 0;
-            ssInput.maxLevel = int(_PyramidDepthMipSize.z);
+
+#elif SSRAY_REFRACTION_ESTIMATE
+            ssInput.referencePositionNDC = posInput.positionNDC;
+            ssInput.referencePositionWS = posInput.positionWS;
+            ssInput.referenceLinearDepth = posInput.linearDepth;
+            ssInput.rayOriginWS = preLightData.transparentPositionWS;
+            ssInput.rayDirWS = preLightData.transparentRefractV;
+            ssInput.depthNormalWS = -V;
+            ssInput.viewProjectionMatrix = UNITY_MATRIX_VP;
+#endif
 #ifdef DEBUG_DISPLAY
             ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
 #endif
 
-            hitSuccessful = ScreenSpaceHiZRaymarch(ssInput, hit);
+            hitSuccessful = SSRAY_MARCH(ssInput, hit);
+#undef SSRAY_MARCH
 
-#elif SSRAY_REFRACTION_LINEAR
-            ScreenSpaceLinearRaymarchInput ssInput;
-            ZERO_INITIALIZE(ScreenSpaceLinearRaymarchInput, ssInput);
-
-            ssInput.startPositionVS = positionVS;
-            ssInput.startLinearDepth = posInput.linearDepth;
-            ssInput.dirVS = transparentRefractVVS;
-            ssInput.projectionMatrix = UNITY_MATRIX_P;
-            ssInput.bufferSize = depthSize;
-#ifdef DEBUG_DISPLAY
-            ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
-#endif
-
-            hitSuccessful = ScreenSpaceLinearRaymarch(ssInput, hit);
-#endif
 
 #ifdef DEBUG_DISPLAY
             if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)
