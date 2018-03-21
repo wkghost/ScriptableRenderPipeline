@@ -274,6 +274,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DebugStatisticsItems = list.ToArray();
             var panel = DebugManager.instance.GetPanel(k_PanelStatistics, true);
+            panel.flags |= DebugUI.Flags.ForceUpdate;
             panel.children.Add(m_DebugStatisticsItems);
         }
 
