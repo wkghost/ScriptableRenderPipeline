@@ -117,6 +117,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kDistortionBlurRemapMax = "_DistortionBlurRemapMax";
         protected MaterialProperty preRefractionPass = null;
         protected const string kPreRefractionPass = "_PreRefractionPass";
+        protected MaterialProperty ssRayRefractionMethod = null;
+        protected const string kSsRayRefractionMethod = "_SSRayRefractionMethod";
+        protected MaterialProperty ssRayMinLevel = null;
+        protected const string kSsRayMinLevel = "_SSRayMinLevel";
+        protected MaterialProperty ssRayMaxLevel = null;
+        protected const string kSsRayMaxLevel = "_SSRayMaxLevel";
         protected MaterialProperty enableFogOnTransparent = null;
         protected const string kEnableFogOnTransparent = "_EnableFogOnTransparent";
         protected MaterialProperty enableBlendModePreserveSpecularLighting = null;
@@ -177,6 +183,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             distortionBlurRemapMin = FindProperty(kDistortionBlurRemapMin, props, false);
             distortionBlurRemapMax = FindProperty(kDistortionBlurRemapMax, props, false);
             preRefractionPass = FindProperty(kPreRefractionPass, props, false);
+            ssRayRefractionMethod = FindProperty(kSsRayRefractionMethod, props, false);
+            ssRayMinLevel = FindProperty(kSsRayMinLevel, props, false);
+            ssRayMaxLevel = FindProperty(kSsRayMaxLevel, props, false);
 
             enableFogOnTransparent = FindProperty(kEnableFogOnTransparent, props, false);
             enableBlendModePreserveSpecularLighting = FindProperty(kEnableBlendModePreserveSpecularLighting, props, false);

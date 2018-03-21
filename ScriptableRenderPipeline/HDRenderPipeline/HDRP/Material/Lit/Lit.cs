@@ -29,6 +29,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Sphere = 2
         };
 
+        public enum SSRayMethod
+        {
+            HiZ,
+            Linear
+        }
+
         //-----------------------------------------------------------------------------
         // SurfaceData
         //-----------------------------------------------------------------------------

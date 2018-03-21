@@ -87,6 +87,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent normalMapSpaceWarning = new GUIContent("Object space normal can't be use with triplanar mapping.");
 
             // Transparency
+            public static string ssRayRefractionMethodText = "SS ray Refraction Method";
+            public static string ssRayMinLevel = "SS ray min mip level";
+            public static string ssRayMaxLevel = "SS ray max mip level";
+            public static string ssRayLevel = "SS ray mip level";
             public static string refractionModeText = "Refraction Mode";
             public static GUIContent refractionIorText = new GUIContent("Index of refraction", "Index of refraction");
             public static GUIContent refractionThicknessText = new GUIContent("Refraction Thickness", "Thickness for rough refraction");
@@ -806,7 +810,26 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     if (mode != Lit.RefractionMode.None)
                     {
                         m_MaterialEditor.ShaderProperty(ior, Styles.refractionIorText);
-
+                        if (ssRayRefractionMethod != null)
+                            m_MaterialEditor.ShaderProperty(ssRayRefractionMethod, Styles.ssRayRefractionMethodText);
+                        
+                        var ssRayMethod = (Lit.SSRayMethod)ssRayRefractionMethod.floatValue;
+                        switch (ssRayMethod)
+                        {
+                            case Lit.SSRayMethod.HiZ:
+                                if (ssRayMinLevel != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayMinLevel, Styles.ssRayMinLevel);
+                                if (ssRayMaxLevel != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayMaxLevel, Styles.ssRayMaxLevel);
+                                break;
+                            case Lit.SSRayMethod.Linear:
+                                if (ssRayMinLevel != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayMinLevel, Styles.ssRayLevel);
+                                break;
+                            default:
+                                break;
+                        }
+                        
                         blendMode.floatValue = (float)BlendMode.Alpha;
 
                         if (thicknessMap[0].textureValue == null)
@@ -970,9 +993,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var refractionModeValue = (Lit.RefractionMode)material.GetFloat(kRefractionMode);
             // We can't have refraction in pre-refraction queue
             var canHaveRefraction = !material.HasProperty(kPreRefractionPass) || material.GetFloat(kPreRefractionPass) <= 0.0;
+            var ssRayMethod = material.HasProperty(kSsRayRefractionMethod) ? (Lit.SSRayMethod)material.GetFloat(kSsRayRefractionMethod) : Lit.SSRayMethod.HiZ;
             CoreUtils.SetKeyword(material, "_REFRACTION_PLANE", (refractionModeValue == Lit.RefractionMode.Plane) && canHaveRefraction);
             CoreUtils.SetKeyword(material, "_REFRACTION_SPHERE", (refractionModeValue == Lit.RefractionMode.Sphere) && canHaveRefraction);
             CoreUtils.SetKeyword(material, "_TRANSMITTANCECOLORMAP", material.GetTexture(kTransmittanceColorMap) && canHaveRefraction);
+            CoreUtils.SetKeyword(material, "SSRAY_REFRACTION_HIZ", ssRayMethod == Lit.SSRayMethod.HiZ);
+            CoreUtils.SetKeyword(material, "SSRAY_REFRACTION_LINEAR", ssRayMethod ==  Lit.SSRayMethod.Linear);
         }
     }
 } // namespace UnityEditor

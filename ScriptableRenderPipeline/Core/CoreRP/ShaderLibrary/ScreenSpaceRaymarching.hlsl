@@ -4,7 +4,6 @@
 CBUFFER_START(ScreenSpaceRaymarching)
 int _SSRayMinLevel;
 int _SSRayMaxLevel;
-int _SSRayAlgorithm;
 CBUFFER_END
 
 struct ScreenSpaceHiZRaymarchInput
@@ -397,6 +396,7 @@ bool ScreenSpaceLinearRaymarch(
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
     bool hitSuccessful = true;
     int iteration = 0;
+    int level = _SSRayMinLevel;
 
     float3 startPositionTXS;
     float3 rayTXS;
@@ -425,6 +425,7 @@ bool ScreenSpaceLinearRaymarch(
     {
         // DDA step
         rayTXS /= max(abs(rayTXS.x), abs(rayTXS.y));
+        rayTXS *= _SSRayMinLevel;
 
         float3 positionTXS = startPositionTXS;
         // TODO: We should have a for loop from the starting point to the far/near plane
@@ -435,7 +436,7 @@ bool ScreenSpaceLinearRaymarch(
 #endif
 
             positionTXS += rayTXS;
-            float invHiZDepth = SampleHiZDepth(positionTXS.xy, 0);
+            float invHiZDepth = SampleHiZDepth(positionTXS.xy, _SSRayMinLevel);
 
 #ifdef DEBUG_DISPLAY
             FillScreenSpaceRaymarchingPostIterationDebug(

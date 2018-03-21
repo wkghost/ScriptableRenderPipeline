@@ -473,9 +473,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_DbufferManager.PushGlobalParams(cmd, m_FrameSettings);
 
                 m_VolumetricLightingModule.PushGlobalParams(hdCamera, cmd);
-
-                cmd.SetGlobalInt(HDShaderIDs._SSRayMinLevel, m_Asset.renderPipelineSettings.ssRayMinLevel);
-                cmd.SetGlobalInt(HDShaderIDs._SSRayMaxLevel, m_Asset.renderPipelineSettings.ssRayMaxLevel);
             }
         }
 
@@ -1539,9 +1536,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
-            // Temporary
-            cmd.SetGlobalInt(HDShaderIDs._SSRayAlgorithm, (int)m_CurrentDebugDisplaySettings.lightingDebugSettings.ssRayAlgorithm);
-
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.fullScreenDebugMode != FullScreenDebugMode.None ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)

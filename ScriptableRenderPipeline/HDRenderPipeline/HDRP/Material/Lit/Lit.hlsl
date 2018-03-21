@@ -1811,45 +1811,38 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
 
             bool hitSuccessful = false;
-            switch (_SSRayAlgorithm)
-            {
-            case 0:
-            {
-                ScreenSpaceHiZRaymarchInput ssInput;
-                ZERO_INITIALIZE(ScreenSpaceHiZRaymarchInput, ssInput);
-                ssInput.startPositionVS = positionVS;
-                ssInput.startLinearDepth = posInput.linearDepth;
-                ssInput.dirVS = transparentRefractVVS;
-                ssInput.projectionMatrix = UNITY_MATRIX_P;
-                ssInput.bufferSize = depthSize;
-                ssInput.minLevel = 0;
-                ssInput.maxLevel = int(_PyramidDepthMipSize.z);
+
+#if SSRAY_REFRACTION_HIZ
+            ScreenSpaceHiZRaymarchInput ssInput;
+            ZERO_INITIALIZE(ScreenSpaceHiZRaymarchInput, ssInput);
+            ssInput.startPositionVS = positionVS;
+            ssInput.startLinearDepth = posInput.linearDepth;
+            ssInput.dirVS = transparentRefractVVS;
+            ssInput.projectionMatrix = UNITY_MATRIX_P;
+            ssInput.bufferSize = depthSize;
+            ssInput.minLevel = 0;
+            ssInput.maxLevel = int(_PyramidDepthMipSize.z);
 #ifdef DEBUG_DISPLAY
-                ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
+            ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
 #endif
 
-                hitSuccessful = ScreenSpaceHiZRaymarch(ssInput, hit);
-                break;
-            }
-            case 1:
-            {
-                ScreenSpaceLinearRaymarchInput ssInput;
-                ZERO_INITIALIZE(ScreenSpaceLinearRaymarchInput, ssInput);
+            hitSuccessful = ScreenSpaceHiZRaymarch(ssInput, hit);
 
-                ssInput.startPositionVS = positionVS;
-                ssInput.startLinearDepth = posInput.linearDepth;
-                ssInput.dirVS = transparentRefractVVS;
-                ssInput.projectionMatrix = UNITY_MATRIX_P;
-                ssInput.bufferSize = depthSize;
+#elif SSRAY_REFRACTION_LINEAR
+            ScreenSpaceLinearRaymarchInput ssInput;
+            ZERO_INITIALIZE(ScreenSpaceLinearRaymarchInput, ssInput);
+
+            ssInput.startPositionVS = positionVS;
+            ssInput.startLinearDepth = posInput.linearDepth;
+            ssInput.dirVS = transparentRefractVVS;
+            ssInput.projectionMatrix = UNITY_MATRIX_P;
+            ssInput.bufferSize = depthSize;
 #ifdef DEBUG_DISPLAY
-                ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
+            ssInput.writeStepDebug = !any(int2(_MouseClickPixelCoord.xy) - int2(posInput.positionSS));
 #endif
 
-                hitSuccessful = ScreenSpaceLinearRaymarch(ssInput, hit);
-                break;
-            }
-                
-            }
+            hitSuccessful = ScreenSpaceLinearRaymarch(ssInput, hit);
+#endif
 
 #ifdef DEBUG_DISPLAY
             if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)

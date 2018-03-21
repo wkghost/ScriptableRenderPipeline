@@ -81,9 +81,6 @@ namespace UnityEditor.Experimental.Rendering
             EditorGUILayout.PropertyField(d.supportStereo, _.GetContent("Support Stereo Rendering"));
             EditorGUILayout.PropertyField(d.enableUltraQualitySSS, _.GetContent("Increase SSS Sample Count"));
 
-            EditorGUILayout.PropertyField(d.ssRayMinLevel, _.GetContent("Screen Space Raymarching Min Level"));
-            EditorGUILayout.PropertyField(d.ssRayMaxLevel, _.GetContent("Screen Space Raymarching Max Level"));
-
             --EditorGUI.indentLevel;
         }
     }

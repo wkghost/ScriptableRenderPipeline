@@ -371,14 +371,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
                 }
             }
-            list.Add(
-                new DebugUI.FloatField
-                {
-                    displayName = "SSRayAlgorithm",
-                    getter = () => lightingDebugSettings.ssRayAlgorithm,
-                    setter = value => lightingDebugSettings.ssRayAlgorithm = value,
-                }
-            );
 
             list.Add(new DebugUI.EnumField { displayName = "Fullscreen Debug Mode", getter = () => (int)fullScreenDebugMode, setter = value => fullScreenDebugMode = (FullScreenDebugMode)value, enumNames = lightingFullScreenDebugStrings, enumValues = lightingFullScreenDebugValues, onValueChanged = RefreshLightingDebug });
             switch (fullScreenDebugMode)
