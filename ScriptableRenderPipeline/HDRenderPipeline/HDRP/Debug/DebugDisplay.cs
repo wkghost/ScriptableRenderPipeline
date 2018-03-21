@@ -36,7 +36,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public uint cellSizeW;
         public uint cellSizeH;
 
-        public Vector3 positionTXS;
+        public Vector3 positionSS;
         public float startLinearDepth;
 
         public uint level;
@@ -44,15 +44,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public uint iteration;
         public uint iterationMax;
 
-        public float hitDistance;
+        public float hitDistanceSS;
         public float hitLinearDepth;
         public Vector2 hitPositionSS;
 
         public float hiZLinearDepth;
-        public Vector3 rayTXS;
+        public Vector3 raySS;
 
         public float iterationDistance;
-        public Vector3 unused00;        
+        public float resultHitDepth;
+        public Vector2 unused00;
     }
 
     public class DebugDisplaySettings
@@ -251,26 +252,60 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void RegisterStatisticsDebug()
         {
-            var list = new List<DebugUI.Widget>();
+            var list = new List<DebugUI.Container>();
             list.Add(new DebugUI.Container
             {
                 displayName = "Screen Space Tracing Debug",
                 children = 
                 {
-                    new DebugUI.BoolField { displayName = "Debug Iterations", getter = IsScreenSpaceTracingIterationDebugEnabled, setter = SetScreenSpaceTracingIterationDebugEnabled },
-                    new DebugUI.EnumField { displayName = "Debug Mode", getter = GetDebugLightingSubMode, setter = SetScreenSpaceTracingDebugMode, enumNames = debugScreenSpaceTracingStrings, enumValues = debugScreenSpaceTracingValues },
-                    new DebugUI.Value { displayName = "Cell Size", getter = () => string.Format("({0}, {1}) px", screenSpaceTracingDebugData.cellSizeW, screenSpaceTracingDebugData.cellSizeH) },
-                    new DebugUI.Value { displayName = "Level / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.level, screenSpaceTracingDebugData.levelMax) },
-                    new DebugUI.Value { displayName = "Iteration / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.iteration, screenSpaceTracingDebugData.iterationMax) },
-                    new DebugUI.Value { displayName = "Start Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.startLinearDepth) },
-                    new DebugUI.Value { displayName = "Hit Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitLinearDepth) },
-                    new DebugUI.Value { displayName = "Depth Buffer", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hiZLinearDepth) },
-                    new DebugUI.Value { displayName = "Hit Distance", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitDistance) },
-                    new DebugUI.Value { displayName = "Iteration Distance", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.iterationDistance) },
-                    new DebugUI.Value { displayName = "Ray TXS", getter = () => string.Format("({0:F7}, {1:F7}) px", screenSpaceTracingDebugData.rayTXS.x, screenSpaceTracingDebugData.rayTXS.y) },
-                    new DebugUI.Value { displayName = "Ray TXS Depth", getter = () => string.Format("({0:F7}) m", 1f / screenSpaceTracingDebugData.rayTXS.z) },
+                    new DebugUI.Container
+                    {
+                        displayName = "Configuration",
+                        children =
+                        {
+                            new DebugUI.BoolField { displayName = "Debug Iterations", getter = IsScreenSpaceTracingIterationDebugEnabled, setter = SetScreenSpaceTracingIterationDebugEnabled, onValueChanged = RefreshStatisticsDebug },
+                            new DebugUI.EnumField { displayName = "Debug Mode", getter = GetDebugLightingSubMode, setter = SetScreenSpaceTracingDebugMode, enumNames = debugScreenSpaceTracingStrings, enumValues = debugScreenSpaceTracingValues, onValueChanged = RefreshStatisticsDebug },
+                        }
+                    }
                 }
             });
+
+            if (IsScreenSpaceTracingIterationDebugEnabled() || GetDebugLightingSubMode() != 0)
+            {
+                list[list.Count - 1].children.Add(new DebugUI.Container
+                    {
+                        displayName = "Loop Information",
+                        children = 
+                        {
+                            new DebugUI.Value { displayName = "Start Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.startLinearDepth) },
+                            new DebugUI.Value { displayName = "Ray SS", getter = () => string.Format("({0:F7}, {1:F7}) px", screenSpaceTracingDebugData.raySS.x, screenSpaceTracingDebugData.raySS.y) },
+                            new DebugUI.Value { displayName = "Ray SS Depth", getter = () => string.Format("({0:F7}) m", 1f / screenSpaceTracingDebugData.raySS.z) },
+                        }
+                    });
+                list[list.Count - 1].children.Add(
+                    new DebugUI.Container
+                    {
+                        displayName = "Iteration Information",
+                        children = 
+                        {
+                            new DebugUI.Value { displayName = "Cell Size", getter = () => string.Format("({0}, {1}) px", screenSpaceTracingDebugData.cellSizeW, screenSpaceTracingDebugData.cellSizeH) },
+                            new DebugUI.Value { displayName = "Level / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.level, screenSpaceTracingDebugData.levelMax) },
+                            new DebugUI.Value { displayName = "Iteration / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.iteration, screenSpaceTracingDebugData.iterationMax) },
+                            new DebugUI.Value { displayName = "Hit Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitLinearDepth) },
+                            new DebugUI.Value { displayName = "Depth Buffer", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hiZLinearDepth) },
+                            new DebugUI.Value { displayName = "Hit Distance", getter = () => string.Format("{0:F7} px", screenSpaceTracingDebugData.hitDistanceSS) },
+                            new DebugUI.Value { displayName = "Iteration Distance", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.iterationDistance) },
+                        }
+                    });
+                list[list.Count - 1].children.Add( new DebugUI.Container
+                    {
+                        displayName = "Result Information",
+                        children = 
+                        {
+                            new DebugUI.Value { displayName = "Hit Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.resultHitDepth) },
+                        }
+                    });
+            }
 
             m_DebugStatisticsItems = list.ToArray();
             var panel = DebugManager.instance.GetPanel(k_PanelStatistics, true);
@@ -298,6 +333,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             UnregisterDebugItems(k_PanelLighting, m_DebugLightingItems);
             RegisterLightingDebug();
+        }
+
+        void RefreshStatisticsDebug<T>(DebugUI.Field<T> field, T value)
+        {
+            UnregisterDebugItems(k_PanelStatistics, m_DebugStatisticsItems);
+            RegisterStatisticsDebug();
         }
 
         public void RegisterLightingDebug()

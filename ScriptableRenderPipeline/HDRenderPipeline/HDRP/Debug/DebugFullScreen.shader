@@ -224,7 +224,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     const float cellSDF = max(distanceToCell.x, distanceToCell.y);
 
                     // Position dot rendering
-                    const float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionTXS.xy));
+                    const float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionSS.xy));
                     const float positionSDF = clamp(circleRadius - distanceToPosition, 0, 1);
 
                     // Start position dot rendering
