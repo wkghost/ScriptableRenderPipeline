@@ -201,12 +201,14 @@ void FillScreenSpaceRaymarchingPreLoopDebug(
 void FillScreenSpaceRaymarchingPostLoopDebug(
     int maxUsedLevel,
     int iteration,
+    float3 rayTXS,
     ScreenSpaceRayHit hit,
     inout ScreenSpaceTracingDebug debug)
 {
     debug.levelMax = maxUsedLevel;
     debug.iterationMax = iteration;
     debug.hitDistance = hit.distance;
+    debug.rayTXS = rayTXS;
 }
 
 void FillScreenSpaceRaymarchingPreIterationDebug(
@@ -271,14 +273,6 @@ bool ScreenSpaceHiZRaymarch(
     FillScreenSpaceRaymarchingPreLoopDebug(startPositionTXS, debug);
 #endif
 
-    // No need to raymarch if the ray is along camera's foward
-    if (!any(rayTXS.xy))
-    {
-        hit.distance = 1 / startPositionTXS.z;
-        hit.linearDepth = 1 / startPositionTXS.z;
-        hit.positionSS = uint2(startPositionTXS.xy);
-    }
-    else
     {
         // Initialize raymarching
         float2 invRayTXS = float2(1, 1) / rayTXS.xy;
@@ -293,12 +287,6 @@ bool ScreenSpaceHiZRaymarch(
         uint2 cellSize = uint2(1, 1) << currentLevel;
 
         float3 positionTXS = startPositionTXS;
-
-        // Goes to the intersection with the first cell
-        {
-            float2 absInvRayTXS = abs(invRayTXS);
-            positionTXS += rayTXS * min(absInvRayTXS.x, absInvRayTXS.y);
-        }
 
         while (currentLevel >= minLevel)
         {
@@ -384,6 +372,7 @@ bool ScreenSpaceHiZRaymarch(
     FillScreenSpaceRaymarchingPostLoopDebug(
         maxUsedLevel,
         iteration,
+        rayTXS,
         hit,
         debug);
     FillScreenSpaceRaymarchingHitDebug(
@@ -434,14 +423,11 @@ bool ScreenSpaceLinearRaymarch(
     }
     else
     {
-        if (abs(rayTXS.x) < abs(rayTXS.y))
-            // rayTXS.y is not null here
-            rayTXS /= abs(rayTXS.y);
-        else
-            // rayTXS.x is not null here
-            rayTXS /= abs(rayTXS.x);
+        // DDA step
+        rayTXS /= max(abs(rayTXS.x), abs(rayTXS.y));
 
         float3 positionTXS = startPositionTXS;
+        // TODO: We should have a for loop from the starting point to the far/near plane
         while (iteration < MAX_ITERATIONS)
         {
 #ifdef DEBUG_DISPLAY
@@ -487,6 +473,7 @@ bool ScreenSpaceLinearRaymarch(
     FillScreenSpaceRaymarchingPostLoopDebug(
         0,
         iteration,
+        rayTXS,
         hit,
         debug);
     FillScreenSpaceRaymarchingHitDebug(

@@ -172,6 +172,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         RTHandle m_DebugScreenSpaceTracing = null;
         ComputeBuffer m_DebugScreenSpaceTracingData = null;
+        ScreenSpaceTracingDebug[] m_DebugScreenSpaceTracingDataArray = new ScreenSpaceTracingDebug[1];
 
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
@@ -956,6 +957,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 CommandBufferPool.Release(cmd);
                 renderContext.Submit();
+
+                if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.ScreenSpaceTracingRefraction)
+                {
+                    m_DebugScreenSpaceTracingData.GetData(m_DebugScreenSpaceTracingDataArray);
+                    var data = m_DebugScreenSpaceTracingDataArray[0];
+                    m_CurrentDebugDisplaySettings.screenSpaceTracingDebugData = data;
+                }
             } // For each camera
         }
 
@@ -1531,7 +1539,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
+            // Temporary
             cmd.SetGlobalInt(HDShaderIDs._SSRayAlgorithm, (int)m_CurrentDebugDisplaySettings.lightingDebugSettings.ssRayAlgorithm);
+
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.fullScreenDebugMode != FullScreenDebugMode.None ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)

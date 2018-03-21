@@ -48,10 +48,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float hitLinearDepth;
         public Vector2 hitPositionSS;
 
-        public float iterationDistance;
         public float hiZLinearDepth;
-        public float unused01;
-        public float unused02;
+        public Vector3 rayTXS;
+
+        public float iterationDistance;
+        public Vector3 unused00;        
     }
 
     public class DebugDisplaySettings
@@ -60,11 +61,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static string k_PanelMaterials = "Material";
         public static string k_PanelLighting = "Lighting";
         public static string k_PanelRendering = "Rendering";
+        public static string k_PanelStatistics = "Statistics";
 
         DebugUI.Widget[] m_DebugDisplayStatsItems;
         DebugUI.Widget[] m_DebugMaterialItems;
         DebugUI.Widget[] m_DebugLightingItems;
         DebugUI.Widget[] m_DebugRenderingItems;
+        DebugUI.Widget[] m_DebugStatisticsItems;
 
         public float debugOverlayRatio = 0.33f;
         public FullScreenDebugMode  fullScreenDebugMode = FullScreenDebugMode.None;
@@ -81,6 +84,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static int[] renderingFullScreenDebugValues = null;
         public static GUIContent[] debugScreenSpaceTracingStrings = null;
         public static int[] debugScreenSpaceTracingValues = null;
+
+        public ScreenSpaceTracingDebug screenSpaceTracingDebugData { get; internal set; }
 
         public DebugDisplaySettings()
         {
@@ -208,6 +213,68 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var panel = DebugManager.instance.GetPanel(k_PanelDisplayStats, true);
             panel.flags = DebugUI.Flags.RuntimeOnly;
             panel.children.Add(m_DebugDisplayStatsItems);
+        }
+
+        bool IsScreenSpaceTracingIterationDebugEnabled()
+        {
+            return fullScreenDebugMode == FullScreenDebugMode.ScreenSpaceTracingRefraction;
+        }
+
+        void SetScreenSpaceTracingIterationDebugEnabled(bool value)
+        {
+            if (value)
+            {
+                lightingDebugSettings.debugLightingMode = DebugLightingMode.ScreenSpaceTracingRefraction;
+                fullScreenDebugMode = FullScreenDebugMode.ScreenSpaceTracingRefraction;
+            }
+            else
+            {
+                lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
+                fullScreenDebugMode = FullScreenDebugMode.None;
+            }
+        }
+
+        void SetScreenSpaceTracingDebugMode(int value)
+        {
+            var val = (DebugScreenSpaceTracing)value;
+            if (val != DebugScreenSpaceTracing.None)
+            {
+                lightingDebugSettings.debugLightingMode = DebugLightingMode.ScreenSpaceTracingRefraction;
+                lightingDebugSettings.debugScreenSpaceTracingMode = (DebugScreenSpaceTracing)value;
+            }
+            else
+            {
+                lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
+                lightingDebugSettings.debugScreenSpaceTracingMode = DebugScreenSpaceTracing.None;
+            }
+        }
+
+        void RegisterStatisticsDebug()
+        {
+            var list = new List<DebugUI.Widget>();
+            list.Add(new DebugUI.Container
+            {
+                displayName = "Screen Space Tracing Debug",
+                children = 
+                {
+                    new DebugUI.BoolField { displayName = "Debug Iterations", getter = IsScreenSpaceTracingIterationDebugEnabled, setter = SetScreenSpaceTracingIterationDebugEnabled },
+                    new DebugUI.EnumField { displayName = "Debug Mode", getter = GetDebugLightingSubMode, setter = SetScreenSpaceTracingDebugMode, enumNames = debugScreenSpaceTracingStrings, enumValues = debugScreenSpaceTracingValues },
+                    new DebugUI.Value { displayName = "Cell Size", getter = () => string.Format("({0}, {1}) px", screenSpaceTracingDebugData.cellSizeW, screenSpaceTracingDebugData.cellSizeH) },
+                    new DebugUI.Value { displayName = "Level / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.level, screenSpaceTracingDebugData.levelMax) },
+                    new DebugUI.Value { displayName = "Iteration / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.iteration, screenSpaceTracingDebugData.iterationMax) },
+                    new DebugUI.Value { displayName = "Start Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.startLinearDepth) },
+                    new DebugUI.Value { displayName = "Hit Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitLinearDepth) },
+                    new DebugUI.Value { displayName = "Depth Buffer", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hiZLinearDepth) },
+                    new DebugUI.Value { displayName = "Hit Distance", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitDistance) },
+                    new DebugUI.Value { displayName = "Iteration Distance", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.iterationDistance) },
+                    new DebugUI.Value { displayName = "Ray TXS", getter = () => string.Format("({0:F7}, {1:F7}) px", screenSpaceTracingDebugData.rayTXS.x, screenSpaceTracingDebugData.rayTXS.y) },
+                    new DebugUI.Value { displayName = "Ray TXS Depth", getter = () => string.Format("({0:F7}) m", 1f / screenSpaceTracingDebugData.rayTXS.z) },
+                }
+            });
+
+            m_DebugStatisticsItems = list.ToArray();
+            var panel = DebugManager.instance.GetPanel(k_PanelStatistics, true);
+            panel.children.Add(m_DebugStatisticsItems);
         }
 
         public void RegisterMaterialDebug()
@@ -482,6 +549,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RegisterMaterialDebug();
             RegisterLightingDebug();
             RegisterRenderingDebug();
+            RegisterStatisticsDebug();
         }
 
         public void UnregisterDebug()
@@ -490,6 +558,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             UnregisterDebugItems(k_PanelMaterials, m_DebugMaterialItems);
             UnregisterDebugItems(k_PanelLighting, m_DebugLightingItems);
             UnregisterDebugItems(k_PanelRendering, m_DebugLightingItems);
+            UnregisterDebugItems(k_PanelStatistics, m_DebugStatisticsItems);
         }
 
         void UnregisterDebugItems(string panelName, DebugUI.Widget[] items)

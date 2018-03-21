@@ -49,34 +49,6 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 return output;
             }
 
-            // String debug utilities
-            bool SampleFloatValue(uint2 pixelSS, uint2 positionSS, uint stringVal[16], float value)
-            {
-                bool isValid = false;
-                SAMPLE_DEBUG_STRING(pixelSS - positionSS, stringVal, isValid);
-                
-                if (!isValid)
-                    isValid = SampleDebugFloatNumber(pixelSS - positionSS - uint2(100, 00), value);
-
-                return isValid;
-            }
-
-            bool SampleIntOverIntValue(uint2 pixelSS, uint2 positionSS, uint stringVal[16], int valueA, int valueB)
-            {
-                bool isValid = false;
-                SAMPLE_DEBUG_STRING(pixelSS - positionSS, stringVal, isValid);
-
-                if (!isValid)
-                    isValid = SampleDebugFontNumber(pixelSS - positionSS - uint2(100, 00), valueA);
-                if (!isValid)
-                    isValid = SampleDebugLetter(pixelSS - positionSS - uint2(112, 00), '/');
-                if (!isValid)
-                    isValid = SampleDebugFontNumber(pixelSS - positionSS - uint2(124, 00), valueB);
-
-                return isValid;
-            }
-            //
-
             // Motion vector debug utilities
             float DistanceToLine(float2 p, float2 p1, float2 p2)
             {
@@ -276,26 +248,6 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     const float positionRingSDF = clamp(ringSize - positionRingDistance, 0, 1);
                     const float w = clamp(1 - startPositionRingSDF - positionRingSDF, 0, 1);
                     col = col * w + float4(1, 1, 1, 1) * (1 - w);
-
-                    if (posInput.positionSS.y < 200)
-                    {
-                        const uint kStrings1[16] = { 'S', 't', 'a', 'r', 't', ' ', 'D', 'e', 'p', 't', 'h', ':', ' ', 0u, ' ', ' ' };
-                        const uint kStrings2[16] = { 'D', 'e', 'p', 't', 'h', ':', ' ', 0u, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-                        const uint kStrings3[16] = { 'L', 'e', 'v', 'e', 'l', ':', ' ', 0u, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-                        const uint kStrings4[16] = { 'I', 't', 'e', 'r', 'a', 't', 'i', 'o', 'n', ':', ' ', 0u, ' ', ' ', ' ', ' ' };
-                        const uint kStrings5[16] = { 'I', 't', '.', ' ', 'D', 'i', 's', 't', 'a', 'n', 'c', 'e', ':', ' ', 0u, ' ' };
-                        const uint kStrings6[16] = { 'I', 't', '.', ' ', 'H', 'i', 'Z', ' ', 'D', 'e', 'p', 't', 'h', ':', ' ', 0u };
-                        if (
-                            //   SampleFloatValue     (posInput.positionSS, uint2(70, 10), kStrings1, debug.startLinearDepth)
-                             SampleFloatValue     (posInput.positionSS, uint2(70, 30), kStrings2, debug.hitLinearDepth)
-                            //|| SampleIntOverIntValue(posInput.positionSS, uint2(70, 50), kStrings3, debug.level, debug.levelMax)
-                            || SampleIntOverIntValue(posInput.positionSS, uint2(70, 70), kStrings4, debug.iteration + 1, debug.iterationMax)
-
-                            || SampleFloatValue     (posInput.positionSS, uint2(300, 10), kStrings5, debug.iterationDistance)
-                            || SampleFloatValue     (posInput.positionSS, uint2(300, 30), kStrings6, debug.hiZLinearDepth)
-                            )
-                            col = float4(1, 1, 1, 1);
-                    }
 
                     return col;
                 }

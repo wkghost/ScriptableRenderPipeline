@@ -79,11 +79,8 @@ namespace UnityEngine.Experimental.Rendering
         {
             Vector2 mousePixelCoord = Input.mousePosition;
 #if UNITY_EDITOR
-            if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                mousePixelCoord = m_mousePosition;
-                mousePixelCoord.y = (ScreenHeight - 1.0f) - mousePixelCoord.y;
-            }
+            mousePixelCoord = m_mousePosition;
+            mousePixelCoord.y = (ScreenHeight - 1.0f) - mousePixelCoord.y;
 #endif
             return mousePixelCoord;
         }
@@ -92,8 +89,7 @@ namespace UnityEngine.Experimental.Rendering
         {
 #if UNITY_EDITOR
             Vector2 mousePixelCoord = m_MouseClickPosition;
-            if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-                mousePixelCoord.y = (ScreenHeight - 1.0f) - mousePixelCoord.y;
+            mousePixelCoord.y = (ScreenHeight - 1.0f) - mousePixelCoord.y;
             return mousePixelCoord;
 #else
             return Vector2.zero;
