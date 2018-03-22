@@ -40,7 +40,7 @@ struct ScreenSpaceTracingDebug
     float2 hitPositionSS;
     float hiZLinearDepth;
     float3 raySS;
-    float unused01;
+    uint intersectionKind;
     float resultHitDepth;
     uint endPositionSSX;
     uint endPositionSSY;
@@ -109,9 +109,9 @@ float3 GetRaySS(ScreenSpaceTracingDebug value)
 {
 	return value.raySS;
 }
-float GetUnused01(ScreenSpaceTracingDebug value)
+uint GetIntersectionKind(ScreenSpaceTracingDebug value)
 {
-	return value.unused01;
+	return value.intersectionKind;
 }
 float GetResultHitDepth(ScreenSpaceTracingDebug value)
 {

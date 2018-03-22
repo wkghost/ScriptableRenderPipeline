@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -30,7 +30,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HitDepth,
         HitSuccess,
         IterationCount,
-        MaxUsedLevel
+        MaxUsedLevel,
+        IntersectionKind,
     }
 
     public enum ShadowMapDebugMode

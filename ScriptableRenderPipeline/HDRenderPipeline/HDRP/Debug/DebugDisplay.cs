@@ -51,7 +51,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float hiZLinearDepth;
         public Vector3 raySS;
 
-        public float unused01;
+        public uint intersectionKind;
         public float resultHitDepth;
         public uint endPositionSSX;
         public uint endPositionSSY;
@@ -67,6 +67,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static string k_PanelLighting = "Lighting";
         public static string k_PanelRendering = "Rendering";
         public static string k_PanelStatistics = "Statistics";
+
+        static readonly string[] k_HiZIntersectionKind = { "None", "Depth", "Cell" };
 
         DebugUI.Widget[] m_DebugDisplayStatsItems;
         DebugUI.Widget[] m_DebugMaterialItems;
@@ -287,6 +289,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             new DebugUI.Value { displayName = "Start Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.startLinearDepth) },
                             new DebugUI.Value { displayName = "Ray SS", getter = () => string.Format("({0:F7}, {1:F7}) px", screenSpaceTracingDebugData.raySS.x, screenSpaceTracingDebugData.raySS.y) },
                             new DebugUI.Value { displayName = "Ray SS Depth", getter = () => string.Format("({0:F7}) m", 1f / screenSpaceTracingDebugData.raySS.z) },
+                            new DebugUI.Value { displayName = "Intersection Kind", getter = () => k_HiZIntersectionKind[screenSpaceTracingDebugData.intersectionKind] },
                         }
                     });
                 list[list.Count - 1].children.Add(
@@ -297,7 +300,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         {
                             new DebugUI.Value { displayName = "Cell Size", getter = () => string.Format("({0:D0}, {1:D0}) px", screenSpaceTracingDebugData.cellSizeW, screenSpaceTracingDebugData.cellSizeH) },
                             new DebugUI.Value { displayName = "Level / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.level, screenSpaceTracingDebugData.levelMax) },
-                            new DebugUI.Value { displayName = "Iteration / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.iteration, screenSpaceTracingDebugData.iterationMax) },
+                            new DebugUI.Value { displayName = "Iteration / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.iteration + 1, screenSpaceTracingDebugData.iterationMax) },
                             new DebugUI.Value { displayName = "Position Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitLinearDepth) },
                             new DebugUI.Value { displayName = "Depth Buffer", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hiZLinearDepth) },
                             new DebugUI.Value { displayName = "Raymarched Distance", getter = () => string.Format("{0:F0} px", ((Vector2)screenSpaceTracingDebugData.positionSS - screenSpaceTracingDebugData.startPositionSS).magnitude) },

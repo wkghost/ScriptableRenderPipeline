@@ -157,6 +157,7 @@ void FillScreenSpaceRaymarchingHitDebug(
     int maxIterations,
     int maxUsedLevel,
     int maxMipLevel,
+    int intersectionKind,
     inout ScreenSpaceRayHit hit)
 {
     float3 debugOutput = float3(0, 0, 0);
@@ -184,6 +185,9 @@ void FillScreenSpaceRaymarchingHitDebug(
             break;
         case DEBUGSCREENSPACETRACING_MAX_USED_LEVEL:
             debugOutput =  float(maxUsedLevel) / float(maxMipLevel);
+            break;
+        case DEBUGSCREENSPACETRACING_INTERSECTION_KIND:
+            debugOutput =  GetIndexColor(intersectionKind);
             break;
         }
     }
@@ -221,7 +225,7 @@ void FillScreenSpaceRaymarchingPreIterationDebug(
     int currentLevel,
     inout ScreenSpaceTracingDebug debug)
 {
-    if (_DebugStep == iteration)
+    if (_DebugStep >= iteration)
         debug.level = currentLevel;
 }
 
@@ -230,9 +234,10 @@ void FillScreenSpaceRaymarchingPostIterationDebug(
     uint2 cellSize,
     float3 positionSS,
     float invHiZDepth,
+    uint intersectionKind,
     inout ScreenSpaceTracingDebug debug)
 {
-    if (_DebugStep == iteration)
+    if (_DebugStep >= iteration)
     {
         debug.cellSizeW = cellSize.x;
         debug.cellSizeH = cellSize.y;
@@ -240,6 +245,7 @@ void FillScreenSpaceRaymarchingPostIterationDebug(
         debug.hitLinearDepth = 1 / positionSS.z;
         debug.iteration = iteration;
         debug.hiZLinearDepth = 1 / invHiZDepth;
+        debug.intersectionKind = intersectionKind;
     }
 }
 #endif
@@ -305,6 +311,7 @@ bool ScreenSpaceEstimateRaycast(
         1,                  // iterationMax
         0,                  // maxMipLevel
         0,                  // maxUsedLevel
+        0,                  // intersectionKind
         hit);
     if (input.writeStepDebug)
     {
@@ -317,6 +324,7 @@ bool ScreenSpaceEstimateRaycast(
             uint2(1, 1),                    // cellSize
             float3(0, 0, 0),                // positionSS
             1 / hit.linearDepth,            // 1 / sampled depth
+            0,                              // intersectionKind
             debug);
         FillScreenSpaceRaymarchingPostLoopDebug(
             1,                              // maxUsedLevel
@@ -382,97 +390,104 @@ bool ScreenSpaceHiZRaymarch(
     FillScreenSpaceRaymarchingPreLoopDebug(startPositionSS, debug);
 #endif
 
+    int intersectionKind = 0;
+    float raySSLength = length(raySS.xy);
+    raySS /= raySSLength;
+    // Initialize raymarching
+    float2 invRaySS = float2(1, 1) / raySS.xy;
+
+    // Calculate planes to intersect for each cell
+    int2 cellPlanes = sign(raySS.xy);
+    float2 crossOffset = CROSS_OFFSET * cellPlanes;
+    cellPlanes = clamp(cellPlanes, 0, 1);
+
+    int currentLevel = minMipLevel;
+    uint2 cellCount = bufferSize >> currentLevel;
+    uint2 cellSize = uint2(1, 1) << currentLevel;
+
+    float3 positionSS = startPositionSS;
+
+    while (currentLevel >= minMipLevel)
     {
-        float raySSLength = length(raySS.xy);
-        raySS /= raySSLength;
-        // Initialize raymarching
-        float2 invRaySS = float2(1, 1) / raySS.xy;
-
-        // Calculate planes to intersect for each cell
-        int2 cellPlanes = sign(raySS.xy);
-        float2 crossOffset = CROSS_OFFSET * cellPlanes;
-        cellPlanes = clamp(cellPlanes, 0, 1);
-
-        int currentLevel = minMipLevel;
-        uint2 cellCount = bufferSize >> currentLevel;
-        uint2 cellSize = uint2(1, 1) << currentLevel;
-
-        float3 positionSS = startPositionSS;
-
-        while (currentLevel >= minMipLevel)
+        if (iteration >= MAX_ITERATIONS)
         {
-            if (iteration >= MAX_ITERATIONS)
-            {
-                hitSuccessful = false;
-                break;
-            }
-
-            cellCount = bufferSize >> currentLevel;
-            cellSize = uint2(1, 1) << currentLevel;
-
-#ifdef DEBUG_DISPLAY
-            FillScreenSpaceRaymarchingPreIterationDebug(iteration, currentLevel, debug);
-#endif
-
-            // Go down in HiZ levels by default
-            int mipLevelDelta = -1;
-
-            // Sampled as 1/Z so it interpolate properly in screen space.
-            const float invHiZDepth = LoadInvDepth(positionSS.xy, currentLevel);
-
-            if (IsPositionAboveDepth(positionSS.z, invHiZDepth))
-            {
-                float3 candidatePositionSS = IntersectDepthPlane(positionSS, raySS, invHiZDepth);
-
-                const int2 cellId = int2(positionSS.xy) / cellSize;
-                const int2 candidateCellId = int2(candidatePositionSS.xy) / cellSize;
-
-                // If we crossed the current cell
-                if (!CellAreEquals(cellId, candidateCellId))
-                {
-                    candidatePositionSS = IntersectCellPlanes(
-                        positionSS,
-                        raySS,
-                        invRaySS,
-                        cellId,
-                        cellSize,
-                        cellPlanes,
-                        crossOffset);
-
-                    // Go up a level to go faster
-                    mipLevelDelta = 1;
-                }
-
-                positionSS = candidatePositionSS;
-            }
-
-            currentLevel = min(currentLevel + mipLevelDelta, maxMipLevel);
-            
-#ifdef DEBUG_DISPLAY
-            maxUsedLevel = max(maxUsedLevel, currentLevel);
-            FillScreenSpaceRaymarchingPostIterationDebug(
-                iteration,
-                cellSize,
-                positionSS,
-                invHiZDepth,
-                debug);
-#endif
-
-            // Check if we are out of the buffer
-            if (any(int2(positionSS.xy) > int2(bufferSize))
-                || any(positionSS.xy < 0))
-            {
-                hitSuccessful = false;
-                break;
-            }
-
-            ++iteration;
+            hitSuccessful = false;
+            break;
         }
 
-        hit.linearDepth = 1 / positionSS.z;
-        hit.positionNDC = float2(positionSS.xy) / float2(bufferSize);
-        hit.positionSS = uint2(positionSS.xy);
+        cellCount = bufferSize >> currentLevel;
+        cellSize = uint2(1, 1) << currentLevel;
+
+
+#ifdef DEBUG_DISPLAY
+        FillScreenSpaceRaymarchingPreIterationDebug(iteration, currentLevel, debug);
+#endif
+
+        // Go down in HiZ levels by default
+        int mipLevelDelta = -1;
+
+        // Sampled as 1/Z so it interpolate properly in screen space.
+        const float invHiZDepth = LoadInvDepth(positionSS.xy, currentLevel);
+        intersectionKind = 0;
+
+        if (IsPositionAboveDepth(positionSS.z, invHiZDepth))
+        {
+            float3 candidatePositionSS = IntersectDepthPlane(positionSS, raySS, invHiZDepth);
+
+            intersectionKind = 1;
+
+            const int2 cellId = int2(positionSS.xy) / cellSize;
+            const int2 candidateCellId = int2(candidatePositionSS.xy) / cellSize;
+
+            // If we crossed the current cell
+            if (!CellAreEquals(cellId, candidateCellId))
+            {
+                candidatePositionSS = IntersectCellPlanes(
+                    positionSS,
+                    raySS,
+                    invRaySS,
+                    cellId,
+                    cellSize,
+                    cellPlanes,
+                    crossOffset);
+
+                intersectionKind = 2;
+
+                // Go up a level to go faster
+                mipLevelDelta = 1;
+            }
+
+            positionSS = candidatePositionSS;
+        }
+
+        currentLevel = min(currentLevel + mipLevelDelta, maxMipLevel);
+        
+#ifdef DEBUG_DISPLAY
+        maxUsedLevel = max(maxUsedLevel, currentLevel);
+        FillScreenSpaceRaymarchingPostIterationDebug(
+            iteration,
+            cellSize,
+            positionSS,
+            invHiZDepth,
+            intersectionKind,
+            debug);
+#endif
+
+        // Check if we are out of the buffer
+        if (any(int2(positionSS.xy) > int2(bufferSize))
+            || any(positionSS.xy < 0)
+            )
+        {
+            hitSuccessful = false;
+            break;
+        }
+
+        ++iteration;
     }
+
+    hit.linearDepth = 1 / positionSS.z;
+    hit.positionNDC = float2(positionSS.xy) / float2(bufferSize);
+    hit.positionSS = uint2(positionSS.xy);
     
 #ifdef DEBUG_DISPLAY
     FillScreenSpaceRaymarchingPostLoopDebug(
@@ -483,7 +498,16 @@ bool ScreenSpaceHiZRaymarch(
         hit,
         debug);
     FillScreenSpaceRaymarchingHitDebug(
-        bufferSize, input.rayDirVS, raySS, startPositionSS, hitSuccessful, iteration, MAX_ITERATIONS, maxMipLevel, maxUsedLevel,
+        bufferSize, 
+        input.rayDirVS, 
+        raySS, 
+        startPositionSS, 
+        hitSuccessful, 
+        iteration, 
+        MAX_ITERATIONS, 
+        maxMipLevel, 
+        intersectionKind, 
+        maxUsedLevel,
         hit);
     if (input.writeStepDebug)
         _DebugScreenSpaceTracingData[0] = debug;
@@ -574,6 +598,7 @@ bool ScreenSpaceLinearRaymarch(
                 uint2(0, 0),
                 positionSS,
                 invHiZDepth,
+                0,
                 debug);
 #endif
 
@@ -608,7 +633,16 @@ bool ScreenSpaceLinearRaymarch(
         hit,
         debug);
     FillScreenSpaceRaymarchingHitDebug(
-        bufferSize, input.rayDirVS, raySS, startPositionSS, hitSuccessful, iteration, MAX_ITERATIONS, 0, 0,
+        bufferSize, 
+        input.rayDirVS, 
+        raySS,
+        startPositionSS, 
+        hitSuccessful, 
+        iteration, 
+        MAX_ITERATIONS, 
+        0, 
+        0,
+        0,
         hit);
     if (input.writeStepDebug)
         _DebugScreenSpaceTracingData[0] = debug;
