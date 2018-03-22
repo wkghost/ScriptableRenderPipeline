@@ -2136,8 +2136,11 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
         specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
             break;
         case DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION:
-            diffuseLighting = lighting.indirect.specularTransmitted;
-            specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            if (_DebugLightingSubMode != DEBUGSCREENSPACETRACING_COLOR)
+            {
+                diffuseLighting = lighting.indirect.specularTransmitted;
+                specularLighting = float3(0.0, 0.0, 0.0); // Disable specular lighting
+            }
             break;
 #if GTAO_MULTIBOUNCE_APPROX
         case DEBUGLIGHTINGMODE_INDIRECT_DIFFUSE_GTAO_FROM_SSAO:

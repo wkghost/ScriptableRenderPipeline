@@ -127,6 +127,7 @@ float3 IntersectCellPlanes(
     float2 crossOffset)
 {
     const float SQRT_2 = sqrt(2);
+    const float CellPlaneBias = 1E-2;
 
     // Planes to check
     int2 planes = (cellId + cellPlanes) * cellSize;
@@ -135,7 +136,7 @@ float3 IntersectCellPlanes(
     float t = min(distanceToCellAxes.x, distanceToCellAxes.y)
         // Offset by 1E-3 to ensure cell boundary crossing
         // This assume that length(raySS.xy) == 1;
-        + 1E-2;
+        + CellPlaneBias;
     // Interpolate screen space to get next test point
     float3 testHitPositionSS = positionSS + raySS * t;
 
@@ -506,8 +507,8 @@ bool ScreenSpaceHiZRaymarch(
         iteration, 
         MAX_ITERATIONS, 
         maxMipLevel, 
-        intersectionKind, 
         maxUsedLevel,
+        intersectionKind, 
         hit);
     if (input.writeStepDebug)
         _DebugScreenSpaceTracingData[0] = debug;
