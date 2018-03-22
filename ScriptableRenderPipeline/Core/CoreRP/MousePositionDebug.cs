@@ -54,6 +54,10 @@ namespace UnityEngine.Experimental.Rendering
                         case KeyCode.PageDown:
                             m_DebugStep = Mathf.Max(0, m_DebugStep - 1);
                             break;
+                        case KeyCode.End:
+                            // Usefull we you don't want to change the scene viewport but still update the mouse click position
+                            m_MouseClickPosition = m_mousePosition;
+                            break;
                     }
                     break;
             }

@@ -1825,7 +1825,8 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
 
 
 #ifdef DEBUG_DISPLAY
-            if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION)
+            if (_DebugLightingMode == DEBUGLIGHTINGMODE_SCREEN_SPACE_TRACING_REFRACTION
+                && _DebugLightingSubMode != DEBUGSCREENSPACETRACING_COLOR)
             {
                 float weight = 1.0;
                 UpdateLightingHierarchyWeights(hierarchyWeight, weight);

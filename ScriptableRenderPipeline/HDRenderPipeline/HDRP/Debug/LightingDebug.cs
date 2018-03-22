@@ -23,10 +23,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public enum DebugScreenSpaceTracing
     {
         None,
+        Color,
         PositionNDC,
         DirVS,
         DirNDC,
-        HitDistance,
         HitDepth,
         HitSuccess,
         IterationCount,

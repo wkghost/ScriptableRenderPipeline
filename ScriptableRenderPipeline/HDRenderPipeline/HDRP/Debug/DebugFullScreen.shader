@@ -27,6 +27,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
             StructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData;
             float _FullScreenDebugMode;
             float _RequireToFlipInputTexture;
+            float _ShowGrid;
             TEXTURE2D(_DebugScreenSpaceTracing);
 
             struct Attributes
@@ -216,12 +217,13 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, 10, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP);
 
                     const uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
+                    const float hasData = cellSize.x != 0 || cellSize.y != 0;
 
                     // Grid rendering
                     float2 distanceToCell = float2(posInput.positionSS % cellSize);
                     distanceToCell = min(distanceToCell, float2(cellSize) - distanceToCell);
                     distanceToCell = clamp(1 - distanceToCell, 0, 1);
-                    const float cellSDF = max(distanceToCell.x, distanceToCell.y);
+                    const float cellSDF = max(distanceToCell.x, distanceToCell.y) * _ShowGrid;
 
                     // Position dot rendering
                     const float distanceToPosition = length(int2(posInput.positionSS) - int2(debug.positionSS.xy));
@@ -231,21 +233,27 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     const float distanceToStartPosition = length(int2(posInput.positionSS) - int2(startPositionSS));
                     const float startPositionSDF = clamp(circleRadius - distanceToStartPosition, 0, 1);
 
+                    // Raymarch line rendering
+                    const uint2 endPositionSS = uint2(debug.endPositionSSX, debug.endPositionSSY);
+                    const float distanceToRaySegment = DistanceToSegment(posInput.positionSS, startPositionSS, endPositionSS);
+                    const float raySegmentSDF = clamp(1 - distanceToRaySegment, 0, 1);
+
                     // Aggregated sdf colors
-                    const float3 debugColor = float3(
-                        startPositionSDF,
-                        positionSDF,
-                        cellSDF
-                    );
+                    const float3 debugColor =
+                        ( GetIndexColor(1) * startPositionSDF
+                        + GetIndexColor(3) * positionSDF
+                        + GetIndexColor(5) * cellSDF
+                        + GetIndexColor(7) * raySegmentSDF
+                        ) * hasData;
 
                     // Combine debug color with background (with opacity)
                     float4 col = float4(debugColor * 0.5 + color.rgb * 0.5, 1);
 
                     // Calculate SDF to draw a ring on both dots
                     const float startPositionRingDistance = abs(distanceToStartPosition - circleRadius);
-                    const float startPositionRingSDF = clamp(ringSize - startPositionRingDistance, 0, 1);
+                    const float startPositionRingSDF = clamp(ringSize - startPositionRingDistance, 0, 1) * hasData;
                     const float positionRingDistance = abs(distanceToPosition - circleRadius);
-                    const float positionRingSDF = clamp(ringSize - positionRingDistance, 0, 1);
+                    const float positionRingSDF = clamp(ringSize - positionRingDistance, 0, 1) * hasData;
                     const float w = clamp(1 - startPositionRingSDF - positionRingSDF, 0, 1);
                     col = col * w + float4(1, 1, 1, 1) * (1 - w);
 

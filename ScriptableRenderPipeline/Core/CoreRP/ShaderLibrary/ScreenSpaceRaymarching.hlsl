@@ -99,21 +99,21 @@ bool CellAreEquals(int2 cellA, int2 cellB)
 // Calculate intersection between the ray and the depth plane
 // positionSS.z is 1/depth
 // raySS.z is 1/depth
-float3 IntersectDepthPlane(float3 positionSS, float3 raySS, float invDepth, out float distanceSS)
+float3 IntersectDepthPlane(float3 positionSS, float3 raySS, float invDepth)
 {
     const float EPSILON = 1E-5;
 
     // The depth of the intersection with the depth plane is: positionSS.z + raySS.z * t = invDepth
-    distanceSS = (invDepth - positionSS.z) / raySS.z;
+    float t = (invDepth - positionSS.z) / raySS.z;
 
     // (t<0) When the ray is going away from the depth plane,
     //  put the intersection away.
     // Instead the intersection with the next tile will be used.
     // (t>=0) Add a small distance to go through the depth plane.
-    distanceSS = distanceSS >= 0.0f ? (distanceSS + EPSILON) : 1E5;
+    t = t >= 0.0f ? (t + EPSILON) : 1E5;
 
     // Return the point on the ray
-    return positionSS + raySS * distanceSS;
+    return positionSS + raySS * t;
 }
 
 // Calculate intersection between a ray and a cell
@@ -124,22 +124,20 @@ float3 IntersectCellPlanes(
     int2 cellId,
     uint2 cellSize,
     int2 cellPlanes,
-    float2 crossOffset,
-    out float distanceSS)
+    float2 crossOffset)
 {
+    const float SQRT_2 = sqrt(2);
+
     // Planes to check
     int2 planes = (cellId + cellPlanes) * cellSize;
     // Hit distance to each planes
     float2 distanceToCellAxes = float2(planes - positionSS.xy) * invRaySS; // (distance to x axis, distance to y axis)
-    distanceSS = min(distanceToCellAxes.x, distanceToCellAxes.y);
+    float t = min(distanceToCellAxes.x, distanceToCellAxes.y) 
+        // Offset by sqrt(2) to ensure cell boundary crossing
+        // This assume that length(raySS.xy) == 1;
+        + SQRT_2;
     // Interpolate screen space to get next test point
-    float3 testHitPositionSS = positionSS + raySS * distanceSS;
-
-    // Offset the proper axis to enforce cell crossing
-    // https://gamedev.autodesk.com/blogs/1/post/5866685274515295601
-    testHitPositionSS.xy += (distanceToCellAxes.x < distanceToCellAxes.y)
-        ? float2(crossOffset.x, 0)
-        : float2(0, crossOffset.y);
+    float3 testHitPositionSS = positionSS + raySS * t;
 
     return testHitPositionSS;
 }
@@ -175,9 +173,6 @@ void FillScreenSpaceRaymarchingHitDebug(
         case DEBUGSCREENSPACETRACING_DIR_NDC:
             debugOutput =  float3(raySS.xy * 0.5 + 0.5, frac(0.1 / raySS.z));
             break;
-        case DEBUGSCREENSPACETRACING_HIT_DISTANCE:
-            debugOutput =  frac(hit.distanceSS * 0.1);
-            break;
         case DEBUGSCREENSPACETRACING_HIT_DEPTH:
             debugOutput =  frac(hit.linearDepth * 0.1);
             break;
@@ -208,6 +203,7 @@ void FillScreenSpaceRaymarchingPostLoopDebug(
     int maxUsedLevel,
     int iteration,
     float3 raySS,
+    bool hitSuccess,
     ScreenSpaceRayHit hit,
     inout ScreenSpaceTracingDebug debug)
 {
@@ -215,6 +211,9 @@ void FillScreenSpaceRaymarchingPostLoopDebug(
     debug.iterationMax = iteration;
     debug.raySS = raySS;
     debug.resultHitDepth = hit.linearDepth;
+    debug.endPositionSSX = hit.positionSS.x;
+    debug.endPositionSSY = hit.positionSS.y;
+    debug.hitSuccess = hitSuccess;
 }
 
 void FillScreenSpaceRaymarchingPreIterationDebug(
@@ -230,8 +229,6 @@ void FillScreenSpaceRaymarchingPostIterationDebug(
     int iteration,
     uint2 cellSize,
     float3 positionSS,
-    float iterationDistance,
-    float hitDistanceSS,
     float invHiZDepth,
     inout ScreenSpaceTracingDebug debug)
 {
@@ -241,10 +238,7 @@ void FillScreenSpaceRaymarchingPostIterationDebug(
         debug.cellSizeH = cellSize.y;
         debug.positionSS = positionSS;
         debug.hitLinearDepth = 1 / positionSS.z;
-        debug.hitPositionSS = uint2(positionSS.xy);
         debug.iteration = iteration;
-        debug.iterationDistance = iterationDistance;
-        debug.hitDistanceSS = hitDistanceSS;
         debug.hiZLinearDepth = 1 / invHiZDepth;
     }
 }
@@ -322,14 +316,13 @@ bool ScreenSpaceEstimateRaycast(
             1,                              // iteration
             uint2(1, 1),                    // cellSize
             float3(0, 0, 0),                // positionSS
-            hitDistance,                    // iterationDistance
-            hit.distanceSS,                 // hitDistanceSS
             1 / hit.linearDepth,            // 1 / sampled depth
             debug);
         FillScreenSpaceRaymarchingPostLoopDebug(
             1,                              // maxUsedLevel
             1,                              // iteration
             float3(0, 0, 0),                // raySS
+            true,                           // hitSuccess
             hit,
             debug);
         _DebugScreenSpaceTracingData[0] = debug;
@@ -345,7 +338,6 @@ bool ScreenSpaceEstimateRaycast(
 // -------------------------------------------------
 
 // Based on Yasin Uludag, 2014. "Hi-Z Screen-Space Cone-Traced Reflections", GPU Pro5: Advanced Rendering Techniques
-// Based on 2017. "Autodesk Gamedev | Notes On Screen Space HiZ Tracing", https://gamedev.autodesk.com/blogs/1/post/5866685274515295601
 
 struct ScreenSpaceHiZRaymarchInput
 {
@@ -391,6 +383,8 @@ bool ScreenSpaceHiZRaymarch(
 #endif
 
     {
+        float raySSLength = length(raySS.xy);
+        raySS /= raySSLength;
         // Initialize raymarching
         float2 invRaySS = float2(1, 1) / raySS.xy;
 
@@ -425,11 +419,10 @@ bool ScreenSpaceHiZRaymarch(
 
             // Sampled as 1/Z so it interpolate properly in screen space.
             const float invHiZDepth = LoadInvDepth(positionSS.xy, currentLevel);
-            float iterationDistanceSS = 0;
 
             if (IsPositionAboveDepth(positionSS.z, invHiZDepth))
             {
-                float3 candidatePositionSS = IntersectDepthPlane(positionSS, raySS, invHiZDepth, iterationDistanceSS);
+                float3 candidatePositionSS = IntersectDepthPlane(positionSS, raySS, invHiZDepth);
 
                 const int2 cellId = int2(positionSS.xy) / cellSize;
                 const int2 candidateCellId = int2(candidatePositionSS.xy) / cellSize;
@@ -444,8 +437,7 @@ bool ScreenSpaceHiZRaymarch(
                         cellId,
                         cellSize,
                         cellPlanes,
-                        crossOffset,
-                        iterationDistanceSS);
+                        crossOffset);
 
                     // Go up a level to go faster
                     mipLevelDelta = 1;
@@ -453,8 +445,6 @@ bool ScreenSpaceHiZRaymarch(
 
                 positionSS = candidatePositionSS;
             }
-
-            hit.distanceSS += iterationDistanceSS;
 
             currentLevel = min(currentLevel + mipLevelDelta, maxMipLevel);
             
@@ -464,14 +454,12 @@ bool ScreenSpaceHiZRaymarch(
                 iteration,
                 cellSize,
                 positionSS,
-                iterationDistanceSS,
-                hit.distanceSS,
                 invHiZDepth,
                 debug);
 #endif
 
             // Check if we are out of the buffer
-            if (any(int2(positionSS.xy) > bufferSize)
+            if (any(int2(positionSS.xy) > int2(bufferSize))
                 || any(positionSS.xy < 0))
             {
                 hitSuccessful = false;
@@ -491,6 +479,7 @@ bool ScreenSpaceHiZRaymarch(
         maxUsedLevel,
         iteration,
         raySS,
+        hitSuccessful,
         hit,
         debug);
     FillScreenSpaceRaymarchingHitDebug(
@@ -584,8 +573,6 @@ bool ScreenSpaceLinearRaymarch(
                 iteration,
                 uint2(0, 0),
                 positionSS,
-                1 / raySS.z,
-                hit.distanceSS,
                 invHiZDepth,
                 debug);
 #endif
@@ -597,7 +584,7 @@ bool ScreenSpaceLinearRaymarch(
             }
 
             // Check if we are out of the buffer
-            if (any(int2(positionSS.xy) > bufferSize)
+            if (any(int2(positionSS.xy) > int2(bufferSize))
                 || any(positionSS.xy < 0))
             {
                 hitSuccessful = false;
@@ -617,6 +604,7 @@ bool ScreenSpaceLinearRaymarch(
         0,
         iteration,
         raySS,
+        hitSuccessful,
         hit,
         debug);
     FillScreenSpaceRaymarchingHitDebug(
