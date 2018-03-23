@@ -107,7 +107,7 @@ namespace UnityEngine.Experimental.Rendering
                 csm.AppendLine("            {");
                 csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, {0}, _Source{1}, source);", kernelIndexName, o.sourceChannel.ToString()));
                 csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, {0}, _Result{1}, target);", kernelIndexName, o.targetChannel.ToString()));
-                csm.AppendLine(string.Format("                cmd.DispatchCompute(m_Shader, {0}, (int)Mathf.Max((size.x) / {1}, 1), (int)Mathf.Max((size.y) / {1}, 1), 1);", kernelIndexName, k_KernelSize.ToString()));
+                csm.AppendLine(string.Format("                cmd.DispatchCompute(m_Shader, {0}, (int)Mathf.Max((size.x) / {1} + 1, 1), (int)Mathf.Max((size.y) / {1} + 1, 1), 1);", kernelIndexName, k_KernelSize.ToString()));
                 csm.AppendLine("            }");
             }
             csc.AppendLine("        }");

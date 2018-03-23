@@ -21,7 +21,7 @@ namespace UnityEngine.Experimental.Rendering
             {
                 cmd.SetComputeTextureParam(m_Shader, k_SampleKernel_xyzw2x, _Source4, source);
                 cmd.SetComputeTextureParam(m_Shader, k_SampleKernel_xyzw2x, _Result1, target);
-                cmd.DispatchCompute(m_Shader, k_SampleKernel_xyzw2x, (int)Mathf.Max((size.x) / 8, 1), (int)Mathf.Max((size.y) / 8, 1), 1);
+                cmd.DispatchCompute(m_Shader, k_SampleKernel_xyzw2x, (int)Mathf.Max((size.x) / 8 + 1, 1), (int)Mathf.Max((size.y) / 8 + 1, 1), 1);
             }
 
     }
