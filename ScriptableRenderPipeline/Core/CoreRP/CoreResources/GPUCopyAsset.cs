@@ -83,11 +83,12 @@ namespace UnityEngine.Experimental.Rendering
                 var o = operations[i];
 
                 // Compute kernel
-                var kernelName = string.Format("KSampleCopy{0}_{1}_{2}", o.sourceChannel.ToString(), o.targetChannel.ToString(), o.subscript);
-                cck.AppendLine(string.Format("#pragma kernel {0}", kernelName));
-                cck.AppendLine(string.Format(@"[numthreads({0}, {0}, 1)]",
-                    k_KernelSize.ToString(), k_KernelSize.ToString()));
-                cck.AppendLine(string.Format(@"void {0}(uint2 dispatchThreadId : SV_DispatchThreadID)", kernelName));
+                var kernelName8 = string.Format("KSampleCopy{0}_{1}_{2}_8", o.sourceChannel.ToString(), o.targetChannel.ToString(), o.subscript);
+                var kernelName1 = string.Format("KSampleCopy{0}_{1}_{2}_1", o.sourceChannel.ToString(), o.targetChannel.ToString(), o.subscript);
+                cck.AppendLine(string.Format("#pragma kernel {0}   KERNEL_NAME={0}  KERNEL_SIZE=8", kernelName8));
+                cck.AppendLine(string.Format("#pragma kernel {0}   KERNEL_NAME={0}  KERNEL_SIZE=1", kernelName1));
+                cck.AppendLine(@"[numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]");
+                cck.AppendLine(@"void KERNEL_NAME(uint2 dispatchThreadId : SV_DispatchThreadID)");
                 cck.AppendLine("{");
                 cck.AppendLine(string.Format("    _Result{0}[dispatchThreadId] = LOAD_TEXTURE2D(_Source{1}, dispatchThreadId).{2};",
                     o.targetChannel.ToString(), o.sourceChannel.ToString(), o.subscript));
@@ -96,19 +97,29 @@ namespace UnityEngine.Experimental.Rendering
 
                 // CSharp kernel index
                 var channelName = k_ChannelIDS[o.sourceChannel - 1];
-                var kernelIndexName = string.Format("k_SampleKernel_{0}2{1}", channelName, o.subscript);
-                csp.AppendLine(string.Format("        int {0};", kernelIndexName));
+                var kernelIndexName8 = string.Format("k_SampleKernel_{0}2{1}_8", channelName, o.subscript);
+                var kernelIndexName1 = string.Format("k_SampleKernel_{0}2{1}_1", channelName, o.subscript);
+                csp.AppendLine(string.Format("        int {0};", kernelIndexName8));
+                csp.AppendLine(string.Format("        int {0};", kernelIndexName1));
 
                 // CSharp constructor
-                csc.AppendLine(string.Format("            {0} = m_Shader.FindKernel(\"{1}\");", kernelIndexName, kernelName));
+                csc.AppendLine(string.Format("            {0} = m_Shader.FindKernel(\"{1}\");", kernelIndexName8, kernelName8));
+                csc.AppendLine(string.Format("            {0} = m_Shader.FindKernel(\"{1}\");", kernelIndexName1, kernelName1));
 
                 // CSharp method
                 csm.AppendLine(string.Format(@"        public void SampleCopyChannel_{0}2{1}(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Vector2 size)", channelName, o.subscript));
-                csm.AppendLine("            {");
-                csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, {0}, _Source{1}, source);", kernelIndexName, o.sourceChannel.ToString()));
-                csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, {0}, _Result{1}, target);", kernelIndexName, o.targetChannel.ToString()));
-                csm.AppendLine(string.Format("                cmd.DispatchCompute(m_Shader, {0}, (int)Mathf.Max((size.x) / {1} + 1, 1), (int)Mathf.Max((size.y) / {1} + 1, 1), 1);", kernelIndexName, k_KernelSize.ToString()));
-                csm.AppendLine("            }");
+                csm.AppendLine              ("            {");
+                csm.AppendLine(string.Format("                var kernel = {0};", kernelIndexName8));
+                csm.AppendLine              ("                var kernelSize = 8;");
+                csm.AppendLine              ("                if (size.x < 8 || size.y < 8)");
+                csm.AppendLine              ("                {");
+                csm.AppendLine(string.Format("                      kernel = {0};", kernelIndexName1));
+                csm.AppendLine              ("                      kernelSize = 1;");
+                csm.AppendLine              ("                }");
+                csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, kernel, _Source{0}, source);", o.sourceChannel.ToString()));
+                csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, kernel, _Result{0}, target);", o.targetChannel.ToString()));
+                csm.AppendLine              ("                cmd.DispatchCompute(m_Shader, kernel, (int)Mathf.Max((size.x) / kernelSize + 1, 1), (int)Mathf.Max((size.y) / kernelSize + 1, 1), 1);");
+                csm.AppendLine              ("            }");
             }
             csc.AppendLine("        }");
 
