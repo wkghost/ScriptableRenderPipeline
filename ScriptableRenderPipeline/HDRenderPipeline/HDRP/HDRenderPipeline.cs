@@ -1695,6 +1695,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
+                m_BufferPyramid.ClearBuffers(hdCamera, cmd);
+
                 // Clear the HDR target
                 using (new ProfilingSample(cmd, "Clear HDR target", CustomSamplerId.ClearHDRTarget.GetSampler()))
                 {

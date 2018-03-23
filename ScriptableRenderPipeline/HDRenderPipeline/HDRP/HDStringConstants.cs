@@ -267,6 +267,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ColorPyramidScale = Shader.PropertyToID("_ColorPyramidScale");
         public static readonly int _DepthPyramidSize = Shader.PropertyToID("_DepthPyramidSize");
         public static readonly int _DepthPyramidScale = Shader.PropertyToID("_DepthPyramidScale");
+        public static readonly int _RectOffset = Shader.PropertyToID("_RectOffset");
 
         public static readonly int _DebugColorPickerTexture = Shader.PropertyToID("_DebugColorPickerTexture");
         public static readonly int _ColorPickerParam = Shader.PropertyToID("_ColorPickerParam");
