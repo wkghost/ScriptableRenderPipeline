@@ -112,6 +112,7 @@ Shader "HDRenderPipeline/Lit"
         [Enum(HiZ, 0, Linear, 1, Estimate, 2)]_SSRayRefractionMethod("SS Ray Refraction Method", Int) = 0
         _SSRayMinLevel ("SS Ray Min Mip Level", Int) = 1
         _SSRayMaxLevel ("SS Ray Max Mip Level", Int) = 10
+        _SSRayMaxIterations ("SS Ray Max Iteration", Int) = 1024
         _Ior("Index Of Refraction", Range(1.0, 2.5)) = 1.0
         _ThicknessMultiplier("Thickness Multiplier", Float) = 1.0
         _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)

@@ -58,6 +58,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Vector2 startPositionSS { get { return new Vector2(startPositionSSX, startPositionSSY); } }
         public Vector2 endPositionSS { get { return new Vector2(endPositionSSX, endPositionSSY); } }
+        public Vector2 cellId { get { return new Vector2((int)positionSS.x / (cellSizeW > 0 ? cellSizeW : 1), (int)positionSS.y / (cellSizeH > 0 ? cellSizeH : 1)); } }
     }
 
     public class DebugDisplaySettings
@@ -298,9 +299,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         displayName = "Iteration Information",
                         children = 
                         {
+                            new DebugUI.Value { displayName = "Cell id", getter = () => string.Format("({0:F0}, {1:F0}) px", screenSpaceTracingDebugData.cellId.x, screenSpaceTracingDebugData.cellId.y) },
                             new DebugUI.Value { displayName = "Cell Size", getter = () => string.Format("({0:D0}, {1:D0}) px", screenSpaceTracingDebugData.cellSizeW, screenSpaceTracingDebugData.cellSizeH) },
                             new DebugUI.Value { displayName = "Level / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.level, screenSpaceTracingDebugData.levelMax) },
                             new DebugUI.Value { displayName = "Iteration / Max", getter = () => string.Format("{0}/{1}", screenSpaceTracingDebugData.iteration + 1, screenSpaceTracingDebugData.iterationMax) },
+                            new DebugUI.Value { displayName = "Position", getter = () => string.Format("({0:F0}, {1:F0}) px", screenSpaceTracingDebugData.positionSS.x, screenSpaceTracingDebugData.positionSS.y) },
                             new DebugUI.Value { displayName = "Position Depth", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hitLinearDepth) },
                             new DebugUI.Value { displayName = "Depth Buffer", getter = () => string.Format("{0:F7} m", screenSpaceTracingDebugData.hiZLinearDepth) },
                             new DebugUI.Value { displayName = "Raymarched Distance", getter = () => string.Format("{0:F0} px", ((Vector2)screenSpaceTracingDebugData.positionSS - screenSpaceTracingDebugData.startPositionSS).magnitude) },
@@ -447,10 +450,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     {
                                         case FullScreenDebugMode.FinalColorPyramid:
                                         case FullScreenDebugMode.PreRefractionColorPyramid:
-                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            id = HDShaderIDs._ColorPyramidScale;
                                             break;
                                         default:
-                                            id = HDShaderIDs._DepthPyramidMipSize;
+                                            id = HDShaderIDs._DepthPyramidScale;
                                             break;
                                     }
                                     var size = Shader.GetGlobalVector(id);
@@ -464,10 +467,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     {
                                         case FullScreenDebugMode.FinalColorPyramid:
                                         case FullScreenDebugMode.PreRefractionColorPyramid:
-                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            id = HDShaderIDs._ColorPyramidScale;
                                             break;
                                         default:
-                                            id = HDShaderIDs._DepthPyramidMipSize;
+                                            id = HDShaderIDs._DepthPyramidScale;
                                             break;
                                     }
                                     var size = Shader.GetGlobalVector(id);
@@ -482,10 +485,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     {
                                         case FullScreenDebugMode.FinalColorPyramid:
                                         case FullScreenDebugMode.PreRefractionColorPyramid:
-                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            id = HDShaderIDs._ColorPyramidScale;
                                             break;
                                         default:
-                                            id = HDShaderIDs._DepthPyramidMipSize;
+                                            id = HDShaderIDs._DepthPyramidScale;
                                             break;
                                     }
                                     var size = Shader.GetGlobalVector(id);

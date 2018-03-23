@@ -5,13 +5,16 @@
 // Algorithm uniform parameters
 // -------------------------------------------------
 
-CBUFFER_START(ScreenSpaceRaymarching)
+CBUFFER_START(UnityScreenSpaceRaymarching)
 // HiZ      : Min mip level
 // Linear   : Mip level
 // Estimate : Mip Level
 int _SSRayMinLevel;
 // HiZ      : Max mip level
 int _SSRayMaxLevel;
+// HiZ      : Maximum iteration
+// Linear   : Maximum iteration
+int _SSRayMaxIterations;
 CBUFFER_END
 
 // -------------------------------------------------
@@ -78,7 +81,7 @@ bool IsPositionAboveDepth(float rayDepth, float invLinearDepth)
 // Sample the Depth buffer at a specific mip and linear depth
 float LoadDepth(float2 positionSS, int level)
 {
-    float pyramidDepth = LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, int2(positionSS.xy) >> level, level).r;
+    float pyramidDepth = LOAD_TEXTURE2D_LOD(_DepthPyramidTexture, int2(positionSS.xy) >> level, level).r;
     float linearDepth = LinearEyeDepth(pyramidDepth, _ZBufferParams);
     return linearDepth;
 }
@@ -279,8 +282,8 @@ bool ScreenSpaceEstimateRaycast(
     ScreenSpaceEstimateRaycastInput input,
     out ScreenSpaceRayHit hit)
 {
-    uint mipLevel = clamp(_SSRayMinLevel, 0, int(_PyramidDepthMipSize.z));
-    uint2 bufferSize = uint2(_PyramidDepthMipSize.xy);
+    uint mipLevel = clamp(_SSRayMinLevel, 0, int(_DepthPyramidScale.z));
+    uint2 bufferSize = uint2(_DepthPyramidSize.xy);
     uint2 referencePositionSS = input.referencePositionNDC * bufferSize;
 
     // Get the depth plane
@@ -353,6 +356,7 @@ struct ScreenSpaceHiZRaymarchInput
     float3 rayOriginVS;         // Ray origin (VS)
     float3 rayDirVS;            // Ray direction (VS)
     float4x4 projectionMatrix;  // Projection matrix of the camera
+    uint maxIterations;          // Number of iterations before failing
 
 #ifdef DEBUG_DISPLAY
     bool writeStepDebug;
@@ -364,15 +368,15 @@ bool ScreenSpaceHiZRaymarch(
     out ScreenSpaceRayHit hit)
 {
     const float2 CROSS_OFFSET = float2(1, 1);
-    const int MAX_ITERATIONS = 32;
 
     // Initialize loop
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
     bool hitSuccessful = true;
-    int iteration = 0;
+    uint iteration = 0u;
     int minMipLevel = max(_SSRayMinLevel, 0);
-    int maxMipLevel = min(_SSRayMaxLevel, int(_PyramidDepthMipSize.z));
-    uint2 bufferSize = uint2(_PyramidDepthMipSize.xy);
+    int maxMipLevel = min(_SSRayMaxLevel, int(_DepthPyramidScale.z));
+    uint2 bufferSize = uint2(_DepthPyramidSize.xy);
+    uint maxIterations = min(input.maxIterations, _SSRayMaxIterations);
 
     float3 startPositionSS;
     float3 raySS;
@@ -410,7 +414,7 @@ bool ScreenSpaceHiZRaymarch(
 
     while (currentLevel >= minMipLevel)
     {
-        if (iteration >= MAX_ITERATIONS)
+        if (iteration >= maxIterations)
         {
             hitSuccessful = false;
             break;
@@ -505,7 +509,7 @@ bool ScreenSpaceHiZRaymarch(
         startPositionSS, 
         hitSuccessful, 
         iteration, 
-        MAX_ITERATIONS, 
+        _SSRayMaxIterations, 
         maxMipLevel, 
         maxUsedLevel,
         intersectionKind, 
@@ -528,6 +532,7 @@ struct ScreenSpaceLinearRaymarchInput
     float3 rayOriginVS;         // Ray origin (VS)
     float3 rayDirVS;            // Ray direction (VS)
     float4x4 projectionMatrix;  // Projection matrix of the camera
+    uint maxIterations;         // Number of iterations before failing
 
 #ifdef DEBUG_DISPLAY
     bool writeStepDebug;
@@ -540,14 +545,14 @@ bool ScreenSpaceLinearRaymarch(
     out ScreenSpaceRayHit hit)
 {
     const float2 CROSS_OFFSET = float2(1, 1);
-    const int MAX_ITERATIONS = 1024;
 
     // Initialize loop
     ZERO_INITIALIZE(ScreenSpaceRayHit, hit);
     bool hitSuccessful = true;
-    int iteration = 0;
-    int level = clamp(_SSRayMinLevel, 0, int(_PyramidDepthMipSize.z));
-    uint2 bufferSize = uint2(_PyramidDepthMipSize.xy);
+    uint iteration = 0u;
+    int level = clamp(_SSRayMinLevel, 0, int(_DepthPyramidScale.z));
+    uint2 bufferSize = uint2(_DepthPyramidSize.xy);
+    uint maxIterations = min(input.maxIterations, _SSRayMaxIterations);
 
     float3 startPositionSS;
     float3 raySS;
@@ -583,7 +588,7 @@ bool ScreenSpaceLinearRaymarch(
 
         float3 positionSS = startPositionSS;
         // TODO: We should have a for loop from the starting point to the far/near plane
-        while (iteration < MAX_ITERATIONS)
+        while (iteration < maxIterations)
         {
 #ifdef DEBUG_DISPLAY
             FillScreenSpaceRaymarchingPreIterationDebug(iteration, 0, debug);
@@ -640,7 +645,7 @@ bool ScreenSpaceLinearRaymarch(
         startPositionSS, 
         hitSuccessful, 
         iteration, 
-        MAX_ITERATIONS, 
+        _SSRayMaxIterations, 
         0, 
         0,
         0,

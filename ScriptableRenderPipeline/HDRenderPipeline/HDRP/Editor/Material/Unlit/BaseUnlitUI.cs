@@ -123,6 +123,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kSsRayMinLevel = "_SSRayMinLevel";
         protected MaterialProperty ssRayMaxLevel = null;
         protected const string kSsRayMaxLevel = "_SSRayMaxLevel";
+        protected MaterialProperty ssRayMaxIterations = null;
+        protected const string kSkRayMaxIterations = "_SSRayMaxIterations";
         protected MaterialProperty enableFogOnTransparent = null;
         protected const string kEnableFogOnTransparent = "_EnableFogOnTransparent";
         protected MaterialProperty enableBlendModePreserveSpecularLighting = null;
@@ -186,6 +188,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ssRayRefractionMethod = FindProperty(kSsRayRefractionMethod, props, false);
             ssRayMinLevel = FindProperty(kSsRayMinLevel, props, false);
             ssRayMaxLevel = FindProperty(kSsRayMaxLevel, props, false);
+            ssRayMaxIterations = FindProperty(kSkRayMaxIterations, props, false);
 
             enableFogOnTransparent = FindProperty(kEnableFogOnTransparent, props, false);
             enableBlendModePreserveSpecularLighting = FindProperty(kEnableBlendModePreserveSpecularLighting, props, false);

@@ -14,14 +14,14 @@ TEXTURE2D(_GBufferTexture2);
 TEXTURE2D(_GBufferTexture3);
 
 // Rough refraction texture
-// Color pyramid (width, height, lodcount, Unused)
-TEXTURE2D(_GaussianPyramidColorTexture);
-// Depth pyramid (width, height, lodcount, Unused)
-TEXTURE2D(_PyramidDepthTexture);
+TEXTURE2D(_ColorPyramidTexture);
+TEXTURE2D(_DepthPyramidTexture);
 
 CBUFFER_START(UnityGaussianPyramidParameters)
-float4 _GaussianPyramidColorMipSize; // (x,y) = PyramidToScreenScale, z = lodCount
-float4 _PyramidDepthMipSize;
+float4 _ColorPyramidSize;       // (x,y) = Actual Pixel Size, (z,w) = 1 / Actual Pixel Size
+float4 _DepthPyramidSize;       // (x,y) = Actual Pixel Size, (z,w) = 1 / Actual Pixel Size
+float4 _ColorPyramidScale;      // (x,y) = Screen Scale, z = lod count, w = unused
+float4 _DepthPyramidScale;      // (x,y) = Screen Scale, z = lod count, w = unused
 CBUFFER_END
 
 // Ambient occlusion texture
@@ -1033,7 +1033,7 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
     preLightData.transparentTransmittance = exp(-bsdfData.absorptionCoefficient * refraction.dist);
     // Empirical remap to try to match a bit the refraction probe blurring for the fallback
     // Use IblPerceptualRoughness so we can handle approx of clear coat.
-    preLightData.transparentSSMipLevel = sqrt(preLightData.iblPerceptualRoughness) * uint(_GaussianPyramidColorMipSize.z);
+    preLightData.transparentSSMipLevel = sqrt(preLightData.iblPerceptualRoughness) * uint(_ColorPyramidScale.z);
 #endif
 
     return preLightData;
@@ -1806,6 +1806,7 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             ssInput.rayOriginVS = positionVS;
             ssInput.rayDirVS = transparentRefractVVS;
             ssInput.projectionMatrix = UNITY_MATRIX_P;
+            ssInput.maxIterations = _SSRayMaxIterations;
 
 #elif SSRAY_REFRACTION_ESTIMATE
             ssInput.referencePositionNDC = posInput.positionNDC;
@@ -1849,7 +1850,7 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             }
 
             // Map the roughness to the correct mip map level of the color pyramid
-            lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_GaussianPyramidColorTexture, s_trilinear_clamp_sampler, hit.positionNDC * _GaussianPyramidColorMipSize.xy, preLightData.transparentSSMipLevel).rgb;
+            lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, hit.positionNDC * _ColorPyramidScale.xy, preLightData.transparentSSMipLevel).rgb;
 
             // Beer-Lamber law for absorption
             lighting.specularTransmitted *= preLightData.transparentTransmittance;

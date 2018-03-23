@@ -90,6 +90,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static string ssRayRefractionMethodText = "SS ray Refraction Method";
             public static string ssRayMinLevel = "SS ray min mip level";
             public static string ssRayMaxLevel = "SS ray max mip level";
+            public static string ssRayMaxIteration = "SS ray max iteration";
             public static string ssRayLevel = "SS ray mip level";
             public static string refractionModeText = "Refraction Mode";
             public static GUIContent refractionIorText = new GUIContent("Index of refraction", "Index of refraction");
@@ -817,12 +818,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         switch (ssRayMethod)
                         {
                             case Lit.SSRayMethod.HiZ:
+                            {
                                 if (ssRayMinLevel != null)
                                     m_MaterialEditor.ShaderProperty(ssRayMinLevel, Styles.ssRayMinLevel);
                                 if (ssRayMaxLevel != null)
                                     m_MaterialEditor.ShaderProperty(ssRayMaxLevel, Styles.ssRayMaxLevel);
+                                if (ssRayMaxIterations != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayMaxIterations, Styles.ssRayMaxIteration);
                                 break;
+                            }
                             case Lit.SSRayMethod.Linear:
+                            {
+                                if (ssRayMinLevel != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayMinLevel, Styles.ssRayLevel);
+                                if (ssRayMaxIterations != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayMaxIterations, Styles.ssRayMaxIteration);
+                                break;
+                            }
                             case Lit.SSRayMethod.Estimate:
                             {
                                 if (ssRayMinLevel != null)
