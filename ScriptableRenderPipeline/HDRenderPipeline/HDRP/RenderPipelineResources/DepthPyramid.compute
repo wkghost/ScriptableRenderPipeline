@@ -35,7 +35,7 @@ SamplerState sampler_PointClamp;    //TODO: could we use min-sampler instead of 
 // ------------------------------------------------
 CBUFFER_START(cb)
 float4 _SrcSize;
-uint2 _RectOffset;
+int2 _RectOffset;          // Offset in source texture
 CBUFFER_END
 
 // ------------------------------------------------
@@ -46,10 +46,8 @@ CBUFFER_END
 void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
 {
     // Upper-left pixel coordinate of quad that this thread will read
-    uint2 threadUL = dispatchThreadId << 1;
-
-    // Downsample the block
-    float2 offset = _RectOffset + float2(threadUL);
+    uint2 srcPixelUL = _RectOffset + (dispatchThreadId << 1);
+    float2 offset = float2(srcPixelUL);
 
 #if defined(PLATFORM_SUPPORT_GATHER)
     //offset += 1; // Offset by one to have proper location for gather
@@ -83,14 +81,6 @@ void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThrea
 #undef MIN_OP
 
     // Write to the final target
-    _Result[dispatchThreadId] = minDepth;
-
-    if (_RectOffset.x == 0 && _RectOffset.y == 0)
-        _Result[dispatchThreadId] = 1;
-    if (_RectOffset.x != 0 && _RectOffset.y == 0)
-        _Result[dispatchThreadId] = 0;
-    if (_RectOffset.x == 0 && _RectOffset.y != 0)
-        _Result[dispatchThreadId] = 0;
-    if (_RectOffset.x != 0 && _RectOffset.y != 0)
-        _Result[dispatchThreadId] = 0;
+    uint2 dstPixel = (_RectOffset >> 1) + dispatchThreadId;
+    _Result[dstPixel] = minDepth;
 }
