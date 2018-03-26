@@ -281,164 +281,117 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 RectUInt main, topRow, rightCol, topRight;
 
                 // we use unsafe block to allocate struct arrays on the stack
-                // unsafe 
-                // {
-                //     // Calculate rects to dispatch
+                unsafe 
+                {
+                    // Calculate rects to dispatch
 
-                //     var dispatch2Rects = stackalloc RectUInt[8];
-                //     // Patterns for partial kernels (must match DepthPyramid.compute)
-                //     //  0.  |x|x|       1.  |x|o|       2.  |o|o|       3.  |o|o|
-                //     //      |x|x|           |x|o|           |x|x|           |x|o|
-                //     var dispatch2Patterns = stackalloc int[8];
-                //     var dispatch2Index = 0;
-                //     var dispatch16Rect = RectUInt.Zero;
+                    var dispatch2Rects = stackalloc RectUInt[8];
+                    // Patterns for partial kernels (must match DepthPyramid.compute)
+                    //  0.  |x|x|       1.  |x|o|       2.  |o|o|       3.  |o|o|
+                    //      |x|x|           |x|o|           |x|x|           |x|o|
+                    var dispatch2Patterns = stackalloc int[8];
+                    var dispatch2Index = 0;
+                    var dispatch16Rect = RectUInt.Zero;
 
-                //     if (TryLayoutByTiles(srcRect, 16, out main, out topRow, out rightCol, out topRight))
-                //     {
-                //         // Dispatch 16x16 full kernel on main
-                //         dispatch16Rect = main;
+                    if (TryLayoutByTiles(srcRect, 16, out main, out topRow, out rightCol, out topRight))
+                    {
+                        // Dispatch 16x16 full kernel on main
+                        dispatch16Rect = main;
 
-                //         if (TryLayoutByRow(topRow, 2, out main, out topRow))
-                //         {
-                //             // Dispatch 2x2 full kernel on main
-                //             dispatch2Rects[dispatch2Index] = main;
-                //             dispatch2Patterns[dispatch2Index] = 0;
-                //             ++dispatch2Index;
-                //         }
-                //         // Dispatch 2x2 partial kernel on topRow
-                //         dispatch2Rects[dispatch2Index] = topRow;
-                //         dispatch2Patterns[dispatch2Index] = 2;
-                //         ++dispatch2Index;
+                        if (TryLayoutByRow(topRow, 2, out main, out topRow))
+                        {
+                            // Dispatch 2x2 full kernel on main
+                            dispatch2Rects[dispatch2Index] = main;
+                            dispatch2Patterns[dispatch2Index] = 0;
+                            ++dispatch2Index;
+                        }
+                        // Dispatch 2x2 partial kernel on topRow
+                        dispatch2Rects[dispatch2Index] = topRow;
+                        dispatch2Patterns[dispatch2Index] = 2;
+                        ++dispatch2Index;
 
 
-                //         if (TryLayoutByCol(rightCol, 2, out main, out rightCol))
-                //         {
-                //             // Dispatch 2x2 full kernel on main
-                //             dispatch2Rects[dispatch2Index] = main;
-                //             dispatch2Patterns[dispatch2Index] = 0;
-                //             ++dispatch2Index;
-                //         }
-                //         // Dispatch 2x2 partial kernel on rightCol
-                //         dispatch2Rects[dispatch2Index] = rightCol;
-                //         dispatch2Patterns[dispatch2Index] = 1;
-                //         ++dispatch2Index;
+                        if (TryLayoutByCol(rightCol, 2, out main, out rightCol))
+                        {
+                            // Dispatch 2x2 full kernel on main
+                            dispatch2Rects[dispatch2Index] = main;
+                            dispatch2Patterns[dispatch2Index] = 0;
+                            ++dispatch2Index;
+                        }
+                        // Dispatch 2x2 partial kernel on rightCol
+                        dispatch2Rects[dispatch2Index] = rightCol;
+                        dispatch2Patterns[dispatch2Index] = 1;
+                        ++dispatch2Index;
 
-                //         if (TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
-                //         {
-                //             // Dispatch 2x2 full kernel on main
-                //             dispatch2Rects[dispatch2Index] = main;
-                //             dispatch2Patterns[dispatch2Index] = 0;
-                //             ++dispatch2Index;
+                        if (TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
+                        {
+                            // Dispatch 2x2 full kernel on main
+                            dispatch2Rects[dispatch2Index] = main;
+                            dispatch2Patterns[dispatch2Index] = 0;
+                            ++dispatch2Index;
 
-                //             // Dispatch 2x2 partial kernel on topRow
-                //             dispatch2Rects[dispatch2Index] = topRow;
-                //             dispatch2Patterns[dispatch2Index] = 2;
-                //             ++dispatch2Index;
+                            // Dispatch 2x2 partial kernel on topRow
+                            dispatch2Rects[dispatch2Index] = topRow;
+                            dispatch2Patterns[dispatch2Index] = 2;
+                            ++dispatch2Index;
                             
-                //             // Dispatch 2x2 partial kernel on rightCol
-                //             dispatch2Rects[dispatch2Index] = rightCol;
-                //             dispatch2Patterns[dispatch2Index] = 1;
-                //             ++dispatch2Index;
-                //         }
+                            // Dispatch 2x2 partial kernel on rightCol
+                            dispatch2Rects[dispatch2Index] = rightCol;
+                            dispatch2Patterns[dispatch2Index] = 1;
+                            ++dispatch2Index;
+                        }
 
-                //         // Dispatch 2x2 partial kernel on topRight
-                //         dispatch2Rects[dispatch2Index] = rightCol;
-                //         dispatch2Patterns[dispatch2Index] = 3;
-                //         ++dispatch2Index;
-                //     }
-                //     else if (TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
-                //     {
-                //         // Dispatch 2x2 full kernel on main
-                //         dispatch2Rects[dispatch2Index] = main;
-                //         dispatch2Patterns[dispatch2Index] = 0;
-                //         ++dispatch2Index;
+                        // Dispatch 2x2 partial kernel on topRight
+                        dispatch2Rects[dispatch2Index] = rightCol;
+                        dispatch2Patterns[dispatch2Index] = 3;
+                        ++dispatch2Index;
+                    }
+                    else if (TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
+                    {
+                        // Dispatch 2x2 full kernel on main
+                        dispatch2Rects[dispatch2Index] = main;
+                        dispatch2Patterns[dispatch2Index] = 0;
+                        ++dispatch2Index;
 
-                //         // Dispatch 2x2 partial kernel on topRow
-                //         dispatch2Rects[dispatch2Index] = topRow;
-                //         dispatch2Patterns[dispatch2Index] = 2;
-                //         ++dispatch2Index;
+                        // Dispatch 2x2 partial kernel on topRow
+                        dispatch2Rects[dispatch2Index] = topRow;
+                        dispatch2Patterns[dispatch2Index] = 2;
+                        ++dispatch2Index;
                         
-                //         // Dispatch 2x2 partial kernel on rightCol
-                //         dispatch2Rects[dispatch2Index] = rightCol;
-                //         dispatch2Patterns[dispatch2Index] = 1;
-                //         ++dispatch2Index;
+                        // Dispatch 2x2 partial kernel on rightCol
+                        dispatch2Rects[dispatch2Index] = rightCol;
+                        dispatch2Patterns[dispatch2Index] = 1;
+                        ++dispatch2Index;
 
-                //         // Dispatch 2x2 partial kernel on topRight
-                //         dispatch2Rects[dispatch2Index] = rightCol;
-                //         dispatch2Patterns[dispatch2Index] = 3;
-                //         ++dispatch2Index;
-                //     }
+                        // Dispatch 2x2 partial kernel on topRight
+                        dispatch2Rects[dispatch2Index] = rightCol;
+                        dispatch2Patterns[dispatch2Index] = 3;
+                        ++dispatch2Index;
+                    }
 
-                //     // Send dispatchs
-                //     if (dispatch16Rect.width > 0 && dispatch16Rect.height > 0)
-                //     {
-                //         var kernel = depthKernel8;
-                //         var x = dispatch16Rect.width >> 4;
-                //         var y = dispatch16Rect.height >> 4;
-                //         cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)dispatch16Rect.x, (int)dispatch16Rect.y);
-                //         cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                //         cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
-                //         cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
-                //     }
+                    // Send dispatchs
+                    if (dispatch16Rect.width > 0 && dispatch16Rect.height > 0)
+                    {
+                        var kernel = depthKernel8;
+                        var x = dispatch16Rect.width >> 4;
+                        var y = dispatch16Rect.height >> 4;
+                        cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)dispatch16Rect.x, (int)dispatch16Rect.y);
+                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
+                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
+                        cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
+                    }
 
-                //     for (int j = 0, c = dispatch2Index; j < c; ++j)
-                //     {
-                //         var kernel = GetDepthKernel2(dispatch2Patterns[j]);
-                //         var rect = dispatch2Rects[j];
-                //         var x = Mathf.Max(rect.width >> 1, 1);
-                //         var y = Mathf.Max(rect.height >> 1, 1);
-                //         cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
-                //         cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                //         cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
-                //         cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
-                //     }
-                // }
-
-                {
-                    var kernel = GetDepthKernel2(0);
-                    var rect = srcRect;
-                    var x = Mathf.Max(rect.width >> 1, 1);
-                    var y = Mathf.Max(rect.height >> 1, 1);
-                    cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
-                    cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
-                }
-
-                if ((srcRect.width & 1) != 0)
-                {
-                    var kernel = GetDepthKernel2(1);
-                    var rect = new RectUInt { x = srcRect.width - 1, y = 0, width = 1, height = srcRect.height };
-                    var x = 1;
-                    var y = Mathf.Max(rect.height >> 1, 1);
-                    cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
-                    cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
-                }
-
-                if ((srcRect.height & 1) != 0)
-                {
-                    var kernel = GetDepthKernel2(2);
-                    var rect = new RectUInt { x = 0, y = srcRect.height - 1, width = srcRect.width, height = 1 };
-                    var x = Mathf.Max(rect.width >> 1, 1);
-                    var y = 1;
-                    cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
-                    cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
-                }
-
-                if ((srcRect.height & 1) != 0 && (srcRect.width & 1) != 0)
-                {
-                    var kernel = GetDepthKernel2(3);
-                    var rect = new RectUInt { x = srcRect.width - 1, y = srcRect.height - 1, width = 1, height = 1 };
-                    var x = 1;
-                    var y = 1;
-                    cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                    cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
-                    cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
+                    for (int j = 0, c = dispatch2Index; j < c; ++j)
+                    {
+                        var kernel = GetDepthKernel2(dispatch2Patterns[j]);
+                        var rect = dispatch2Rects[j];
+                        var x = Mathf.Max(rect.width >> 1, 1);
+                        var y = Mathf.Max(rect.height >> 1, 1);
+                        cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
+                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
+                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
+                        cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
+                    }
                 }
 
                 // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
