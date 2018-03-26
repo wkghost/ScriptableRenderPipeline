@@ -15,7 +15,10 @@ int _SSRayMaxLevel;
 // HiZ      : Maximum iteration
 // Linear   : Maximum iteration
 int _SSRayMaxIterations;
+float _SSRayDepthSuccessBias;
 CBUFFER_END
+
+const float DepthPlaneBias = 1E-5;
 
 // -------------------------------------------------
 // Output
@@ -104,8 +107,6 @@ bool CellAreEquals(int2 cellA, int2 cellB)
 // raySS.z is 1/depth
 float3 IntersectDepthPlane(float3 positionSS, float3 raySS, float invDepth)
 {
-    const float EPSILON = 1E-5;
-
     // The depth of the intersection with the depth plane is: positionSS.z + raySS.z * t = invDepth
     float t = (invDepth - positionSS.z) / raySS.z;
 
@@ -113,7 +114,7 @@ float3 IntersectDepthPlane(float3 positionSS, float3 raySS, float invDepth)
     //  put the intersection away.
     // Instead the intersection with the next tile will be used.
     // (t>=0) Add a small distance to go through the depth plane.
-    t = t >= 0.0f ? (t + EPSILON) : 1E5;
+    t = t >= 0.0f ? (t + DepthPlaneBias) : 1E5;
 
     // Return the point on the ray
     return positionSS + raySS * t;
@@ -411,6 +412,7 @@ bool ScreenSpaceHiZRaymarch(
     uint2 cellSize = uint2(1, 1) << currentLevel;
 
     float3 positionSS = startPositionSS;
+    float invHiZDepth = 0;
 
     while (currentLevel >= minMipLevel)
     {
@@ -432,7 +434,7 @@ bool ScreenSpaceHiZRaymarch(
         int mipLevelDelta = -1;
 
         // Sampled as 1/Z so it interpolate properly in screen space.
-        const float invHiZDepth = LoadInvDepth(positionSS.xy, currentLevel);
+        invHiZDepth = LoadInvDepth(positionSS.xy, currentLevel);
         intersectionKind = 0;
 
         if (IsPositionAboveDepth(positionSS.z, invHiZDepth))
@@ -493,7 +495,10 @@ bool ScreenSpaceHiZRaymarch(
     hit.linearDepth = 1 / positionSS.z;
     hit.positionNDC = float2(positionSS.xy) / float2(bufferSize);
     hit.positionSS = uint2(positionSS.xy);
-    
+
+    if (hit.linearDepth > (1 / invHiZDepth) + _SSRayDepthSuccessBias)
+        hitSuccessful = false;
+
 #ifdef DEBUG_DISPLAY
     FillScreenSpaceRaymarchingPostLoopDebug(
         maxUsedLevel,
@@ -610,7 +615,8 @@ bool ScreenSpaceLinearRaymarch(
 
             if (!IsPositionAboveDepth(positionSS.z, invHiZDepth))
             {
-                hitSuccessful = true;
+                if (1 / positionSS.z > (1 / invHiZDepth + _SSRayDepthSuccessBias))
+                    hitSuccessful = false;
                 break;
             }
 

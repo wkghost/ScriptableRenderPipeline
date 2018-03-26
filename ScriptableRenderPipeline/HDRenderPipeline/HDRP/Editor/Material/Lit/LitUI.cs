@@ -92,6 +92,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static string ssRayMaxLevel = "SS ray max mip level";
             public static string ssRayMaxIteration = "SS ray max iteration";
             public static string ssRayLevel = "SS ray mip level";
+            public static string ssRayDepthSuccessBias = "SS ray depth success bias";
             public static string refractionModeText = "Refraction Mode";
             public static GUIContent refractionIorText = new GUIContent("Index of refraction", "Index of refraction");
             public static GUIContent refractionThicknessText = new GUIContent("Refraction Thickness", "Thickness for rough refraction");
@@ -825,6 +826,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                     m_MaterialEditor.ShaderProperty(ssRayMaxLevel, Styles.ssRayMaxLevel);
                                 if (ssRayMaxIterations != null)
                                     m_MaterialEditor.ShaderProperty(ssRayMaxIterations, Styles.ssRayMaxIteration);
+                                if (ssRayDepthSuccessBias != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayDepthSuccessBias, Styles.ssRayDepthSuccessBias);
                                 break;
                             }
                             case Lit.SSRayMethod.Linear:
@@ -833,6 +836,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                     m_MaterialEditor.ShaderProperty(ssRayMinLevel, Styles.ssRayLevel);
                                 if (ssRayMaxIterations != null)
                                     m_MaterialEditor.ShaderProperty(ssRayMaxIterations, Styles.ssRayMaxIteration);
+                                if (ssRayDepthSuccessBias != null)
+                                    m_MaterialEditor.ShaderProperty(ssRayDepthSuccessBias, Styles.ssRayDepthSuccessBias);
                                 break;
                             }
                             case Lit.SSRayMethod.Estimate:

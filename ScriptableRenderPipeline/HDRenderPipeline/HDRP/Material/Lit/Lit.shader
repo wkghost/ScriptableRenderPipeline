@@ -113,6 +113,7 @@ Shader "HDRenderPipeline/Lit"
         _SSRayMinLevel ("SS Ray Min Mip Level", Int) = 1
         _SSRayMaxLevel ("SS Ray Max Mip Level", Int) = 10
         _SSRayMaxIterations ("SS Ray Max Iteration", Int) = 1024
+        _SSRayDepthSuccessBias ("SS Ray Depth Success Bias", Float) = 0.01
         _Ior("Index Of Refraction", Range(1.0, 2.5)) = 1.0
         _ThicknessMultiplier("Thickness Multiplier", Float) = 1.0
         _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)
