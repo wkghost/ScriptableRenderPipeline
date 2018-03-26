@@ -22,13 +22,18 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
             #include "CoreRP/ShaderLibrary/Debug.hlsl"
             #include "../ShaderVariables.hlsl"
             #include "../Debug/DebugDisplay.cs.hlsl"
-
-            TEXTURE2D(_DebugFullScreenTexture);
-            StructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData;
+            
+            CBUFFER_START (UnityDebug)
             float _FullScreenDebugMode;
             float _RequireToFlipInputTexture;
             float _ShowGrid;
+            float _ShowDepthPyramidDebug;
+            CBUFFER_END
+
             TEXTURE2D(_DebugScreenSpaceTracing);
+            TEXTURE2D(_DepthPyramidTexture);
+            TEXTURE2D(_DebugFullScreenTexture);
+            StructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData;
 
             struct Attributes
             {
@@ -213,8 +218,10 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     ScreenSpaceTracingDebug debug = _DebugScreenSpaceTracingData[0];
 
                     const uint2 startPositionSS = uint2(debug.startPositionSSX, debug.startPositionSSY);
+                    
+                    const float deviceDepth = LOAD_TEXTURE2D_LOD(_DepthPyramidTexture, int2(input.positionCS.xy) >> debug.level, debug.level).r;
 
-                    PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, 10, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP);
+                    PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, deviceDepth, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP);
 
                     const uint2 cellSize = uint2(debug.cellSizeW, debug.cellSizeH);
                     const float hasData = cellSize.x != 0 || cellSize.y != 0;
@@ -248,6 +255,8 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
 
                     // Combine debug color with background (with opacity)
                     float4 col = float4(debugColor * 0.5 + color.rgb * 0.5, 1);
+                    if (_ShowDepthPyramidDebug == 1) 
+                        col = float4(debugColor * 0.5 + frac(float3(posInput.linearDepth, posInput.linearDepth, posInput.linearDepth) * 0.1), 1);
 
                     // Calculate SDF to draw a ring on both dots
                     const float startPositionRingDistance = abs(distanceToStartPosition - circleRadius);

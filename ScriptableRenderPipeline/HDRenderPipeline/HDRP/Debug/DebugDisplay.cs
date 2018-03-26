@@ -58,7 +58,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Vector2 startPositionSS { get { return new Vector2(startPositionSSX, startPositionSSY); } }
         public Vector2 endPositionSS { get { return new Vector2(endPositionSSX, endPositionSSY); } }
-        public Vector2 cellId { get { return new Vector2((int)positionSS.x / (cellSizeW > 0 ? cellSizeW : 1), (int)positionSS.y / (cellSizeH > 0 ? cellSizeH : 1)); } }
+        public Vector2 cellId { get { return new Vector2(((int)positionSS.x) >> (int)level, ((int)positionSS.y) >> (int)level); } }
     }
 
     public class DebugDisplaySettings
@@ -81,6 +81,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public FullScreenDebugMode  fullScreenDebugMode = FullScreenDebugMode.None;
         public float fullscreenDebugMip = 0.0f;
         public bool showSSRayGrid = true;
+        public bool showSSRayDepthPyramid = true;
 
         public MaterialDebugSettings materialDebugSettings = new MaterialDebugSettings();
         public LightingDebugSettings lightingDebugSettings = new LightingDebugSettings();
@@ -274,6 +275,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             new DebugUI.BoolField { displayName = "Debug Iterations", getter = IsScreenSpaceTracingIterationDebugEnabled, setter = SetScreenSpaceTracingIterationDebugEnabled, onValueChanged = RefreshStatisticsDebug },
                             new DebugUI.EnumField { displayName = "Debug Mode", getter = GetDebugLightingSubMode, setter = SetScreenSpaceTracingDebugMode, enumNames = debugScreenSpaceTracingStrings, enumValues = debugScreenSpaceTracingValues, onValueChanged = RefreshStatisticsDebug },
                             new DebugUI.BoolField { displayName = "Display Grid", getter = () => showSSRayGrid, setter = v => showSSRayGrid = v },
+                            new DebugUI.BoolField { displayName = "Display Depth", getter = () => showSSRayDepthPyramid, setter = v => showSSRayDepthPyramid = v },
                         }
                     }
                 }

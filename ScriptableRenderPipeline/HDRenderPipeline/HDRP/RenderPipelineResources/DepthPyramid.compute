@@ -47,10 +47,10 @@ void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThrea
 {
     // Upper-left pixel coordinate of quad that this thread will read
     uint2 srcPixelUL = _RectOffset + (dispatchThreadId << 1);
-    float2 offset = float2(srcPixelUL);
+    // Offset by 0.5 so sampling get the proper pixels
+    float2 offset = float2(srcPixelUL) + 0.5;
 
 #if defined(PLATFORM_SUPPORT_GATHER)
-    //offset += 1; // Offset by one to have proper location for gather
     float4 depths = GATHER_RED_TEXTURE2D(_Source, sampler_PointClamp, offset * _SrcSize.zw, 0.0).wzxy;
 #else
     // Downsample the block
