@@ -108,9 +108,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Note that even if PS4 supported POT Mips, the buffers would be padded to the next power of 2 anyway (TODO: check with other platforms...)
             int pyramidSize = (int)Mathf.NextPowerOfTwo(Mathf.Max(size.x, size.y));
             return new Vector2Int((int)(pyramidSize * GetXRscale()), pyramidSize);
-            
-            // int pyramidSize = (int)Mathf.NextPowerOfTwo(Mathf.Max(size.x, size.y));
-            // return new Vector2Int((int)(size.x * GetXRscale()), size.y);
         }
 
         void UpdatePyramidMips(HDCamera camera, RenderTextureFormat format, List<RTHandle> mipList, int lodCount)
@@ -132,124 +129,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return new Vector2((float)camera.actualWidth / m_DepthPyramidBuffer.rt.width, (float)camera.actualHeight / m_DepthPyramidBuffer.rt.height);
         }
 
-        struct RectUInt 
-        {
-            public static readonly RectUInt Zero = new RectUInt { x = 0u, y = 0u, width = 0u, height = 0u };
-
-            public uint x;
-            public uint y;
-            public uint width;
-            public uint height;
-        }
-
-        static bool TryLayoutByTiles(RectUInt src, uint tileSize, out RectUInt main, out RectUInt topRow, out RectUInt rightCol, out RectUInt topRight)
-        {
-            if (src.width < tileSize || src.height < tileSize)
-            {
-                main = RectUInt.Zero;
-                topRow = RectUInt.Zero;
-                rightCol = RectUInt.Zero;
-                topRight = RectUInt.Zero;
-                return false;
-            }
-
-            uint mainRows = src.height / tileSize;
-            uint mainCols = src.width / tileSize;
-            uint mainWidth = mainCols * tileSize;
-            uint mainHeight = mainRows * tileSize;
-
-            main = new RectUInt
-            {
-                x = src.x,
-                y = src.y,
-                width = mainWidth,
-                height = mainHeight,
-            };
-            topRow = new RectUInt
-            {
-                x = src.x,
-                y = src.y + mainHeight,
-                width = mainWidth,
-                height = src.height - mainHeight
-            };
-            rightCol = new RectUInt
-            {
-                x = src.x + mainWidth,
-                y = src.y,
-                width = src.width - mainWidth,
-                height = mainHeight
-            };
-            topRight = new RectUInt
-            {
-                x = src.x + mainWidth,
-                y = src.y + mainHeight,
-                width = src.width - mainWidth,
-                height = src.height - mainHeight
-            };
-
-            return true;
-        }
-
-        static bool TryLayoutByRow(RectUInt src, uint tileSize, out RectUInt main, out RectUInt other)
-        {
-            if (src.height < tileSize)
-            {
-                main = RectUInt.Zero;
-                other = RectUInt.Zero;
-                return false;
-            }
-
-            uint mainRows = src.height / tileSize;
-            uint mainHeight = mainRows * tileSize;
-
-            main = new RectUInt
-            {
-                x = src.x,
-                y = src.y,
-                width = src.width,
-                height = mainHeight,
-            };
-            other = new RectUInt
-            {
-                x = src.x,
-                y = src.y + mainHeight,
-                width = src.width,
-                height = src.height - mainHeight
-            };
-
-            return true;
-        }
-
-        static bool TryLayoutByCol(RectUInt src, uint tileSize, out RectUInt main, out RectUInt other)
-        {
-            if (src.width < tileSize)
-            {
-                main = RectUInt.Zero;
-                other = RectUInt.Zero;
-                return false;
-            }
-
-            uint mainCols = src.width / tileSize;
-            uint mainWidth = mainCols * tileSize;
-
-            main = new RectUInt
-            {
-                x = src.x,
-                y = src.y,
-                width = mainWidth,
-                height = src.height,
-            };
-            other = new RectUInt
-            {
-                x = src.x + mainWidth,
-                y = src.y,
-                width = src.width - mainWidth,
-                height = src.height
-            };
-
-            return true;
-        }
-
         public void RenderDepthPyramid(
             HDCamera hdCamera,
             CommandBuffer cmd,
@@ -262,8 +141,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Vector2 scale = GetPyramidToScreenScale(hdCamera);
             cmd.SetGlobalVector(HDShaderIDs._DepthPyramidSize, new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight));
             cmd.SetGlobalVector(HDShaderIDs._DepthPyramidScale, new Vector4(scale.x, scale.y, lodCount, 0.0f));
-
-            m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, depthTexture, m_DepthPyramidBuffer, new Vector2(hdCamera.actualWidth, hdCamera.actualHeight));
+            for (var i = 0 ; i < lodCount; ++i)
+            {
+                cmd.SetRenderTarget(m_DepthPyramidBuffer, i);
+                cmd.ClearRenderTarget(false, true, Color.white, 0);
+            }
+            m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, depthTexture, m_DepthPyramidBuffer, hdCamera.actualRect);
 
             RTHandle src = m_DepthPyramidBuffer;
             for (var i = 0; i < lodCount; i++)
@@ -291,14 +174,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     //      |x|x|           |x|o|           |x|x|           |x|o|
                     var dispatch2Patterns = stackalloc int[8];
                     var dispatch2Index = 0;
-                    var dispatch16Rect = RectUInt.Zero;
+                    var dispatch16Rect = RectUInt.zero;
 
-                    if (TryLayoutByTiles(srcRect, 16, out main, out topRow, out rightCol, out topRight))
+                    if (TileLayoutUtils.TryLayoutByTiles(srcRect, 16, out main, out topRow, out rightCol, out topRight))
                     {
                         // Dispatch 16x16 full kernel on main
                         dispatch16Rect = main;
 
-                        if (TryLayoutByRow(topRow, 2, out main, out topRow))
+                        if (TileLayoutUtils.TryLayoutByRow(topRow, 2, out main, out topRow))
                         {
                             // Dispatch 2x2 full kernel on main
                             dispatch2Rects[dispatch2Index] = main;
@@ -311,7 +194,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         ++dispatch2Index;
 
 
-                        if (TryLayoutByCol(rightCol, 2, out main, out rightCol))
+                        if (TileLayoutUtils.TryLayoutByCol(rightCol, 2, out main, out rightCol))
                         {
                             // Dispatch 2x2 full kernel on main
                             dispatch2Rects[dispatch2Index] = main;
@@ -323,7 +206,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         dispatch2Patterns[dispatch2Index] = 1;
                         ++dispatch2Index;
 
-                        if (TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
+                        if (TileLayoutUtils.TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
                         {
                             // Dispatch 2x2 full kernel on main
                             dispatch2Rects[dispatch2Index] = main;
@@ -346,7 +229,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         dispatch2Patterns[dispatch2Index] = 3;
                         ++dispatch2Index;
                     }
-                    else if (TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
+                    else if (TileLayoutUtils.TryLayoutByTiles(srcRect, 2, out main, out topRow, out rightCol, out topRight))
                     {
                         // Dispatch 2x2 full kernel on main
                         dispatch2Rects[dispatch2Index] = main;

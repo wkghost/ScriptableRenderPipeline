@@ -49,6 +49,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public int actualWidth { get { return m_ActualWidth; } }
         public int actualHeight { get { return m_ActualHeight; } }
+        public Vector2Int actualSize { get { return new Vector2Int(m_ActualWidth, m_ActualHeight); } }
+        public RectUInt actualRect { get { return new RectUInt(0u, 0u, (uint)m_ActualWidth, (uint)m_ActualHeight); } }
         public Vector2 scaleBias { get { return m_CameraScaleBias; } }
         public MSAASamples msaaSamples { get { return m_msaaSamples; } }
 

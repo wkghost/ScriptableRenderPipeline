@@ -62,18 +62,90 @@ namespace UnityEngine.Experimental.Rendering
             }
 
             ccp.AppendLine();
+            ccp.AppendLine("CBUFFER_START (UnityCBuffer)");
+            ccp.AppendLine("  uint2 _RectOffset;");
+            ccp.AppendLine("CBUFFER_END");
+            ccp.AppendLine();
+            csm.AppendLine("        static readonly int _RectOffset = Shader.PropertyToID(\"_RectOffset\");");
             foreach (var target in targets)
             {
                 ccp.AppendLine(string.Format("RWTexture2D<float{0}> _Result{0};", target.ToString()));
                 csm.AppendLine(string.Format("        static readonly int _Result{0} = Shader.PropertyToID(\"_Result{0}\");", target.ToString()));
             }
-            ccp.AppendLine();
             foreach (var source in sources)
             {
                 ccp.AppendLine(string.Format("Texture2D<float{0}> _Source{0};", source.ToString()));
                 csm.AppendLine(string.Format("        static readonly int _Source{0} = Shader.PropertyToID(\"_Source{0}\");", source.ToString()));
             }
-            ccp.AppendLine();
+
+            csm.AppendLine(@"        void SampleCopyChannel(
+            CommandBuffer cmd, 
+            RectUInt rect,
+            int _source,
+            RenderTargetIdentifier source, 
+            int _target,
+            RenderTargetIdentifier target,
+            int kernel8,
+            int kernel1)
+        {
+            RectUInt main, topRow, rightCol, topRight;
+            unsafe 
+            {
+                RectUInt* dispatch1Rects = stackalloc RectUInt[3];
+                int dispatch1RectCount = 0;
+                RectUInt dispatch8Rect = RectUInt.zero;
+
+                if (TileLayoutUtils.TryLayoutByTiles(
+                    rect, 
+                    8,
+                    out main,
+                    out topRow, 
+                    out rightCol,
+                    out topRight))
+                {
+                    if (topRow.width > 0 && topRow.height > 0)
+                    {
+                        dispatch1Rects[dispatch1RectCount] = topRow;
+                        ++dispatch1RectCount;
+                    }
+                    if (rightCol.width > 0 && rightCol.height > 0)
+                    {
+                        dispatch1Rects[dispatch1RectCount] = rightCol;
+                        ++dispatch1RectCount;
+                    }
+                    if (topRight.width > 0 && topRight.height > 0)
+                    {
+                        dispatch1Rects[dispatch1RectCount] = topRight;
+                        ++dispatch1RectCount;
+                    }
+                    dispatch8Rect = main;
+                }
+                else if (rect.width > 0 && rect.height > 0)
+                {
+                    dispatch1Rects[dispatch1RectCount] = rect;
+                    ++dispatch1RectCount;
+                }
+
+                cmd.SetComputeTextureParam(m_Shader, kernel8, _source, source);
+                cmd.SetComputeTextureParam(m_Shader, kernel1, _source, source);
+                cmd.SetComputeTextureParam(m_Shader, kernel8, _target, target);
+                cmd.SetComputeTextureParam(m_Shader, kernel1, _target, target);
+
+                if (dispatch8Rect.width > 0 && dispatch8Rect.height > 0)
+                {
+                    var r = dispatch8Rect;
+                    cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
+                    cmd.DispatchCompute(m_Shader, kernel8, (int)Mathf.Max(r.width / 8, 1), (int)Mathf.Max(r.height / 8, 1), 1);
+                }
+                
+                for (int i = 0, c = dispatch1RectCount; i < c; ++i)
+                {
+                    var r = dispatch1Rects[i];
+                    cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
+                    cmd.DispatchCompute(m_Shader, kernel1, (int)Mathf.Max(r.width, 1), (int)Mathf.Max(r.height, 1), 1);
+                }
+            }
+        }");
 
             csc.AppendLine("        public GPUCopy(ComputeShader shader)");
             csc.AppendLine("        {");
@@ -90,7 +162,7 @@ namespace UnityEngine.Experimental.Rendering
                 cck.AppendLine(@"[numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]");
                 cck.AppendLine(@"void KERNEL_NAME(uint2 dispatchThreadId : SV_DispatchThreadID)");
                 cck.AppendLine("{");
-                cck.AppendLine(string.Format("    _Result{0}[dispatchThreadId] = LOAD_TEXTURE2D(_Source{1}, dispatchThreadId).{2};",
+                cck.AppendLine(string.Format("    _Result{0}[_RectOffset + dispatchThreadId] = LOAD_TEXTURE2D(_Source{1}, _RectOffset + dispatchThreadId).{2};",
                     o.targetChannel.ToString(), o.sourceChannel.ToString(), o.subscript));
                 cck.AppendLine("}");
                 cck.AppendLine();
@@ -107,19 +179,10 @@ namespace UnityEngine.Experimental.Rendering
                 csc.AppendLine(string.Format("            {0} = m_Shader.FindKernel(\"{1}\");", kernelIndexName1, kernelName1));
 
                 // CSharp method
-                csm.AppendLine(string.Format(@"        public void SampleCopyChannel_{0}2{1}(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Vector2 size)", channelName, o.subscript));
-                csm.AppendLine              ("            {");
-                csm.AppendLine(string.Format("                var kernel = {0};", kernelIndexName8));
-                csm.AppendLine              ("                var kernelSize = 8;");
-                csm.AppendLine              ("                if (size.x < 8 || size.y < 8)");
-                csm.AppendLine              ("                {");
-                csm.AppendLine(string.Format("                      kernel = {0};", kernelIndexName1));
-                csm.AppendLine              ("                      kernelSize = 1;");
-                csm.AppendLine              ("                }");
-                csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, kernel, _Source{0}, source);", o.sourceChannel.ToString()));
-                csm.AppendLine(string.Format("                cmd.SetComputeTextureParam(m_Shader, kernel, _Result{0}, target);", o.targetChannel.ToString()));
-                csm.AppendLine              ("                cmd.DispatchCompute(m_Shader, kernel, (int)Mathf.Max((size.x) / kernelSize + 1, 1), (int)Mathf.Max((size.y) / kernelSize + 1, 1), 1);");
-                csm.AppendLine              ("            }");
+                csm.AppendLine(string.Format(@"        public void SampleCopyChannel_{0}2{1}(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectUInt rect)", channelName, o.subscript));
+                csm.AppendLine              ("          {");
+                csm.AppendLine(string.Format("                 SampleCopyChannel(cmd, rect, _Source{0}, source, _Result{1}, target, {2}, {3});", o.sourceChannel.ToString(), o.targetChannel.ToString(), kernelIndexName8, kernelIndexName1));
+                csm.AppendLine              ("          }");
             }
             csc.AppendLine("        }");
 

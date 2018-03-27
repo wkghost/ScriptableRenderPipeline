@@ -17,21 +17,81 @@ namespace UnityEngine.Experimental.Rendering
             k_SampleKernel_xyzw2x_1 = m_Shader.FindKernel("KSampleCopy4_1_x_1");
         }
 
+        static readonly int _RectOffset = Shader.PropertyToID("_RectOffset");
         static readonly int _Result1 = Shader.PropertyToID("_Result1");
         static readonly int _Source4 = Shader.PropertyToID("_Source4");
-        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Vector2 size)
+        void SampleCopyChannel(
+            CommandBuffer cmd, 
+            RectUInt rect,
+            int _source,
+            RenderTargetIdentifier source, 
+            int _target,
+            RenderTargetIdentifier target,
+            int kernel8,
+            int kernel1)
+        {
+            RectUInt main, topRow, rightCol, topRight;
+            unsafe 
             {
-                var kernel = k_SampleKernel_xyzw2x_8;
-                var kernelSize = 8;
-                if (size.x < 8 || size.y < 8)
+                RectUInt* dispatch1Rects = stackalloc RectUInt[3];
+                int dispatch1RectCount = 0;
+                RectUInt dispatch8Rect = RectUInt.zero;
+
+                if (TileLayoutUtils.TryLayoutByTiles(
+                    rect, 
+                    8,
+                    out main,
+                    out topRow, 
+                    out rightCol,
+                    out topRight))
                 {
-                      kernel = k_SampleKernel_xyzw2x_1;
-                      kernelSize = 1;
+                    if (topRow.width > 0 && topRow.height > 0)
+                    {
+                        dispatch1Rects[dispatch1RectCount] = topRow;
+                        ++dispatch1RectCount;
+                    }
+                    if (rightCol.width > 0 && rightCol.height > 0)
+                    {
+                        dispatch1Rects[dispatch1RectCount] = rightCol;
+                        ++dispatch1RectCount;
+                    }
+                    if (topRight.width > 0 && topRight.height > 0)
+                    {
+                        dispatch1Rects[dispatch1RectCount] = topRight;
+                        ++dispatch1RectCount;
+                    }
+                    dispatch8Rect = main;
                 }
-                cmd.SetComputeTextureParam(m_Shader, kernel, _Source4, source);
-                cmd.SetComputeTextureParam(m_Shader, kernel, _Result1, target);
-                cmd.DispatchCompute(m_Shader, kernel, (int)Mathf.Max((size.x) / kernelSize + 1, 1), (int)Mathf.Max((size.y) / kernelSize + 1, 1), 1);
+                else if (rect.width > 0 && rect.height > 0)
+                {
+                    dispatch1Rects[dispatch1RectCount] = rect;
+                    ++dispatch1RectCount;
+                }
+
+                cmd.SetComputeTextureParam(m_Shader, kernel8, _source, source);
+                cmd.SetComputeTextureParam(m_Shader, kernel1, _source, source);
+                cmd.SetComputeTextureParam(m_Shader, kernel8, _target, target);
+                cmd.SetComputeTextureParam(m_Shader, kernel1, _target, target);
+
+                if (dispatch8Rect.width > 0 && dispatch8Rect.height > 0)
+                {
+                    var r = dispatch8Rect;
+                    cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
+                    cmd.DispatchCompute(m_Shader, kernel8, (int)Mathf.Max(r.width / 8, 1), (int)Mathf.Max(r.height / 8, 1), 1);
+                }
+                
+                for (int i = 0, c = dispatch1RectCount; i < c; ++i)
+                {
+                    var r = dispatch1Rects[i];
+                    cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
+                    cmd.DispatchCompute(m_Shader, kernel1, (int)Mathf.Max(r.width, 1), (int)Mathf.Max(r.height, 1), 1);
+                }
             }
+        }
+        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectUInt rect)
+          {
+                 SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
+          }
 
     }
 }
