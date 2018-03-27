@@ -1849,16 +1849,19 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
                 return lighting;
             }
 
-            // Map the roughness to the correct mip map level of the color pyramid
-            lighting.specularTransmitted = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, hit.positionNDC * _ColorPyramidScale.xy, preLightData.transparentSSMipLevel).rgb;
-
-            // Beer-Lamber law for absorption
-            lighting.specularTransmitted *= preLightData.transparentTransmittance;
-
             float weight = 1.0;
             UpdateLightingHierarchyWeights(hierarchyWeight, weight); // Shouldn't be needed, but safer in case we decide to change hierarchy priority
-                                                                     // We use specularFGD as an approximation of the fresnel effect (that also handle smoothness), so take the remaining for transmission
-            lighting.specularTransmitted *= (1.0 - preLightData.specularFGD) * weight;
+
+            float3 preLD = SAMPLE_TEXTURE2D_LOD(
+                _ColorPyramidTexture, 
+                s_trilinear_clamp_sampler, 
+                hit.positionNDC * _ColorPyramidScale.xy, 
+                preLightData.transparentSSMipLevel
+            ).rgb;
+
+            // We use specularFGD as an approximation of the fresnel effect (that also handle smoothness), so take the remaining for transmission
+            float3 F = preLightData.specularFGD;
+            lighting.specularTransmitted = (1.0 - F) * preLD.rgb * preLightData.transparentTransmittance * weight;
 #else
             // No refraction, no need to go further
             hierarchyWeight = 1.0;
@@ -2047,7 +2050,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
     if (GPUImageBasedLightingType == GPUIMAGEBASEDLIGHTINGTYPE_REFLECTION)
         lighting.specularReflected = envLighting;
     else
-        lighting.specularTransmitted = envLighting * preLightData.transparentTransmittance;
+        lighting.specularTransmitted = envLighting;
 
     return lighting;
 }
