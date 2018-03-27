@@ -167,6 +167,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 unsafe 
                 {
                     // Calculate rects to dispatch
+                    // We try to launch the 16x16 kernel as much as we can
+                    // So we layout the rect viewport in several rect where we choose the proper kernel
+                    // For instance, for a viewport with a size that is not a multiple of 16: 
+                    //  (NB: 2_1 => mean kernel with size 2 and pattern 1)
+                    //
+                    // |-------------------------|-----|-----|
+                    // |           2_2           | 2_2 | 2_3 |
+                    // |-------------------------|-----|-----|
+                    // |           2_0           | 2_0 | 2_1 |
+                    // |-------------------------|-----|-----|
+                    // |                         |     |     |
+                    // |                         |     |     |
+                    // |           8_0           | 2_0 | 2_1 |
+                    // |                         |     |     |
+                    // |                         |     |     |
+                    // |-------------------------|-----|-----|
 
                     var dispatch2Rects = stackalloc RectUInt[8];
                     // Patterns for partial kernels (must match DepthPyramid.compute)
@@ -252,6 +268,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         ++dispatch2Index;
                     }
 
+                    for (int j = 0, c = m_DepthKernels.Length; j < c; ++j)
+                        cmd.SetComputeTextureParam(m_DepthPyramidCS, m_DepthKernels[j], _Source, src);
+                    for (int j = 0, c = m_DepthKernels.Length; j < c; ++j)
+                        cmd.SetComputeTextureParam(m_DepthPyramidCS, m_DepthKernels[j], _Result, dest);
+
                     // Send dispatchs
                     if (dispatch16Rect.width > 0 && dispatch16Rect.height > 0)
                     {
@@ -259,8 +280,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var x = dispatch16Rect.width >> 4;
                         var y = dispatch16Rect.height >> 4;
                         cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)dispatch16Rect.x, (int)dispatch16Rect.y);
-                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
                         cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
                     }
 
@@ -271,8 +290,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var x = Mathf.Max(rect.width >> 1, 1);
                         var y = Mathf.Max(rect.height >> 1, 1);
                         cmd.SetComputeIntParams(m_DepthPyramidCS, HDShaderIDs._RectOffset, (int)rect.x, (int)rect.y);
-                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Source, src);
-                        cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
                         cmd.DispatchCompute(m_DepthPyramidCS, kernel, (int)x, (int)y, 1);
                     }
                 }
