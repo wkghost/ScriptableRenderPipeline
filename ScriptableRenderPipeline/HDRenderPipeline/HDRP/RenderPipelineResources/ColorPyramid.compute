@@ -29,7 +29,9 @@ RWTexture2D<float4> _Result;
 SamplerState sampler_LinearClamp;
 
 CBUFFER_START(cb)
-    float4 _Size;
+    float4 _DstSize;
+    int4 _SrcViewport;            // (x, y, xMax, yMax)
+    int2 _RectOffset;
 CBUFFER_END
 
 // 16x16 pixels with an 8x8 center that we will be blurring writing out. Each uint is two color
@@ -114,19 +116,57 @@ void BlurVertically(uint2 pixelCoord, uint topMostIndex)
     _Result[pixelCoord] = blurred;
 }
 
-#pragma kernel KMain
-[numthreads(8, 8, 1)]
-void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
+float4 SampleInViewportLinearClamp(
+    TEXTURE2D_ARGS(tex, sampl), 
+    int2 positionTXS,
+    int4 viewport,
+    uint lod
+)
 {
-    // Upper-left pixel coordinate of quad that this thread will read
-    int2 threadUL = (groupThreadId << 1) + (groupId << 3) - 4;
+    const uint2 c00TXS = clamp(positionTXS             , viewport.xy, viewport.zw);
+    const uint2 c10TXS = clamp(positionTXS + int2(1, 0), viewport.xy, viewport.zw);
+    const uint2 c01TXS = clamp(positionTXS + int2(0, 1), viewport.xy, viewport.zw);
+    const uint2 c11TXS = clamp(positionTXS + int2(1, 1), viewport.xy, viewport.zw);
 
-    // Downsample the block
-    float2 offset = float2(threadUL);
-    float4 p00 = _Source.SampleLevel(sampler_LinearClamp, (offset                    + 0.5) * _Size.zw, 0.0);
-    float4 p10 = _Source.SampleLevel(sampler_LinearClamp, (offset + float2(1.0, 0.0) + 0.5) * _Size.zw, 0.0);
-    float4 p01 = _Source.SampleLevel(sampler_LinearClamp, (offset + float2(0.0, 1.0) + 0.5) * _Size.zw, 0.0);
-    float4 p11 = _Source.SampleLevel(sampler_LinearClamp, (offset + float2(1.0, 1.0) + 0.5) * _Size.zw, 0.0);
+    const float4 p00 = LOAD_TEXTURE2D_LOD(tex, c00TXS, lod);
+    const float4 p10 = LOAD_TEXTURE2D_LOD(tex, c10TXS, lod);
+    const float4 p01 = LOAD_TEXTURE2D_LOD(tex, c01TXS, lod);
+    const float4 p11 = LOAD_TEXTURE2D_LOD(tex, c11TXS, lod);
+
+    return (p00 + p10 + p01 + p11) * 0.25;
+}
+
+#pragma kernel KDownSampleColor                     KERNEL_NAME=KDownSampleColor
+#pragma kernel KDownSampleColorClamped              KERNEL_NAME=KDownSampleColorClamped         FEATURE_VIEWPORT
+[numthreads(8, 8, 1)]
+void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+#ifdef FEATURE_VIEWPORT
+    // Upper-left pixel coordinate of quad that this thread will read
+    int2 dstThreadUL = _RectOffset + (groupThreadId << 1) + (groupId << 3) - 4;
+    int2 srcThreadUL = dstThreadUL << 1;
+
+    // Downsample with linear sampler on previous mip
+    const float4 p00 = SampleInViewportLinearClamp(TEXTURE2D_PARAM(_Source, sampler_LinearClamp), srcThreadUL             , _SrcViewport, 0.0);
+    const float4 p10 = SampleInViewportLinearClamp(TEXTURE2D_PARAM(_Source, sampler_LinearClamp), srcThreadUL + int2(2, 0), _SrcViewport, 0.0);
+    const float4 p01 = SampleInViewportLinearClamp(TEXTURE2D_PARAM(_Source, sampler_LinearClamp), srcThreadUL + int2(0, 2), _SrcViewport, 0.0);
+    const float4 p11 = SampleInViewportLinearClamp(TEXTURE2D_PARAM(_Source, sampler_LinearClamp), srcThreadUL + int2(2, 2), _SrcViewport, 0.0);
+#else
+    // Upper-left pixel coordinate of quad that this thread will read
+    int2 threadUL = _RectOffset + (groupThreadId << 1) + (groupId << 3) - 4;
+
+    const float2 offset = float2(threadUL);
+    const float2 uv00 = (offset                    + 0.5) * _DstSize.zw;
+    const float2 uv10 = (offset + float2(1.0, 0.0) + 0.5) * _DstSize.zw;
+    const float2 uv01 = (offset + float2(0.0, 1.0) + 0.5) * _DstSize.zw;
+    const float2 uv11 = (offset + float2(1.0, 1.0) + 0.5) * _DstSize.zw;
+
+    // Downsample with linear sampler on previous mip
+    const float4 p00 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_LinearClamp, uv00, 0.0);
+    const float4 p10 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_LinearClamp, uv10, 0.0);
+    const float4 p01 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_LinearClamp, uv01, 0.0);
+    const float4 p11 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_LinearClamp, uv11, 0.0);
+#endif
 
     // Store the 4 downsampled pixels in LDS
     uint destIdx = groupThreadId.x + (groupThreadId.y << 4u);
@@ -142,5 +182,5 @@ void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, u
     GroupMemoryBarrierWithGroupSync();
 
     // Vertically blur the pixels in LDS and write the result to memory
-    BlurVertically(dispatchThreadId, (groupThreadId.y << 3u) + groupThreadId.x);
+    BlurVertically(_RectOffset + dispatchThreadId, (groupThreadId.y << 3u) + groupThreadId.x);
 }

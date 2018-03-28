@@ -6,10 +6,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     class BufferPyramid
     {
-        static readonly int _Size = Shader.PropertyToID("_Size");
         static readonly int _Source = Shader.PropertyToID("_Source");
         static readonly int _Result = Shader.PropertyToID("_Result");
+        static readonly int _DstSize = Shader.PropertyToID("_DstSize");
         static readonly int _SrcSize = Shader.PropertyToID("_SrcSize");
+        static readonly int _SrcViewport = Shader.PropertyToID("_SrcViewport");
         const int k_DepthBlockSize = 4;
 
         GPUCopy m_GPUCopy;
@@ -17,7 +18,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         RTHandle m_ColorPyramidBuffer;
         List<RTHandle> m_ColorPyramidMips = new List<RTHandle>();
-        int m_ColorPyramidKernel;
+        int m_ColorPyramidKDownSampleColor;
+        int m_ColorPyramidKDownSampleColorClamped;
 
         ComputeShader m_DepthPyramidCS;
         RTHandle m_DepthPyramidBuffer;
@@ -34,7 +36,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ComputeShader depthPyramidCS, GPUCopy gpuCopy)
         {
             m_ColorPyramidCS = colorPyramidCS;
-            m_ColorPyramidKernel = m_ColorPyramidCS.FindKernel("KMain");
+            m_ColorPyramidKDownSampleColor = m_ColorPyramidCS.FindKernel("KDownSampleColor");
+            m_ColorPyramidKDownSampleColorClamped = m_ColorPyramidCS.FindKernel("KDownSampleColorClamped");
 
             m_DepthPyramidCS = depthPyramidCS;
             m_GPUCopy = gpuCopy;
@@ -70,7 +73,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ClearBuffers(HDCamera hdCamera, CommandBuffer cmd)
         {
-            HDUtils.SetRenderTarget(cmd, hdCamera, m_ColorPyramidBuffer, ClearFlag.Color, Color.clear);
+            HDUtils.SetRenderTarget(cmd, hdCamera, m_ColorPyramidBuffer, ClearFlag.Color, Color.black);
             HDUtils.SetRenderTarget(cmd, hdCamera, m_DepthPyramidBuffer, ClearFlag.Color, Color.clear);
         }
 
@@ -332,16 +335,83 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // TODO: Add proper stereo support to the compute job
 
-                cmd.SetComputeTextureParam(m_ColorPyramidCS, m_ColorPyramidKernel, _Source, src);
-                cmd.SetComputeTextureParam(m_ColorPyramidCS, m_ColorPyramidKernel, _Result, dest);
-                // _Size is used as a scale inside the whole render target so here we need to keep the full size (and not the scaled size depending on the current camera)
-                cmd.SetComputeVectorParam(m_ColorPyramidCS, _Size, new Vector4(dest.rt.width, dest.rt.height, 1f / dest.rt.width, 1f / dest.rt.height));
-                cmd.DispatchCompute(
-                    m_ColorPyramidCS,
-                    m_ColorPyramidKernel,
-                    Mathf.CeilToInt(dstMipWidth / 8f),
-                    Mathf.CeilToInt(dstMipHeight / 8f),
-                    1);
+                unsafe
+                {
+                    RectUInt dispatch16FullRect = RectUInt.zero;
+                    RectUInt* dispatch16Clamped = stackalloc RectUInt[3];
+                    int dispatch16ClampedCount = 0;
+
+                    RectUInt dstRect = new RectUInt(0, 0, (uint)dstMipWidth, (uint)dstMipHeight);
+
+                    if (TileLayoutUtils.TryLayoutByTiles(
+                        dstRect, 
+                        8,
+                        out dispatch16FullRect,
+                        out dispatch16Clamped[0],
+                        out dispatch16Clamped[1],
+                        out dispatch16Clamped[2]
+                        ))
+                    {
+                        dispatch16ClampedCount = 3;
+                    }
+                    else
+                    {
+                        dispatch16Clamped[0] = dstRect;
+                        dispatch16ClampedCount = 1;
+                    }
+
+                    cmd.SetComputeIntParams(m_ColorPyramidCS, _SrcViewport, 0, 0, Math.Max(srcMipWidth - 1, 1), Mathf.Max(srcMipHeight - 1, 1));
+                    // _SrcSize is used as a scale inside the whole render target so here we need to keep the full size (and not the scaled size depending on the current camera)
+                    cmd.SetComputeVectorParam(m_ColorPyramidCS, _DstSize, new Vector4(dest.rt.width, dest.rt.height, 1f / dest.rt.width, 1f / dest.rt.height));
+                    
+                    cmd.SetComputeTextureParam(m_ColorPyramidCS, m_ColorPyramidKDownSampleColor, _Source, src);
+                    cmd.SetComputeTextureParam(m_ColorPyramidCS, m_ColorPyramidKDownSampleColorClamped, _Source, src);
+                    cmd.SetComputeTextureParam(m_ColorPyramidCS, m_ColorPyramidKDownSampleColor, _Result, dest);
+                    cmd.SetComputeTextureParam(m_ColorPyramidCS, m_ColorPyramidKDownSampleColorClamped, _Result, dest);
+
+                    if (dispatch16FullRect.width > 0  && dispatch16FullRect.height > 0)
+                    {
+                        cmd.SetComputeIntParams(
+                            m_ColorPyramidCS, 
+                            HDShaderIDs._RectOffset, 
+                            (int)dispatch16FullRect.x,
+                            (int)dispatch16FullRect.y
+                        );
+                        cmd.DispatchCompute(
+                            m_ColorPyramidCS,
+                            m_ColorPyramidKDownSampleColor,
+                            (int)(dispatch16FullRect.width / 8u),
+                            (int)(dispatch16FullRect.height / 8u),
+                            1
+                        );
+                    }
+                        
+
+                    for (var j = 0; j < dispatch16ClampedCount; ++j)
+                    {
+                        var rect = dispatch16Clamped[j];
+                        if (rect.width > 0 && rect.height > 0)
+                        {
+                            cmd.SetComputeIntParams(
+                                m_ColorPyramidCS, 
+                                HDShaderIDs._RectOffset, 
+                                (int)rect.x,
+                                (int)rect.y
+                            );
+                            cmd.DispatchCompute(
+                                m_ColorPyramidCS,
+                                m_ColorPyramidKDownSampleColorClamped,
+                                (int)Mathf.Max(rect.width / 8u, 1),
+                                (int)Mathf.Max(rect.height / 8u, 1),
+                                1
+                            );
+                        }
+                    }
+                }
+
+                
+
+                
                 // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
                 cmd.CopyTexture(m_ColorPyramidMips[i], 0, 0, 0, 0, dstMipWidth, dstMipHeight, m_ColorPyramidBuffer, 0, i + 1, 0, 0);
 
