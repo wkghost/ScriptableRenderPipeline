@@ -89,6 +89,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newAsset.copyStencilBuffer = Load<Shader>(HDRenderPipelinePath + "RenderPipelineResources/CopyStencilBuffer.shader");
                 newAsset.copyDepthBuffer = Load<Shader>(HDRenderPipelinePath + "RenderPipelineResources/CopyDepthBuffer.shader");
                 newAsset.blit = Load<Shader>(HDRenderPipelinePath + "RenderPipelineResources/Blit.shader");
+                newAsset.texturePaddingCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipelineResources/TexturePadding.compute");
 
                 // Sky
                 newAsset.blitCubemap = Load<Shader>(HDRenderPipelinePath + "Sky/BlitCubemap.shader");

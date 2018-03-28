@@ -31,6 +31,7 @@ SamplerState sampler_LinearClamp;
 CBUFFER_START(cb)
     float4 _DstSize;
     int4 _SrcViewport;            // (x, y, xMax, yMax)
+    int4 _DstViewport;            // (x, y, xMax, yMax)
     int2 _RectOffset;
 CBUFFER_END
 
@@ -181,6 +182,15 @@ void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThrea
 
     GroupMemoryBarrierWithGroupSync();
 
+    const int2 pixCoord = _RectOffset + dispatchThreadId;
+#ifdef FEATURE_VIEWPORT
     // Vertically blur the pixels in LDS and write the result to memory
-    BlurVertically(_RectOffset + dispatchThreadId, (groupThreadId.y << 3u) + groupThreadId.x);
+    if  (  pixCoord.x < _DstViewport.x
+        || pixCoord.y < _DstViewport.y
+        || pixCoord.x > _DstViewport.z
+        || pixCoord.y > _DstViewport.w
+        )
+        return;
+#endif
+    BlurVertically(pixCoord, (groupThreadId.y << 3u) + groupThreadId.x);
 }

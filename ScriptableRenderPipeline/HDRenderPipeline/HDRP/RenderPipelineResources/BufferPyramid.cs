@@ -11,9 +11,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         static readonly int _DstSize = Shader.PropertyToID("_DstSize");
         static readonly int _SrcSize = Shader.PropertyToID("_SrcSize");
         static readonly int _SrcViewport = Shader.PropertyToID("_SrcViewport");
+        static readonly int _DstViewport = Shader.PropertyToID("_DstViewport");
         const int k_DepthBlockSize = 4;
 
         GPUCopy m_GPUCopy;
+        TexturePadding m_TexturePadding;
         ComputeShader m_ColorPyramidCS;
 
         RTHandle m_ColorPyramidBuffer;
@@ -33,7 +35,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public BufferPyramid(
             ComputeShader colorPyramidCS,
-            ComputeShader depthPyramidCS, GPUCopy gpuCopy)
+            ComputeShader depthPyramidCS, 
+            GPUCopy gpuCopy,
+            TexturePadding texturePadding
+            )
         {
             m_ColorPyramidCS = colorPyramidCS;
             m_ColorPyramidKDownSampleColor = m_ColorPyramidCS.FindKernel("KDownSampleColor");
@@ -41,6 +46,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DepthPyramidCS = depthPyramidCS;
             m_GPUCopy = gpuCopy;
+            m_TexturePadding = texturePadding;
             m_DepthKernels = new int[]
             {
                 m_DepthPyramidCS.FindKernel("KDepthDownSample8"),
@@ -169,6 +175,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // we use unsafe block to allocate struct arrays on the stack
                 unsafe 
                 {
+                    // TODO: Maybe faster to pad texture appriopriately instead of sampling inside a viewport
+
                     // Calculate rects to dispatch
                     // We try to launch the 16x16 kernel as much as we can
                     // So we layout the rect viewport in several rect where we choose the proper kernel
@@ -311,6 +319,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ScriptableRenderContext renderContext,
             RTHandle colorTexture)
         {
+            // TODO: Maybe faster to pad texture appriopriately instead of sampling inside a viewport
+
             int lodCount = GetPyramidLodCount(hdCamera);
             UpdatePyramidMips(hdCamera, m_ColorPyramidBuffer.rt.format, m_ColorPyramidMips, lodCount);
 
@@ -361,6 +371,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
 
                     cmd.SetComputeIntParams(m_ColorPyramidCS, _SrcViewport, 0, 0, Math.Max(srcMipWidth - 1, 1), Mathf.Max(srcMipHeight - 1, 1));
+                    cmd.SetComputeIntParams(m_ColorPyramidCS, _DstViewport, 0, 0, Math.Max(dstMipWidth - 1, 1), Mathf.Max(dstMipHeight - 1, 1));
                     // _SrcSize is used as a scale inside the whole render target so here we need to keep the full size (and not the scaled size depending on the current camera)
                     cmd.SetComputeVectorParam(m_ColorPyramidCS, _DstSize, new Vector4(dest.rt.width, dest.rt.height, 1f / dest.rt.width, 1f / dest.rt.height));
                     
@@ -408,12 +419,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                     }
                 }
-
                 
+                var dstMipWidthToCopy = dstMipWidth;
+                var dstMipHeightToCopy = dstMipHeight;
 
-                
+                if (dstMipWidth != dest.rt.width || dstMipHeight != dest.rt.height)
+                {
+                    // When we use a viewport inside the RTHandle, we still want to be able to use a clamped sampler
+                    // So we copy an extra pixel in both x and y, this way, it will fake a clamped linear sampling.
+                    var padWidth = dstMipWidth != dest.rt.width;
+                    var padHeight = dstMipHeight != dest.rt.height;
+                    if (padWidth)
+                        m_TexturePadding.PadTextureRightCol(cmd, dest, dstMipWidth, dstMipHeight);
+                    if (padHeight)
+                        m_TexturePadding.PadTextureTopRow(cmd, dest, dstMipWidth, dstMipHeight);
+                    if (padWidth && padHeight)
+                        m_TexturePadding.PadTextureTopRight(cmd, dest, dstMipWidth, dstMipHeight);
+
+                    dstMipWidthToCopy = dstMipWidth + 1;
+                    dstMipHeightToCopy = dstMipHeight + 1;
+                }
+
                 // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
-                cmd.CopyTexture(m_ColorPyramidMips[i], 0, 0, 0, 0, dstMipWidth, dstMipHeight, m_ColorPyramidBuffer, 0, i + 1, 0, 0);
+                cmd.CopyTexture(m_ColorPyramidMips[i], 0, 0, 0, 0, dstMipWidthToCopy, dstMipHeightToCopy, m_ColorPyramidBuffer, 0, i + 1, 0, 0);
 
                 src = dest;
             }

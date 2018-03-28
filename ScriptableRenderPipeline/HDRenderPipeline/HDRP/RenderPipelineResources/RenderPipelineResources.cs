@@ -43,6 +43,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Shader copyStencilBuffer;
         public Shader copyDepthBuffer;
         public Shader blit;
+        public ComputeShader texturePaddingCS;
 
         // Sky
         public Shader blitCubemap;
