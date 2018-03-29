@@ -24,6 +24,10 @@ float4 _ColorPyramidScale;      // (x,y) = Screen Scale, z = lod count, w = unus
 float4 _DepthPyramidScale;      // (x,y) = Screen Scale, z = lod count, w = unused
 CBUFFER_END
 
+CBUFFER_START(UnityScreenSpaceLightingParameters)
+float _InvScreenWeightDistance;     // Distance for screen space smoothstep with fallback
+CBUFFER_END
+
 // Ambient occlusion texture
 TEXTURE2D(_AmbientOcclusionTexture);
 
@@ -1839,17 +1843,19 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             if (!hitSuccessful)
                 return lighting;
 
+            float2 weightNDC = clamp(min(hit.positionNDC, 1 - hit.positionNDC) * _InvScreenWeightDistance, 0, 1);
+            weightNDC = weightNDC * weightNDC * (3 - 2 * weightNDC);
+            float weight = weightNDC.x * weightNDC.y;
+
             // Exit if texel is out of color buffer
             // Or if the texel is from an object in front of the object
             if (hit.linearDepth < posInput.linearDepth
-                || any(hit.positionNDC < 0.0)
-                || any(hit.positionNDC > 1.0))
+                || weight == 0)
             {
                 // Do nothing and don't update the hierarchy weight so we can fall back on refraction probe
                 return lighting;
             }
 
-            float weight = 1.0;
             UpdateLightingHierarchyWeights(hierarchyWeight, weight); // Shouldn't be needed, but safer in case we decide to change hierarchy priority
 
             float3 preLD = SAMPLE_TEXTURE2D_LOD(

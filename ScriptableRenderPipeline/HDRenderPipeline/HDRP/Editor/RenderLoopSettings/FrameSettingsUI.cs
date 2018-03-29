@@ -15,6 +15,7 @@ namespace UnityEditor.Experimental.Rendering
                 SectionRenderingSettings,
                 SectionXRSettings,
                 SectionLightingSettings,
+                SectionScreenSpaceSettings,
                 CED.Select(
                     (s, d, o) => s.lightLoopSettings,
                     (s, d, o) => d.lightLoopSettings,
@@ -62,17 +63,24 @@ namespace UnityEditor.Experimental.Rendering
             FoldoutOption.Indent,
             CED.LabelWidth(250, CED.Action(Drawer_SectionLightingSettings)));
 
+        public static CED.IDrawer SectionScreenSpaceSettings = CED.FoldoutGroup(
+            "ScreenSpace Settings",
+            (s, p, o) => s.isSectionExpandedScreenSpaceSettings,
+            FoldoutOption.Indent,
+            CED.LabelWidth(250, CED.Action(Drawer_SectionScreenSpaceSettings)));
+
         public AnimBool isSectionExpandedRenderingPasses { get { return m_AnimBools[0]; } }
         public AnimBool isSectionExpandedLightingSettings { get { return m_AnimBools[1]; } }
         public AnimBool isSectionExpandedRenderingSettings { get { return m_AnimBools[2]; } }
         public AnimBool isSectionExpandedXRSettings { get { return m_AnimBools[3]; } }
         public AnimBool isSectionExpandedXRSupported { get { return m_AnimBools[4]; } }
         public AnimBool isSectionExpandedUseForwardOnly { get { return m_AnimBools[5]; } }
+        public AnimBool isSectionExpandedScreenSpaceSettings { get { return m_AnimBools[6]; } }
 
         public LightLoopSettingsUI lightLoopSettings = new LightLoopSettingsUI();
 
         public FrameSettingsUI()
-             : base(7)
+             : base(8)
         {
         }
 
@@ -136,6 +144,11 @@ namespace UnityEditor.Experimental.Rendering
             EditorGUILayout.PropertyField(p.enableShadow, _.GetContent("Enable Shadow"));
             EditorGUILayout.PropertyField(p.enableContactShadow, _.GetContent("Enable Contact Shadows"));
             EditorGUILayout.PropertyField(p.enableShadowMask, _.GetContent("Enable Shadow Masks"));
+        }
+
+        static void Drawer_SectionScreenSpaceSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)
+        {
+            EditorGUILayout.PropertyField(p.screenSpaceFallbackNDCThreshold, _.GetContent("Screen Space Fallback NDC Threshold"));
         }
     }
 }

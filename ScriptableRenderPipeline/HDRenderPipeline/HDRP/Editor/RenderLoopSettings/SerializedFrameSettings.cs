@@ -39,6 +39,8 @@ namespace UnityEditor.Experimental.Rendering
 
         public SerializedProperty enableShadowMask;
 
+        public SerializedProperty screenSpaceFallbackNDCThreshold;
+
         public SerializedLightLoopSettings lightLoopSettings;
 
 
@@ -71,6 +73,7 @@ namespace UnityEditor.Experimental.Rendering
             enableTransparentObjects = root.Find((FrameSettings d) => d.enableTransparentObjects);
             enableMSAA = root.Find((FrameSettings d) => d.enableMSAA);
             enableShadowMask = root.Find((FrameSettings d) => d.enableShadowMask);
+            screenSpaceFallbackNDCThreshold = root.Find((FrameSettings d) => d.screenSpaceFallbackNDCThreshold);
 
             lightLoopSettings = new SerializedLightLoopSettings(root.Find((FrameSettings d) => d.lightLoopSettings));
         }

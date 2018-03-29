@@ -17,6 +17,7 @@ namespace UnityEditor.Experimental.Rendering
         public SerializedProperty supportMotionVectors;
         public SerializedProperty supportStereo;
         public SerializedProperty enableUltraQualitySSS;
+        public SerializedProperty screenWeightDistance;
 
         public SerializedProperty ssRayMinLevel;
         public SerializedProperty ssRayMaxLevel;

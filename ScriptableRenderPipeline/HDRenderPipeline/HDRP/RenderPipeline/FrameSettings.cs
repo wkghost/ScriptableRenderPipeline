@@ -49,6 +49,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public LightLoopSettings lightLoopSettings = new LightLoopSettings();
 
+        [Range(0.0f, 0.5f)]
+        public float screenSpaceFallbackNDCThreshold = 0.1f;
+
         public void CopyTo(FrameSettings frameSettings)
         {
             frameSettings.enableShadow = this.enableShadow;
@@ -84,6 +87,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             frameSettings.enableMSAA = this.enableMSAA;
 
             frameSettings.enableShadowMask = this.enableShadowMask;
+
+            frameSettings.screenSpaceFallbackNDCThreshold = this.screenSpaceFallbackNDCThreshold;
 
             this.lightLoopSettings.CopyTo(frameSettings.lightLoopSettings);
         }
@@ -163,6 +168,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 aggregate.enableStereo = false;
                 aggregate.enableShadowMask = false;
             }
+
+            aggregate.screenSpaceFallbackNDCThreshold = srcFrameSettings.screenSpaceFallbackNDCThreshold;
 
             LightLoopSettings.InitializeLightLoopSettings(camera, aggregate, renderPipelineSettings, srcFrameSettings, ref aggregate.lightLoopSettings);
         }
@@ -268,6 +275,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         new DebugUI.BoolField { displayName = "Enable Shadows", getter = () => frameSettings.enableShadow, setter = value => frameSettings.enableShadow = value },
                         new DebugUI.BoolField { displayName = "Enable Contact Shadows", getter = () => frameSettings.enableContactShadows, setter = value => frameSettings.enableContactShadows = value },
                         new DebugUI.BoolField { displayName = "Enable ShadowMask", getter = () => frameSettings.enableShadowMask, setter = value => frameSettings.enableShadowMask = value },
+                    }
+                },
+                new DebugUI.Container
+                {
+                    displayName = "Screen Space Settings",
+                    children =
+                    {
+                        new DebugUI.FloatField { displayName = "Screen Space Fallback NDC Threshold", getter = () => frameSettings.screenSpaceFallbackNDCThreshold, setter = value => frameSettings.screenSpaceFallbackNDCThreshold = value, min = () => 0, max = () => 0.5f, incStep = 0.01f, incStepMult = 0.1f },
                     }
                 }
             });

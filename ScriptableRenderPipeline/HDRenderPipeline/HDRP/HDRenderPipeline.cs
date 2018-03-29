@@ -475,6 +475,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_DbufferManager.PushGlobalParams(cmd, m_FrameSettings);
 
                 m_VolumetricLightingModule.PushGlobalParams(hdCamera, cmd);
+
+                cmd.SetGlobalFloat(HDShaderIDs._InvScreenWeightDistance, 1f / m_FrameSettings.screenSpaceFallbackNDCThreshold);
             }
         }
 
