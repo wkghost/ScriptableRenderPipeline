@@ -25,8 +25,8 @@
 // Texture buffers
 // ------------------------------------------------
 
-Texture2D<float> _Source;
-RWTexture2D<float> _Result;
+Texture2D<float2> _Source;
+RW_TEXTURE2D(float2, _Result);
 
 SamplerState sampler_PointClamp;    //TODO: could we use min-sampler instead of using ALU?
 
@@ -42,6 +42,14 @@ CBUFFER_END
 // Kernel
 // ------------------------------------------------
 
+#if UNITY_REVERSED_Z
+# define MIN_DEPTH(l, r) max(l, r)
+# define MAX_DEPTH(l, r) min(l, r)
+#else
+# define MIN_DEPTH(l, r) min(l, r)
+# define MAX_DEPTH(l, r) max(l, r)
+#endif
+
 [numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]
 void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
 {
@@ -53,7 +61,6 @@ void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThrea
 #if defined(PLATFORM_SUPPORT_GATHER)
     float4 depths = GATHER_RED_TEXTURE2D(_Source, sampler_PointClamp, offset * _SrcSize.zw, 0.0).wzxy;
 #else
-    // Downsample the block
     float p00 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_PointClamp, (offset) * _SrcSize.zw, 0.0).x;
     float p10 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_PointClamp, (offset + float2(1.0, 0.0)) * _SrcSize.zw, 0.0).x;
     float p01 = SAMPLE_TEXTURE2D_LOD(_Source, sampler_PointClamp, (offset + float2(0.0, 1.0)) * _SrcSize.zw, 0.0).x;
@@ -61,26 +68,25 @@ void KERNEL_NAME(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThrea
     float4 depths = float4(p00, p10, p01, p11);
 #endif
 
-#if UNITY_REVERSED_Z
-# define MIN_OP(l, r) max(l, r)
-#else
-# define MIN_OP(l, r) min(l, r)
-#endif
-
     // Select the nearest sample
 #if PATTERN == 0
-    float minDepth = MIN_OP(MIN_OP(depths.x, depths.y), MIN_OP(depths.z, depths.w));
+    float minDepth = MIN_DEPTH(MIN_DEPTH(depths.x, depths.y), MIN_DEPTH(depths.z, depths.w));
+    float maxDepth = MAX_DEPTH(MAX_DEPTH(depths.x, depths.y), MAX_DEPTH(depths.z, depths.w));
 #elif PATTERN == 1
-    float minDepth = MIN_OP(depths.x, depths.z);
+    float minDepth = MIN_DEPTH(depths.x, depths.z);
+    float maxDepth = MAX_DEPTH(depths.x, depths.z);
 #elif PATTERN == 2
-    float minDepth = MIN_OP(depths.x, depths.y);
+    float minDepth = MIN_DEPTH(depths.x, depths.y);
+    float maxDepth = MAX_DEPTH(depths.x, depths.y);
 #elif PATTERN == 3
     float minDepth = depths.x;
+    float maxDepth = depths.x;
 #endif
-
-#undef MIN_OP
 
     // Write to the final target
     uint2 dstPixel = (_RectOffset >> 1) + dispatchThreadId;
-    _Result[dstPixel] = minDepth;
+    _Result[dstPixel] = float2(minDepth, maxDepth);
 }
+
+#undef MIN_DEPTH
+#undef MAX_DEPTH

@@ -74,7 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void CreateBuffers()
         {
             m_ColorPyramidBuffer = RTHandle.Alloc(size => CalculatePyramidSize(size), filterMode: FilterMode.Trilinear, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, useMipMap: true, autoGenerateMips: false, name: "ColorPymarid");
-            m_DepthPyramidBuffer = RTHandle.Alloc(size => CalculatePyramidSize(size), filterMode: FilterMode.Trilinear, colorFormat: RenderTextureFormat.RFloat, sRGB: false, useMipMap: true, autoGenerateMips: false, enableRandomWrite: true, name: "DepthPyramid"); // Need randomReadWrite because we downsample the first mip with a compute shader.
+            m_DepthPyramidBuffer = RTHandle.Alloc(size => CalculatePyramidSize(size), filterMode: FilterMode.Trilinear, colorFormat: RenderTextureFormat.RGFloat, sRGB: false, useMipMap: true, autoGenerateMips: false, enableRandomWrite: true, name: "DepthPyramid"); // Need randomReadWrite because we downsample the first mip with a compute shader.
         }
 
         public void ClearBuffers(HDCamera hdCamera, CommandBuffer cmd)
@@ -150,11 +150,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Vector2 scale = GetPyramidToScreenScale(hdCamera);
             cmd.SetGlobalVector(HDShaderIDs._DepthPyramidSize, new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight));
             cmd.SetGlobalVector(HDShaderIDs._DepthPyramidScale, new Vector4(scale.x, scale.y, lodCount, 0.0f));
-            for (var i = 0 ; i < lodCount; ++i)
-            {
-                cmd.SetRenderTarget(m_DepthPyramidBuffer, i);
-                cmd.ClearRenderTarget(false, true, Color.white, 0);
-            }
             m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, depthTexture, m_DepthPyramidBuffer, hdCamera.actualRect);
 
             RTHandle src = m_DepthPyramidBuffer;
@@ -305,8 +300,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
+                var dstMipWidthToCopy = dstMipWidth;
+                var dstMipHeightToCopy = dstMipHeight;
+
+                if (dstMipWidth != dest.rt.width || dstMipHeight != dest.rt.height)
+                {
+                    // When we use a viewport inside the RTHandle, we still want to be able to use a clamped sampler
+                    // So we copy an extra pixel in both x and y, this way, it will fake a clamped linear sampling.
+                    var padWidth = dstMipWidth != dest.rt.width;
+                    var padHeight = dstMipHeight != dest.rt.height;
+                    if (padWidth)
+                        m_TexturePadding.PadTextureRightCol(cmd, dest, dstMipWidth, dstMipHeight);
+                    if (padHeight)
+                        m_TexturePadding.PadTextureTopRow(cmd, dest, dstMipWidth, dstMipHeight);
+                    if (padWidth && padHeight)
+                        m_TexturePadding.PadTextureTopRight(cmd, dest, dstMipWidth, dstMipHeight);
+
+                    dstMipWidthToCopy = dstMipWidth + 1;
+                    dstMipHeightToCopy = dstMipHeight + 1;
+                }
+
                 // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
-                cmd.CopyTexture(m_DepthPyramidMips[i], 0, 0, 0, 0, dstMipWidth, dstMipHeight, m_DepthPyramidBuffer, 0, i + 1, 0, 0);
+                cmd.CopyTexture(m_DepthPyramidMips[i], 0, 0, 0, 0, dstMipWidthToCopy, dstMipHeightToCopy, m_DepthPyramidBuffer, 0, i + 1, 0, 0);
                 src = dest;
             }
 
