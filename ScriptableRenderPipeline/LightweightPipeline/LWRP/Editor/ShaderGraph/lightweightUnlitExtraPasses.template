@@ -23,6 +23,7 @@ ${Defines}
     #include "LWRP/ShaderLibrary/Core.hlsl"
     #include "LWRP/ShaderLibrary/Lighting.hlsl"
     #include "ShaderGraphLibrary/Functions.hlsl"
+    #include "CoreRP/ShaderLibrary/Color.hlsl"
 
 ${Graph}
     // x: global clip space bias, y: normal world space bias
@@ -90,6 +91,7 @@ ${Defines}
     #include "LWRP/ShaderLibrary/Core.hlsl"
     #include "LWRP/ShaderLibrary/Lighting.hlsl"
     #include "ShaderGraphLibrary/Functions.hlsl"
+    #include "CoreRP/ShaderLibrary/Color.hlsl"
 
 ${Graph}
     float4 vert(GraphVertexInput v) : SV_POSITION

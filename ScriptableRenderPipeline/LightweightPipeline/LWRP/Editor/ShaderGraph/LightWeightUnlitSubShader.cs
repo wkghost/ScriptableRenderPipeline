@@ -134,7 +134,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // -------------------------------------
             // Get Requirements
 
-            var vertexRequirements = ShaderGraphRequirements.FromNodes(vertexNodes, ShaderStageCapability.Vertex);
+            var vertexRequirements = ShaderGraphRequirements.FromNodes(vertexNodes, ShaderStageCapability.Vertex, false);
             var pixelRequirements = ShaderGraphRequirements.FromNodes(pixelNodes, ShaderStageCapability.Fragment);
             var surfaceRequirements = ShaderGraphRequirements.FromNodes(pixelNodes, ShaderStageCapability.Fragment, false);
 
@@ -310,13 +310,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             graph.AppendLine(shaderProperties.GetPropertiesDeclaration(1));
 
+            graph.AppendLine(vertexDescriptionInputStruct.ToString());
+            graph.AppendLine(surfaceDescriptionInputStruct.ToString());
+
             graph.AppendLine(functionBuilder.ToString());
 
-            graph.AppendLine(vertexDescriptionInputStruct.ToString());
             graph.AppendLine(vertexDescriptionStruct.ToString());
             graph.AppendLine(vertexDescriptionFunction.ToString());
-            
-            graph.AppendLine(surfaceDescriptionInputStruct.ToString());
+        
             graph.AppendLine(surfaceDescriptionStruct.ToString());
             graph.AppendLine(surfaceDescriptionFunction.ToString());
 
@@ -382,7 +383,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // -------------------------------------
             // Get requirements
 
-            var vertexRequirements = ShaderGraphRequirements.FromNodes(vertexNodes, ShaderStageCapability.Vertex);
+            var vertexRequirements = ShaderGraphRequirements.FromNodes(vertexNodes, ShaderStageCapability.Vertex, false);
 
             var modelRequiements = ShaderGraphRequirements.none;
             modelRequiements.requiresNormal |= m_VertexCoordinateSpace;
@@ -487,9 +488,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             graph.AppendLine(shaderProperties.GetPropertiesDeclaration(1));
 
+            graph.AppendLine(vertexDescriptionInputStruct.ToString());
+
             graph.AppendLine(functionBuilder.ToString());
 
-            graph.AppendLine(vertexDescriptionInputStruct.ToString());
             graph.AppendLine(vertexDescriptionStruct.ToString());
             graph.AppendLine(vertexDescriptionFunction.ToString());
 
