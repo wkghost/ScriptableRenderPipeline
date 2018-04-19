@@ -137,6 +137,7 @@ Pass
 
     #pragma shader_feature _SPECGLOSSMAP
 
-    #include "LWRP/ShaderLibrary/LightweightPassMeta.hlsl"
+    #include "LWRP/ShaderLibrary/InputSurfacePBR.hlsl"
+    #include "LWRP/ShaderLibrary/LightweightPassMetaPBR.hlsl"
     ENDHLSL
 }
