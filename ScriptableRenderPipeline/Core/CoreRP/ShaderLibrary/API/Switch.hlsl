@@ -1,24 +1,10 @@
-// This file assume SHADER_API_D3D11 is defined
-
-#define INTRINSIC_BITFIELD_EXTRACT
-#define BitFieldExtract __v_bfe_u32
-#define INTRINSIC_BITFIELD_EXTRACT_SIGN_EXTEND
-#define BitFieldExtractSignExtend __v_bfe_i32
-#define INTRINSIC_BITFIELD_INSERT
-#define BitFieldInsert __v_bfi_b32
-#define INTRINSIC_WAVEREADFIRSTLANE
-#define WaveReadFirstLane ReadFirstLane
-#define INTRINSIC_MAD24
-#define Mad24 mad24
-#define INTRINSIC_MINMAX3
-#define Min3 min3
-#define Max3 max3
-#define INTRINSIC_CUBEMAP_FACE_ID
+// This file assume SHADER_API_SWITCH is defined
+// TODO: This is a straight copy from D3D11.hlsl. Go through all this stuff and adjust where needed.
 
 #define UNITY_UV_STARTS_AT_TOP 1
 #define UNITY_REVERSED_Z 1
 #define UNITY_NEAR_CLIP_VALUE (1.0)
-// This value will not go through any matrix projection convertion
+// This value will not go through any matrix projection conversion
 #define UNITY_RAW_FAR_CLIP_VALUE (0.0)
 #define VERTEXID_SEMANTIC SV_VertexID
 #define FRONT_FACE_SEMANTIC SV_IsFrontFace
@@ -42,7 +28,7 @@
 
 // Texture util abstraction
 
-#define CALCULATE_TEXTURE2D_LOD(textureName, samplerName, coord2) textureName.GetLOD(samplerName, coord2)
+#define CALCULATE_TEXTURE2D_LOD(textureName, samplerName, coord2) textureName.CalculateLevelOfDetail(samplerName, coord2)
 
 // Texture abstraction
 
@@ -57,8 +43,8 @@
 #define TEXTURECUBE_SHADOW(textureName)       TEXTURECUBE(textureName)
 #define TEXTURECUBE_ARRAY_SHADOW(textureName) TEXTURECUBE_ARRAY(textureName)
 
-#define RW_TEXTURE2D(type, textureName)       RW_Texture2D<type> textureName
-#define RW_TEXTURE3D(type, textureName)       RW_Texture3D<type> textureName
+#define RW_TEXTURE2D(type, textureName)       RWTexture2D<type> textureName
+#define RW_TEXTURE3D(type, textureName)       RWTexture3D<type> textureName
 
 #define SAMPLER(samplerName)                  SamplerState samplerName
 #define SAMPLER_CMP(samplerName)              SamplerComparisonState samplerName
@@ -109,14 +95,20 @@
 #define SAMPLE_DEPTH_TEXTURE(textureName, samplerName, coord2)          SAMPLE_TEXTURE2D(textureName, samplerName, coord2).r
 #define SAMPLE_DEPTH_TEXTURE_LOD(textureName, samplerName, coord2, lod) SAMPLE_TEXTURE2D_LOD(textureName, samplerName, coord2, lod).r
 
-#define LOAD_TEXTURE2D(textureName, unCoord2)                                   textureName.Load(int3(unCoord2, 0))
-#define LOAD_TEXTURE2D_LOD(textureName, unCoord2, lod)                          textureName.Load(int3(unCoord2, lod))
-#define LOAD_TEXTURE2D_MSAA(textureName, unCoord2, sampleIndex)                 textureName.Load(unCoord2, sampleIndex)
-#define LOAD_TEXTURE2D_ARRAY(textureName, unCoord2, index)                      textureName.Load(int4(unCoord2, index, 0))
-#define LOAD_TEXTURE2D_ARRAY_MSAA(textureName, unCoord2, index, sampleIndex)    textureName.Load(int4(unCoord2, index, 0), sampleIndex)
-#define LOAD_TEXTURE2D_ARRAY_LOD(textureName, unCoord2, index, lod)             textureName.Load(int4(unCoord2, index, lod))
-#define LOAD_TEXTURE3D(textureName, unCoord3)                                   textureName.Load(int4(unCoord3, 0))
-#define LOAD_TEXTURE3D_LOD(textureName, unCoord3, lod)                          textureName.Load(int4(unCoord3, lod))
+float4 switch_load_texture2d(Texture2D texName, uint2 unCoord2) {
+    uint _tw; uint _th;
+    texName.GetDimensions(_tw, _th);
+    unCoord2 = clamp(unCoord2, uint2(0, 0), uint2(_tw-1, _th-1));
+    return texName.Load(int3(unCoord2, 0));
+}
+//(kc)#define LOAD_TEXTURE2D(textureName, unCoord2)                       textureName.Load(int3(unCoord2, 0))
+#define LOAD_TEXTURE2D(textureName, unCoord2)                       switch_load_texture2d(textureName, unCoord2)
+#define LOAD_TEXTURE2D_LOD(textureName, unCoord2, lod)              textureName.Load(int3(unCoord2, lod))
+#define LOAD_TEXTURE2D_MSAA(textureName, unCoord2, sampleIndex)     textureName.Load(unCoord2, sampleIndex)
+#define LOAD_TEXTURE2D_ARRAY(textureName, unCoord2, index)          textureName.Load(int4(unCoord2, index, 0))
+#define LOAD_TEXTURE2D_ARRAY_LOD(textureName, unCoord2, index, lod) textureName.Load(int4(unCoord2, index, lod))
+#define LOAD_TEXTURE3D(textureName, unCoord3)                       textureName.Load(int4(unCoord3, 0))
+#define LOAD_TEXTURE3D_LOD(textureName, unCoord3, lod)              textureName.Load(int4(unCoord3, lod))
 
 #define PLATFORM_SUPPORT_GATHER
 #define GATHER_TEXTURE2D(textureName, samplerName, coord2, offset)        textureName.Gather(samplerName, coord2, offset)
