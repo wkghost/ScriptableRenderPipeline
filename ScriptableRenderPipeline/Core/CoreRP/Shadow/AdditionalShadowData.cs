@@ -1,6 +1,9 @@
+using System.Collections.Generic;
+
 namespace UnityEngine.Experimental.Rendering
 {
     [RequireComponent(typeof(Light))]
+    [ExecuteInEditMode]
     public class AdditionalShadowData : MonoBehaviour
     {
 #pragma warning disable 414 // CS0414 The private field '...' is assigned but its value is never used
@@ -125,6 +128,78 @@ namespace UnityEngine.Experimental.Rendering
             }
             return -1;
         }
+
+        // Shadow Planes
+        [HideInInspector, SerializeField]
+        private ShadowPlane[] m_ShadowPlanes; // serialized to handle copy/paste
+        private ShadowPlane.Params[] m_ShadowPlaneParams;
+
+        public ShadowPlane[] ShadowPlanes { get { ValidateShadowPlanes(); return m_ShadowPlanes; } }
+        public ShadowPlane.Params[] ShadowPlaneParams { get { ValidateShadowPlanes(); return m_ShadowPlaneParams; } }
+
+        void InvalidateShadowPlanes() { m_ShadowPlanes = null; }
+        void ValidateShadowPlanes()
+        {
+            if (m_ShadowPlanes != null)
+            {
+#if UNITY_EDITOR
+                // Did we just get copy/pasted?
+                if (m_ShadowPlanes.Length > 0 && m_ShadowPlanes[0].transform.parent != transform)
+                {
+                    var newPlanes = new ShadowPlane[m_ShadowPlanes.Length];
+                    m_ShadowPlanes.CopyTo(newPlanes, 0);
+                    m_ShadowPlanes = null;
+                    var oldPlanes = GetComponents<ShadowPlane>();
+                    foreach (var p in oldPlanes)
+                        UnityEditor.Undo.DestroyObjectImmediate(p.gameObject);
+                    foreach (var p in newPlanes)
+                        AddShadowPlane(p);
+                }
+                else
+#endif
+                    return;
+            }
+            List<ShadowPlane> planes = new List<ShadowPlane>();
+            GetComponentsInChildren(planes);
+            for (int i = planes.Count-1; i >= 0; --i)
+                if (planes[i].transform.parent != transform)
+                    planes.RemoveAt(i);
+            foreach (var p in planes)
+            m_ShadowPlanes = planes.ToArray();
+            if (m_ShadowPlanes == null)
+                m_ShadowPlanes = new ShadowPlane[0];
+            m_ShadowPlaneParams = new ShadowPlane.Params[m_ShadowPlanes.Length];
+            for (int i = 0; i < m_ShadowPlanes.Length; ++i)
+			    m_ShadowPlaneParams[i] = m_ShadowPlanes[i].ShadowParams;
+        }
+
+        public ShadowPlane AddShadowPlane(ShadowPlane copyFrom = null)
+        {
+            GameObject go = new GameObject("Shadow Plane", typeof(ShadowPlane));
+#if UNITY_EDITOR
+            UnityEditor.Undo.RegisterCreatedObjectUndo(go, "Add Shadow Plane");
+            UnityEditor.Undo.SetTransformParent(go.transform, transform, "Add Shadow Plane");
+            UnityEditor.EditorUtility.SetDirty(this);
+#else
+            go.transform.parent = transform.parent;
+#endif
+            var plane = go.GetComponent<ShadowPlane>();
+            if (copyFrom == null)
+            {
+                plane.transform.localPosition = Vector3.zero;
+                plane.transform.localRotation = Quaternion.identity;
+                plane.m_Feather = 1;
+            }
+            else
+            {
+                plane.transform.localPosition = copyFrom.transform.localPosition;
+                plane.transform.localRotation = copyFrom.transform.localRotation;
+                plane.m_Feather = copyFrom.m_Feather;
+            }
+            return plane;
+        }
+
+        void OnTransformChildrenChanged() { InvalidateShadowPlanes(); }
     }
 
 #if UNITY_EDITOR

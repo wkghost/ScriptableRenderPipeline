@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.AnimatedValues;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
@@ -530,6 +531,50 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.PropertyField(m_AdditionalShadowData.edgeToleranceNormal, s_Styles.edgeToleranceNormal);
                     EditorGUILayout.Slider(m_AdditionalShadowData.edgeTolerance, 0.0f, 1.0f, s_Styles.edgeTolerance);
                     EditorGUI.indentLevel--;
+                }
+
+                // Shadow Planes
+		        EditorGUILayout.Space();
+                if (targets.Length > 1)
+                {
+        			EditorGUILayout.HelpBox("Cannot edit Shadow Planes for multi-object", MessageType.Info);
+                }
+                else
+                {
+                    var asd = m_SerializedAdditionalShadowData.targetObject as AdditionalShadowData;
+                    if (asd != null)
+                    {
+                        Rect rect = EditorGUILayout.GetControlRect(true);
+                        float labelWidth = rect.x;
+                        rect = EditorGUI.IndentedRect(rect);
+                        labelWidth = EditorGUIUtility.labelWidth - (rect.x - labelWidth);
+                        GUI.Label(new Rect(rect.x, rect.y, labelWidth, rect.height), "Shadow Planes");
+                        rect.width -= labelWidth; rect.x += labelWidth;
+                        if (GUI.Button(rect, "Create Shadow Plane"))
+                            asd.AddShadowPlane();
+                    
+                        EditorGUI.indentLevel++;
+                        labelWidth = EditorGUIUtility.labelWidth;
+                        EditorGUIUtility.labelWidth = 0;
+                        GUIContent removeLabel = new GUIContent("Remove", "Destroy the shadow plane");
+                        float removeWidth = GUI.skin.button.CalcSize(removeLabel).x;
+                        const float hSpace = 2;
+                        var planes = asd.ShadowPlanes;
+                        foreach (var p in planes)
+                        {
+                            rect = EditorGUILayout.GetControlRect(true);
+                            rect.width -= removeWidth + hSpace;
+                            bool enabled = GUI.enabled;
+                            GUI.enabled = false;
+                            EditorGUI.ObjectField(rect, p, typeof(ShadowPlane), !EditorUtility.IsPersistent(target));
+                            GUI.enabled = enabled;
+                            rect.x += rect.width + hSpace; rect.width = removeWidth;
+                            if (GUI.Button(rect, removeLabel))
+                                Undo.DestroyObjectImmediate(p.gameObject);
+                        }
+                        EditorGUIUtility.labelWidth = labelWidth;
+                        EditorGUI.indentLevel--;
+                    }
                 }
                 EditorGUI.indentLevel--;
             }
