@@ -450,7 +450,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Additional Settings", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(m_AdditionalLightData.affectDiffuse, s_Styles.affectDiffuse);
                 EditorGUILayout.PropertyField(m_AdditionalLightData.affectSpecular, s_Styles.affectSpecular);
                 EditorGUILayout.PropertyField(m_AdditionalLightData.fadeDistance, s_Styles.fadeDistance);
@@ -500,8 +499,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         EditorGUI.indentLevel--;
                     }
                 }
-
-                EditorGUI.indentLevel--;
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -549,7 +546,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Additional Settings", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
 
                 if (settings.lightType.enumValueIndex != (int)LightType.Directional)
                 {
@@ -577,7 +573,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.Slider(m_AdditionalShadowData.edgeTolerance, 0.0f, 1.0f, s_Styles.edgeTolerance);
                     EditorGUI.indentLevel--;
                 }
-                EditorGUI.indentLevel--;
             }
         }
 
