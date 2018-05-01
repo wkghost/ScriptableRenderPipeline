@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEditor.Experimental.Rendering.HDPipeline;
 #endif
-using UnityEngine.Serialization;
+using System.Collections.Generic;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -21,6 +21,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     //@TODO: We should continuously move these values
     // into the engine when we can see them being generally useful
     [RequireComponent(typeof(Light))]
+    [ExecuteInEditMode] // needed for OnTransformChildrenChanged
     public class HDAdditionalLightData : MonoBehaviour
     {
  #pragma warning disable 414 // CS0414 The private field '...' is assigned but its value is never used
@@ -243,5 +244,76 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.ConvertPhysicalLightIntensityToLightIntensity();
         }
 
+        // Clip Planes
+        [HideInInspector, SerializeField]
+        private HDClipPlane[] m_ClipPlanes; // serialized to handle copy/paste
+        private HDClipPlane.Params[] m_ClipPlaneParams;
+
+        public HDClipPlane[] ClipPlanes { get { ValidateClipPlanes(); return m_ClipPlanes; } }
+        public HDClipPlane.Params[] ClipPlaneParams { get { ValidateClipPlanes(); return m_ClipPlaneParams; } }
+
+        void InvalidateClipPlanes() { m_ClipPlanes = null; }
+        void ValidateClipPlanes()
+        {
+            if (m_ClipPlanes != null)
+            {
+#if UNITY_EDITOR
+                // Did we just get copy/pasted?
+                if (m_ClipPlanes.Length > 0 && m_ClipPlanes[0].transform.parent != transform)
+                {
+                    var newPlanes = new HDClipPlane[m_ClipPlanes.Length];
+                    m_ClipPlanes.CopyTo(newPlanes, 0);
+                    m_ClipPlanes = null;
+                    var oldPlanes = GetComponents<HDClipPlane>();
+                    foreach (var p in oldPlanes)
+                        UnityEditor.Undo.DestroyObjectImmediate(p.gameObject);
+                    foreach (var p in newPlanes)
+                        AddClipPlane(p);
+                }
+                else
+#endif
+                    return;
+            }
+            List<HDClipPlane> planes = new List<HDClipPlane>();
+            GetComponentsInChildren(planes);
+            for (int i = planes.Count-1; i >= 0; --i)
+                if (planes[i].transform.parent != transform)
+                    planes.RemoveAt(i);
+            foreach (var p in planes)
+            m_ClipPlanes = planes.ToArray();
+            if (m_ClipPlanes == null)
+                m_ClipPlanes = new HDClipPlane[0];
+            m_ClipPlaneParams = new HDClipPlane.Params[m_ClipPlanes.Length];
+            for (int i = 0; i < m_ClipPlanes.Length; ++i)
+			    m_ClipPlaneParams[i] = m_ClipPlanes[i].ClipParams;
+        }
+
+        public HDClipPlane AddClipPlane(HDClipPlane copyFrom = null)
+        {
+            GameObject go = new GameObject("Clip Plane", typeof(HDClipPlane));
+#if UNITY_EDITOR
+            Undo.RegisterCreatedObjectUndo(go, "Add Clip Plane");
+            Undo.SetTransformParent(go.transform, transform, "Add Clip Plane");
+            EditorUtility.SetDirty(this);
+#else
+            go.transform.parent = transform.parent;
+#endif
+            var plane = go.GetComponent<HDClipPlane>();
+            if (copyFrom == null)
+            {
+                plane.transform.localPosition = Vector3.zero;
+                plane.transform.localRotation = Quaternion.identity;
+                plane.m_Feather = 1;
+            }
+            else
+            {
+                plane.transform.localPosition = copyFrom.transform.localPosition;
+                plane.transform.localRotation = copyFrom.transform.localRotation;
+                plane.m_Feather = copyFrom.m_Feather;
+            }
+            return plane;
+        }
+
+        void OnTransformChildrenChanged() { InvalidateClipPlanes(); }
     }
 }

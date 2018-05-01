@@ -1,8 +1,8 @@
 ﻿namespace UnityEngine.Experimental.Rendering
 {
-    public class ShadowPlane : MonoBehaviour
+    public class HDClipPlane : MonoBehaviour
     {
-        [Tooltip("How much to feather the edge of the plane")]
+        [Tooltip("How much to feather the clipped edge")]
 	    public float m_Feather = 1.0f;
 
 	    public struct Params
@@ -10,19 +10,19 @@
 		    public Vector4 plane;
 		    public float feather;
 	    }
-        public Params ShadowParams
+        public Params ClipParams
         { 
             get 
             { 
                 return new Params 
                 { 
-                    plane = GetShadowPlaneVector(), 
+                    plane = GetClipPlaneVector(), 
                     feather = m_Feather * 0.1f
                 };
             }
         }
 
-	    Vector4 GetShadowPlaneVector()
+	    Vector4 GetClipPlaneVector()
 	    {
 		    Transform t = transform;
 		    Vector3 v = t.forward;
