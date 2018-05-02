@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Rendering;
+//using System.Runtime.InteropServices;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -8,7 +9,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [GenerateHLSL(PackingRules.Exact)]
         public enum MaterialFeatureFlags
         {
-            LitStandard             = 1 << 0
+            StackLitStandard             = 1 << 0,
+            StackLitAnisotropy           = 1 << 4,
+            StackLitCoat                 = 1 << 6,
         };
 
         //-----------------------------------------------------------------------------
@@ -22,7 +25,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Material Features")]
             public uint materialFeatures;
 
-            // Standard
+            // Bottom interface (2 lobes BSDF) 
+            // Standard parametrization
             [SurfaceDataAttributes("Base Color", false, true)]
             public Vector3 baseColor;
             
@@ -40,6 +44,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Metallic")]
             public float metallic;
 
+            // Anisotropic
+            [SurfaceDataAttributes("Tangent", true)]
+            public Vector3 tangentWS;
+            [SurfaceDataAttributes("Anisotropy")]
+            public float anisotropy; // anisotropic ratio(0->no isotropic; 1->full anisotropy in tangent direction, -1->full anisotropy in bitangent direction)
+
+            // Top interface and media (clearcoat)
+            [SurfaceDataAttributes("Coat Roughness")]
+            public float coatPerceptualSmoothness;
+            [SurfaceDataAttributes("Coat IOR")]
+            public float coatIor;
+            [SurfaceDataAttributes("Coat Thickness")]
+            public float coatThickness;
+            [SurfaceDataAttributes("Coat Extinction Coefficient")]
+            public Vector3 coatExtinction;
+
+            [SurfaceDataAttributes("Ambient Occlusion")]
+            public float ambientOcclusion;
         };
 
         //-----------------------------------------------------------------------------
@@ -51,6 +73,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             public uint materialFeatures;
 
+            // Bottom interface (2 lobes BSDF) 
+            // Standard parametrization
             [SurfaceDataAttributes("", false, true)]
             public Vector3 diffuseColor;
             public Vector3 fresnel0;
@@ -60,15 +84,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float perceptualRoughnessA;
             public float perceptualRoughnessB;
             public float lobeMix;
+
+            // Anisotropic
+            [SurfaceDataAttributes("", true)]
+            public Vector3 tangentWS;
+            [SurfaceDataAttributes("", true)]
+            public Vector3 bitangentWS;
             public float roughnessAT;
             public float roughnessAB;
             public float roughnessBT;
             public float roughnessBB;
+            public float coatRoughness;
             public float anisotropy;
-            //public fixed float test[2];
 
+            // Top interface and media (clearcoat)
+            public float coatPerceptualRoughness;
+            public float coatIor;
+            public float coatThickness;
+            public Vector3 coatExtinction;
 
+            public float ambientOcclusion;
         };
+
         //-----------------------------------------------------------------------------
         // Init precomputed textures
         //-----------------------------------------------------------------------------

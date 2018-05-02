@@ -18,6 +18,12 @@ SAMPLER(sampler_SmoothnessAMap);
 TEXTURE2D(_SmoothnessBMap);
 SAMPLER(sampler_SmoothnessBMap);
 
+TEXTURE2D(_NormalMap);
+SAMPLER(sampler_NormalMap);
+
+TEXTURE2D(_AmbientOcclusionMap);
+SAMPLER(sampler_AmbientOcclusionMap);
+
 TEXTURE2D(_SubsurfaceMaskMap);
 SAMPLER(sampler_SubsurfaceMaskMap);
 
@@ -26,9 +32,6 @@ SAMPLER(sampler_ThicknessMap);
 
 TEXTURE2D(_EmissiveColorMap);
 SAMPLER(sampler_EmissiveColorMap);
-
-TEXTURE2D(_NormalMap);
-SAMPLER(sampler_NormalMap);
 
 
 CBUFFER_START(UnityPerMaterial)
@@ -70,11 +73,29 @@ float4 _SmoothnessBMapChannelMask;
 float4 _SmoothnessBRange;
 float _LobeMix;
 
+float _Anisotropy;
+float _CoatSmoothness;
+float _CoatIor;
+float _CoatThickness;
+float4 _CoatExtinction;
+
 float _NormalScale;
 float _NormalMapUV;
+float _NormalMapUVLocal;
+float _NormalMapObjSpace;
 float4 _NormalMap_ST;
 float4 _NormalMap_TexelSize;
 float4 _NormalMap_MipInfo;
+
+float _AmbientOcclusion;
+float _AmbientOcclusionUseMap;
+float _AmbientOcclusionMapUV;
+float _AmbientOcclusionMapUVLocal;
+float4 _AmbientOcclusionMap_ST;
+float4 _AmbientOcclusionMap_TexelSize;
+float4 _AmbientOcclusionMap_MipInfo;
+float4 _AmbientOcclusionMapChannelMask;
+float4 _AmbientOcclusionRange;
 
 float3 _EmissiveColor;
 float4 _EmissiveColorMap_ST;

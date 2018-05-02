@@ -22,7 +22,6 @@ Shader "HDRenderPipeline/StackLit"
         _MetallicMapChannel("Metallic Map Channel", Float) = 0.0
         _MetallicMapChannelMask("Metallic Map Channel Mask", Vector) = (1, 0, 0, 0)
         _MetallicRemap("Metallic Remap", Vector) = (0, 1, 0, 0)
-        [ToggleUI] _MetallicRemapInverted("Invert Metallic Remap", Float) = 0.0
         [HideInInspector] _MetallicRange("Metallic Range", Vector) = (0, 1, 0, 0)
 
         [HideInInspector] _SmoothnessAMapShow("SmoothnessA Map Show", Float) = 0
@@ -50,10 +49,32 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _SmoothnessBRange("SmoothnessB Range", Vector) = (0, 1, 0, 0)
         _LobeMix("Lobe Mix", Range(0.0, 1.0)) = 0
 
+        // TODO: TangentMap, AnisotropyMap and CoatIorMap (SmoothnessMap ?)
+
+        _Anisotropy("Anisotropy", Range(-1.0, 1.0)) = 0.0
+        [ToggleUI] _CoatEnable("Coat Enable", Float) = 0.0 // UI only
+        _CoatSmoothness("Coat Smoothness", Range(0.0, 1.0)) = 1.0
+        _CoatIor("Coat IOR", Range(1.0, 2.0)) = 1.5
+        _CoatThickness("Coat Thickness", Range(0.0, 0.99)) = 0.0
+        _CoatExtinction("Coat Extinction Coefficient", Color) = (1,1,1,1) // in thickness^-1 units
+
         [HideInInspector] _NormalMapShow("NormalMap Show", Float) = 0.0
         _NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
         _NormalMapUV("NormalMapUV", Float) = 0.0
+        _NormalMapUVLocal("NormalMapUV Local", Float) = 0.0
+        _NormalMapObjSpace("NormalMapUV Local", Float) = 0.0
         _NormalScale("Normal Scale", Range(0.0, 2.0)) = 1
+
+        [HideInInspector] _AmbientOcclusionMapShow("AmbientOcclusion Map Show", Float) = 0
+        _AmbientOcclusion("AmbientOcclusion", Range(0.0, 1.0)) = 1
+        _AmbientOcclusionMap("AmbientOcclusion Map", 2D) = "white" {}
+        _AmbientOcclusionUseMap("AmbientOcclusion Use Map", Float) = 0
+        _AmbientOcclusionMapUV("AmbientOcclusion Map UV", Float) = 0.0
+        _AmbientOcclusionMapUVLocal("AmbientOcclusion Map UV Local", Float) = 0.0
+        _AmbientOcclusionMapChannel("AmbientOcclusion Map Channel", Float) = 0.0
+        _AmbientOcclusionMapChannelMask("AmbientOcclusion Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _AmbientOcclusionRemap("AmbientOcclusion Remap", Vector) = (0, 1, 0, 0)
+        [HideInInspector] _AmbientOcclusionRange("AmbientOcclusion Range", Vector) = (0, 1, 0, 0)
 
         [HideInInspector] _EmissiveColorMapShow("Emissive Color Map Show", Float) = 0.0
         _EmissiveColor("Emissive Color", Color) = (1, 1, 1)
@@ -188,6 +209,11 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_PRE_MULTIPLY
     #pragma shader_feature _BLENDMODE_PRESERVE_SPECULAR_LIGHTING // easily handled in material.hlsl, so adding this already.
     #pragma shader_feature _ENABLE_FOG_ON_TRANSPARENT
+
+    // MaterialFeature are used as shader feature to allow compiler to optimize properly
+    #pragma shader_feature _MATERIAL_FEATURE_ANISOTROPY
+    #pragma shader_feature _MATERIAL_FEATURE_COAT
+    #pragma shader_feature _MATERIAL_FEATURE_DUAL_LOBE
 
     //enable GPU instancing support
     #pragma multi_compile_instancing
