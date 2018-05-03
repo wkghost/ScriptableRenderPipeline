@@ -4,59 +4,6 @@
 #include "CoreRP/ShaderLibrary/Sampling/SampleUVMapping.hlsl"
 #include "../MaterialUtilities.hlsl"
 
-////-----------------------------------------------------------------------------
-//// Texture Mapping (think of LayerTexCoord as simply TexCoordMappings,
-//// ie no more layers here - cf Lit materials)
-////-----------------------------------------------------------------------------
-//
-////
-//// For easier copying of code for now use a LayerTexCoord wrapping struct.
-//// We don't have details yet.
-////
-//// NEWLITTODO: Eventually, we could quickly share GetBuiltinData of LitBuiltinData.hlsl
-//// in our GetSurfaceAndBuiltinData( ) here, since we will use the LayerTexCoord identifier,
-//// and an identical ComputeLayerTexCoord( ) prototype
-////
-//struct LayerTexCoord
-//{
-//    UVMapping base;
-//
-//    // Store information that will be share by all UVMapping
-//    float3 vertexNormalWS; // TODO: store also object normal map for object triplanar
-//};
-//
-//// Want to use only one sampler for normalmap/bentnormalmap either we use OS or TS. And either we have normal map or bent normal or both.
-////
-//// Note (compared to Lit shader):
-////
-//// We don't have a layered material with which we are sharing code here like the LayeredLit shader, but we can also save a couple of
-//// samplers later if we use bentnormals.
-////
-//// _IDX suffix is meaningless here, could use the name SAMPLER_NORMALMAP_ID instead of SAMPLER_NORMALMAP_IDX and replace all
-//// indirect #ifdef _NORMALMAP_TANGENT_SPACE_IDX #ifdef and _NORMALMAP_IDX tests with the more direct
-//// shader_feature keywords _NORMALMAP_TANGENT_SPACE and _NORMALMAP.
-////
-//// (Originally in the LayeredLit shader, shader_feature keywords like _NORMALMAP become _NORMALMAP0 but since files are shared,
-//// LitDataIndividualLayer will use a generic _NORMALMAP_IDX defined before its inclusion by the client LitData or LayeredLitData.
-//// That way, LitDataIndividualLayer supports multiple inclusions)
-
-#ifdef _NORMALMAP_TANGENT_SPACE
-    #if defined(_NORMALMAP)
-    #define SAMPLER_NORMALMAP_ID sampler_NormalMap
-    // TODO:
-    //#elif defined(_BENTNORMALMAP)
-    //#define SAMPLER_NORMALMAP_ID sampler_BentNormalMap
-    #endif
-#else
-    // TODO:
-    //#error STACKLIT_USES_ONLY_TANGENT_SPACE_FOR_NOW
-    //#if defined(_NORMALMAP)
-    //#define SAMPLER_NORMALMAP_ID sampler_NormalMapOS
-    //#elif defined(_BENTNORMALMAP)
-    //#define SAMPLER_NORMALMAP_ID sampler_BentNormalMapOS
-    //#endif
-#endif
-
 //-----------------------------------------------------------------------------
 // Texture Mapping
 //-----------------------------------------------------------------------------
@@ -168,7 +115,7 @@ float4 SampleTexture2DTriplanarScaleBias(TEXTURE2D_ARGS(textureName, samplerName
 #endif
 }
 
-float3 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, samplerName), float textureNameUV, float textureNameUVLocal, float4 textureNameST, float textureNameObjSpace, TextureUVMapping uvMapping, float2 scale)
+float3 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, samplerName), float textureNameUV, float textureNameUVLocal, float4 textureNameST, float textureNameObjSpace, TextureUVMapping uvMapping, float scale)
 {
     if (textureNameObjSpace)
     {
@@ -247,7 +194,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     InitializeMappingData(input, uvMapping);
 
     // -------------------------------------------------------------
-    // Surface Data:
+    // Surface Data
     // -------------------------------------------------------------
 
     float alpha = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).a * _BaseColor.a;
@@ -257,48 +204,32 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     DoAlphaTest(alpha, _AlphaCutoff);
 #endif
 
+    // Standard
     surfaceData.baseColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).rgb * _BaseColor.rgb;
 
-    float3 gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, float2(_NormalScale.xx));
+    float3 gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale);
     //TODO: bentNormalTS
 
     surfaceData.perceptualSmoothnessA = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessAMap), _SmoothnessAMapChannelMask);
     surfaceData.perceptualSmoothnessA = lerp(_SmoothnessARange.x, _SmoothnessARange.y, surfaceData.perceptualSmoothnessA);
     surfaceData.perceptualSmoothnessA = lerp(_SmoothnessA, surfaceData.perceptualSmoothnessA, _SmoothnessAUseMap);
 
-    // TODO: Ambient occlusion, detail mask.
     surfaceData.metallic = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_MetallicMap), _MetallicMapChannelMask);
     surfaceData.metallic = lerp(_MetallicRange.x, _MetallicRange.y, surfaceData.metallic);
     surfaceData.metallic = lerp(_Metallic, surfaceData.metallic, _MetallicUseMap);
+
+    surfaceData.dielectricIor = _DielectricIor;
 
     surfaceData.ambientOcclusion = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AmbientOcclusionMap), _AmbientOcclusionMapChannelMask);
     surfaceData.ambientOcclusion = lerp(_AmbientOcclusionRange.x, _AmbientOcclusionRange.y, surfaceData.ambientOcclusion);
     surfaceData.ambientOcclusion = lerp(_AmbientOcclusion, surfaceData.ambientOcclusion, _AmbientOcclusionUseMap);
 
     // These static material feature allow compile time optimization
-    // TODO: As we add features, or-set the flags eg MATERIALFEATUREFLAGS_STACK_LIT_* with #ifdef
-    // on corresponding _MATERIAL_FEATURE_* shader_feature kerwords (set by UI) so the compiler
-    // knows the value of surfaceData.materialFeatures.
     surfaceData.materialFeatures = MATERIALFEATUREFLAGS_STACK_LIT_STANDARD;
 
-#ifdef _MATERIAL_FEATURE_ANISOTROPY
-    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY;
-#endif
-#ifdef _MATERIAL_FEATURE_COAT
-    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT;
-#endif
-// Not used for now aside from here in GetSurfaceAndBuiltinData
-//#ifdef _MATERIAL_FEATURE_DUAL_LOBE
-//#endif
-
-    // -------------------------------------------------------------
     // Feature dependent data
-    // -------------------------------------------------------------
-
-// TODO: #ifdef _TANGENTMAP, object space, etc.
-    surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz); // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
-
-#ifdef _MATERIAL_FEATURE_DUAL_LOBE
+#ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_DUAL_SPECULAR_LOBE;
     surfaceData.lobeMix = _LobeMix;
     surfaceData.perceptualSmoothnessB = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessBMap), _SmoothnessBMapChannelMask);
     surfaceData.perceptualSmoothnessB = lerp(_SmoothnessBRange.x, _SmoothnessBRange.y, surfaceData.perceptualSmoothnessB);
@@ -308,22 +239,65 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.perceptualSmoothnessB = 1.0;
 #endif
 
-// TODO: #ifdef _ANISOTROPYMAP
-    surfaceData.anisotropy = 1.0;
 #ifdef _MATERIAL_FEATURE_ANISOTROPY
-    surfaceData.anisotropy *= _Anisotropy;
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY;
+    // TODO: manage anistropy map
+    //surfaceData.anisotropy = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AnistropyMap), _AnistropyMapChannelMask);
+    //surfaceData.anisotropy = lerp(_AnistropyRange.x, _AnistropyRange.y, surfaceData.anisotropy);
+    surfaceData.anisotropy = _Anisotropy; // In all cases we must multiply anisotropy with the map
+#else
+    surfaceData.anisotropy = 0.0;
 #endif
+    surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz); // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
 
 #ifdef _MATERIAL_FEATURE_COAT
-    surfaceData.coatPerceptualSmoothness = _CoatSmoothness;
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT;
+    surfaceData.coatPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_CoatSmoothnessMap), _CoatSmoothnessMapChannelMask);
+    surfaceData.coatPerceptualSmoothness = lerp(_CoatSmoothnessRange.x, _CoatSmoothnessRange.y, surfaceData.coatPerceptualSmoothness);
+    surfaceData.coatPerceptualSmoothness = lerp(_CoatSmoothness, surfaceData.coatPerceptualSmoothness, _CoatSmoothnessUseMap);
     surfaceData.coatIor = _CoatIor;
     surfaceData.coatThickness = _CoatThickness;
     surfaceData.coatExtinction = _CoatExtinction; // in thickness^-1 units
 #else
     surfaceData.coatPerceptualSmoothness = 0.0;
-    surfaceData.coatIor = 1.0;
+    surfaceData.coatIor = 1.0001;
     surfaceData.coatThickness = 0.0;
     surfaceData.coatExtinction = float3(1.0, 1.0, 1.0);
+#endif
+
+#ifdef _MATERIAL_FEATURE_IRIDESCENCE
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE;
+    surfaceData.iridescenceIor = _IridescenceIor;
+    surfaceData.iridescenceThickness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_IridescenceThicknessMap), _IridescenceThicknessMapChannelMask);
+    surfaceData.iridescenceThickness = lerp(_IridescenceThicknessRange.x, _IridescenceThicknessRange.y, surfaceData.iridescenceThickness);
+    surfaceData.iridescenceThickness = lerp(_IridescenceThickness, surfaceData.iridescenceThickness, _IridescenceThicknessUseMap);
+#else
+    surfaceData.iridescenceIor = 1.0;
+    surfaceData.iridescenceThickness = 0.0;
+#endif
+
+#if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) || defined(_MATERIAL_FEATURE_TRANSMISSION)
+    surfaceData.diffusionProfile = _DiffusionProfile;
+#else
+    surfaceData.diffusionProfile = 0;
+#endif
+
+#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING;
+    surfaceData.subsurfaceMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SubsurfaceMaskMap), _SubsurfaceMaskMapChannelMask);
+    surfaceData.subsurfaceMask = lerp(_SubsurfaceMaskRange.x, _SubsurfaceMaskRange.y, surfaceData.subsurfaceMask);
+    surfaceData.subsurfaceMask = lerp(_SubsurfaceMask, surfaceData.subsurfaceMask, _SubsurfaceMaskUseMap);
+#else
+    surfaceData.subsurfaceMask = 0.0;
+#endif
+
+#ifdef _MATERIAL_FEATURE_TRANSMISSION
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION;
+    surfaceData.thickness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_ThicknessMap), _ThicknessMapChannelMask);
+    surfaceData.thickness = lerp(_ThicknessRange.x, _ThicknessRange.y, surfaceData.thickness);
+    surfaceData.thickness = lerp(_Thickness, surfaceData.thickness, _ThicknessUseMap);
+#else
+    surfaceData.thickness = 1.0;
 #endif
 
     // -------------------------------------------------------------
@@ -360,6 +334,18 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     builtinData.opacity = alpha;
 
     builtinData.bakeDiffuseLighting = SampleBakedGI(input.positionWS, surfaceData.normalWS, input.texCoord1, input.texCoord2);
+
+    // It is safe to call this function here as surfaceData have been filled
+    // We want to know if we must enable transmission on GI for SSS material, if the material have no SSS, this code will be remove by the compiler.
+    BSDFData bsdfData = ConvertSurfaceDataToBSDFData(surfaceData);
+    if (HasFeatureFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
+    {
+        // For now simply recall the function with inverted normal, the compiler should be able to optimize the lightmap case to not resample the directional lightmap
+        // however it will not optimize the lightprobe case due to the proxy volume relying on dynamic if (we rely must get right of this dynamic if), not a problem for SH9, but a problem for proxy volume.
+        // TODO: optimize more this code.
+        // Add GI transmission contribution by resampling the GI for inverted vertex normal
+        builtinData.bakeDiffuseLighting += SampleBakedGI(input.positionWS, -input.worldToTangent[2], input.texCoord1, input.texCoord2) * bsdfData.transmittance;
+    }
 
     // Emissive Intensity is only use here, but is part of BuiltinData to enforce UI parameters as we want the users to fill one color and one intensity
     builtinData.emissiveIntensity = _EmissiveIntensity; // We still store intensity here so we can reuse it with debug code
