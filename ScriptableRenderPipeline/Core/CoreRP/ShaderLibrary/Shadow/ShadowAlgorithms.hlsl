@@ -143,11 +143,15 @@ float3 EvalShadow_ReceiverBias( ShadowData sd, float3 positionWS, float3 normalW
 	float normalBiasMax   = sd.normalBias.y;
 	float normalBiasScale = sd.normalBias.z;
 
-	float  NdotL       = dot( normalWS, L );
-	float  sine        = sqrt( saturate( 1.0 - NdotL * NdotL ) );
-	float  tangent     = abs( NdotL ) > 0.0 ? (sine / NdotL) : 0.0;
-		   sine        = clamp( sine    * normalBiasScale, normalBiasMin, normalBiasMax );
-		   tangent     = clamp( tangent * viewBiasScale * lightviewBiasWeight, viewBiasMin, viewBiasMax );
+	float  NdotL   = max(dot( normalWS, L ), FLT_EPS);
+	float  sine    = sqrt( saturate( 1.0 - NdotL * NdotL ) );
+    float  tangent = 0.0;
+    if (abs(NdotL) > FLT_EPS) 
+    {
+        tangent = sine / NdotL;
+    }
+    sine    = clamp( sine * normalBiasScale, normalBiasMin, normalBiasMax );
+	tangent = clamp( tangent * viewBiasScale * lightviewBiasWeight, viewBiasMin, viewBiasMax );
 	float3 view_bias   = L        * tangent;
 	float3 normal_bias = normalWS * sine;
 	return positionWS + (normal_bias + view_bias) * EvalShadow_WorldTexelSize( sd, L_dist, perspProj );

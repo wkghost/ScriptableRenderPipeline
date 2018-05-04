@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEditor.AnimatedValues;
 using UnityEngine;
@@ -179,7 +179,6 @@ namespace UnityEditor.Experimental.Rendering
             AnimBoolGetter m_IsExpanded;
             string m_Title;
             FoldoutOption m_Options;
-            bool m_Animate;
 
             bool animate { get { return (m_Options & FoldoutOption.Animate) != 0; } }
             bool indent { get { return (m_Options & FoldoutOption.Indent) != 0; } }
