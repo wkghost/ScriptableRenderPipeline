@@ -354,6 +354,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             var opaqueDrawSettings = new DrawRendererSettings(m_CurrCamera, m_DepthPrepass);
             opaqueDrawSettings.sorting.flags = SortFlags.CommonOpaque;
+            opaqueDrawSettings.flags = DrawRendererFlags.EnableDynamicBatching | DrawRendererFlags.EnableInstancing;
 
             var opaqueFilterSettings = new FilterRenderersSettings(true)
             {
@@ -415,6 +416,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             opaqueDrawSettings.SetShaderPassName(1, m_UnlitPassName);
             opaqueDrawSettings.sorting.flags = SortFlags.CommonOpaque;
             opaqueDrawSettings.rendererConfiguration = settings;
+            opaqueDrawSettings.flags = DrawRendererFlags.EnableDynamicBatching | DrawRendererFlags.EnableInstancing;
 
             var opaqueFilterSettings = new FilterRenderersSettings(true)
             {
@@ -495,6 +497,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             transparentSettings.SetShaderPassName(1, m_UnlitPassName);
             transparentSettings.sorting.flags = SortFlags.CommonTransparent;
             transparentSettings.rendererConfiguration = config;
+            transparentSettings.flags = DrawRendererFlags.EnableDynamicBatching | DrawRendererFlags.EnableInstancing;
 
             var transparentFilterSettings = new FilterRenderersSettings(true)
             {
