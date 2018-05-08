@@ -221,8 +221,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         void DrawFeatures()
         {
             bool disabledScope = settings.isCompletelyBaked
+                // Bake shadow aren't supported before 2018.2
+                #if !UNITY_2018_2_OR_NEWER
                 || m_LightShape == LightShape.Line
-                || m_LightShape == LightShape.Rectangle;
+                || m_LightShape == LightShape.Rectangle
+                #endif
+                ;
 
             using (new EditorGUI.DisabledScope(disabledScope))
             {
@@ -294,7 +298,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     m_AdditionalLightData.shapeHeight.floatValue = Mathf.Max(m_AdditionalLightData.shapeHeight.floatValue, k_MinAreaWidth);
                     settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
                     settings.areaSizeY.floatValue = m_AdditionalLightData.shapeHeight.floatValue;
+                    // Bake shadow aren't supported before 2018.2
+                    settings.shadowsType.enumValueIndex = (int)LightShadows.Soft;
+                    #else
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
+                    #endif
                     break;
 
                 case LightShape.Line:
@@ -308,7 +316,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // Fake line with a small rectangle in vanilla unity for GI
                     settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
                     settings.areaSizeY.floatValue = k_MinAreaWidth;
+                    // Bake shadow aren't supported before 2018.2
+                    #if UNITY_2018_2_OR_NEWER
+                    settings.shadowsType.enumValueIndex = (int)LightShadows.Soft;
+                    #else
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
+                    #endif
                     break;
 
                 case (LightShape)(-1):
