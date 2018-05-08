@@ -299,6 +299,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
                     settings.areaSizeY.floatValue = m_AdditionalLightData.shapeHeight.floatValue;
                     // Bake shadow aren't supported before 2018.2
+                    #if UNITY_2018_2_OR_NEWER
                     settings.shadowsType.enumValueIndex = (int)LightShadows.Soft;
                     #else
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
