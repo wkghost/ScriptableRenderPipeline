@@ -231,7 +231,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             using (new EditorGUI.DisabledScope(disabledScope))
             {
                 bool shadowsEnabled = EditorGUILayout.Toggle(CoreEditorUtils.GetContent("Enable Shadows"), settings.shadowsType.enumValueIndex != 0);
-                settings.shadowsType.enumValueIndex = shadowsEnabled ? (int)LightShadows.Hard : (int)LightShadows.None;
+                if (shadowsEnabled)
+                {
+                    settings.shadowsType.enumValueIndex = (m_LightShape == LightShape.Line || m_LightShape == LightShape.Rectangle) ? (int)LightShadows.Soft : (int)LightShadows.Hard;
+                }
+                else
+                {
+                    settings.shadowsType.enumValueIndex = (int)LightShadows.None;
+                }
             }
 
             EditorGUILayout.PropertyField(m_AdditionalLightData.showAdditionalSettings);
@@ -299,9 +306,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
                     settings.areaSizeY.floatValue = m_AdditionalLightData.shapeHeight.floatValue;
                     // Bake shadow aren't supported before 2018.2
-                    #if UNITY_2018_2_OR_NEWER
-                    settings.shadowsType.enumValueIndex = (int)LightShadows.Soft;
-                    #else
+                    #if !UNITY_2018_2_OR_NEWER
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
                     #endif
                     break;
@@ -318,9 +323,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
                     settings.areaSizeY.floatValue = k_MinAreaWidth;
                     // Bake shadow aren't supported before 2018.2
-                    #if UNITY_2018_2_OR_NEWER
-                    settings.shadowsType.enumValueIndex = (int)LightShadows.Soft;
-                    #else
+                    #if !UNITY_2018_2_OR_NEWER
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
                     #endif
                     break;
