@@ -65,7 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (volumeTexture.format != requiredTextureFormat) 
             {
-                Debug.LogError(string.Format("VolumeTextureAtlas: Texture format of texture {0} : {1} does not match expected format of {2}", volumeTexture, volumeTexture.format, requiredTextureSize));
+                Debug.LogError(string.Format("VolumeTextureAtlas: Texture format of texture {0} : {1} does not match expected format of {2}", volumeTexture, volumeTexture.format, requiredTextureFormat));
                 return;
             }
 
