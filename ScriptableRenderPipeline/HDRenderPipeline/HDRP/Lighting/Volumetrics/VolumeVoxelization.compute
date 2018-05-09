@@ -63,7 +63,28 @@ CBUFFER_END
 //--------------------------------------------------------------------------------------------------
 // Implementation
 //--------------------------------------------------------------------------------------------------
-float SampleVolumeMask(DensityVolumeData volumeData, float3 voxelCenterUV)
+
+void CalculatePXPYDifferentials(float3 Dx, float3 Dy, float t, float3 rayUnDirWS, float3 N, out float3 Px, out float3 Py)
+{
+    float3 tDx = t * Dx;
+    float3 tDy = t * Dy;
+
+    float DN = dot(rayUnDirWS, N);
+    float Tx = - (dot(tDx, N) / DN );
+    float Ty = - (dot(tDy, N) / DN );
+
+    Px = tDx + (Tx * rayUnDirWS);
+    Py = tDy + (Ty * rayUnDirWS);
+}
+
+
+float CalculateLODLevel(float3 Px, float3 Py)
+{
+    float deltaMax = max(dot(Px, Px), dot(Py, Py));
+    return max(0.0, 0.5 * log2(deltaMax));
+}
+
+float SampleVolumeMask(DensityVolumeData volumeData, float3 voxelCenterUV, float3 PxUV, float3 PyUV)
 {
     float offset = volumeData.textureIndex * _VolumeMaskDimensions.x;
     float clampBorder = 0.5f * _VolumeMaskDimensions.y;
@@ -75,11 +96,21 @@ float SampleVolumeMask(DensityVolumeData volumeData, float3 voxelCenterUV)
     voxelCenterUV.z += offset;
 
     voxelCenterUV.z = clamp(voxelCenterUV.z, offset + clampBorder, offset + _VolumeMaskDimensions.x - clampBorder);
+    
+    float lod = CalculateLODLevel(PxUV, PyUV);
 
-    float maskValue = SAMPLE_TEXTURE3D_LOD(_VolumeMaskAtlas, s_linear_clamp_sampler, voxelCenterUV, 0).a;
+    float maskValue = SAMPLE_TEXTURE3D_LOD(_VolumeMaskAtlas, s_linear_clamp_sampler, voxelCenterUV, lod).a;
 
     return maskValue;
 }
+
+void CalculateRayDifferentials(float3 rayUnDirWS, float3 voxelAxisRight, float3 voxelAxisUp, out float3 Dx, out float3 Dy)
+{
+    float3 right = normalize(voxelAxisRight);
+    float3 up = normalize(voxelAxisUp);
+    Dx = (right - ( dot(rayUnDirWS, right) * rayUnDirWS));
+    Dy = (up - ( dot(rayUnDirWS, up) * rayUnDirWS));
+} 
 
 
 void FillVolumetricDensityBuffer(PositionInputs posInput, float3 rayOriginWS, float3 rayUnDirWS,
@@ -103,6 +134,10 @@ void FillVolumetricDensityBuffer(PositionInputs posInput, float3 rayOriginWS, fl
     for (uint slice = 0; slice < VBUFFER_SLICE_COUNT; slice++)
 #else
     uint sliceCountHack = max(VBUFFER_SLICE_COUNT, (uint)_VBufferDepthEncodingParams.w); // Prevent unrolling...
+    
+    float3 Dx;
+    float3 Dy;
+    CalculateRayDifferentials(rayUnDirWS, voxelAxisRight, voxelAxisUp, Dx, Dy);
 
     // TODO: replace 'sliceCountHack' with VBUFFER_SLICE_COUNT when the shader compiler bug is fixed.
     for (uint slice = 0; slice < sliceCountHack; slice++)
@@ -163,7 +198,7 @@ void FillVolumetricDensityBuffer(PositionInputs posInput, float3 rayOriginWS, fl
 
                 // Express the voxel center in the local coordinate system of the box.
                 float3 voxelCenterBS = mul(voxelCenterWS - obb.center, transpose(obbFrame));
-                float3 voxelCenterUV = (voxelCenterBS / obbExtents) * 0.5 + 0.5;
+                float3 voxelCenterUV = (voxelCenterBS / obbExtents);
 
             #if SOFT_VOXELIZATION
                 // We need to determine which is the face closest to 'voxelCenterBS'.
@@ -239,7 +274,16 @@ void FillVolumetricDensityBuffer(PositionInputs posInput, float3 rayOriginWS, fl
                     //Sample the volumeMask
                     if (_VolumeData[volumeIndex].textureIndex != -1)
                     {
-                        scatteringAndExtinctionMask = SampleVolumeMask(_VolumeData[volumeIndex], voxelCenterUV);
+                        float3 Px;
+                        float3 Py;
+                        CalculatePXPYDifferentials(Dx, Dy, z, rayUnDirWS, -voxelAxisForward, Px, Py);
+                        float3 PxBS = mul(Px - obb.center, transpose(obbFrame));
+                        float3 PxUV = (PxBS / obbExtents) * 0.5 + 0.5;
+                        
+                        float3 PyBS = mul(Py - obb.center, transpose(obbFrame));
+                        float3 PyUV = (PyBS / obbExtents) * 0.5 + 0.5;
+                        
+                        scatteringAndExtinctionMask = SampleVolumeMask(_VolumeData[volumeIndex], voxelCenterUV * 0.5 + 0.5, PxUV, PyUV);
                     }
 
                     // There is an overlap. Sample the 3D texture, or load the constant value.
