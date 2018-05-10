@@ -18,57 +18,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SkyResolution4096 = 4096
     }
 
-    [Serializable]
-    public enum CubeReflectionResolution
-    {
-        CubeReflectionResolution128 = 128,
-        CubeReflectionResolution256 = 256,
-        CubeReflectionResolution512 = 512,
-        CubeReflectionResolution1024 = 1024,
-        CubeReflectionResolution2048 = 2048,
-        CubeReflectionResolution4096 = 4096
-    }
-
-    [Serializable]
-    public enum PlanarReflectionResolution
-    {
-        PlanarReflectionResolution64 = 64,
-        PlanarReflectionResolution128 = 128,
-        PlanarReflectionResolution256 = 256,
-        PlanarReflectionResolution512 = 512,
-        PlanarReflectionResolution1024 = 1024,
-        PlanarReflectionResolution2048 = 2048,
-        PlanarReflectionResolution4096 = 4096,
-        PlanarReflectionResolution8192 = 8192,
-        PlanarReflectionResolution16384 = 16384
-    }
-
-    [Serializable]
-    public enum CookieResolution
-    {
-        CookieResolution64 = 64,
-        CookieResolution128 = 128,
-        CookieResolution256 = 256,
-        CookieResolution512 = 512,
-        CookieResolution1024 = 1024,
-        CookieResolution2048 = 2048,
-        CookieResolution4096 = 4096,
-        CookieResolution8192 = 8192,
-        CookieResolution16384 = 16384
-    }
-
-    [Serializable]
-    public enum CubeCookieResolution
-    {
-        CubeCookieResolution64 = 64,
-        CubeCookieResolution128 = 128,
-        CubeCookieResolution256 = 256,
-        CubeCookieResolution512 = 512,
-        CubeCookieResolution1024 = 1024,
-        CubeCookieResolution2048 = 2048,
-        CubeCookieResolution4096 = 4096
-    }
-
     public enum EnvironementUpdateMode
     {
         OnChanged = 0,
@@ -190,12 +139,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void UpdateCurrentSkySettings(HDCamera camera)
+        public void UpdateCurrentSkySettings(HDCamera hdCamera)
         {
             m_VisualSky.skySettings = GetSkySetting(VolumeManager.instance.stack);
 
 #if UNITY_EDITOR
-            if (camera.camera.cameraType == CameraType.Preview)
+            if (HDUtils.IsRegularPreviewCamera(hdCamera.camera))
             {
                 m_VisualSky.skySettings = GetDefaultPreviewSkyInstance();
             }
@@ -204,7 +153,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_BakingSky.skySettings = SkyManager.GetBakingSkySettings();
 
             // Update needs to happen before testing if the component is active other internal data structure are not properly updated yet.
-            VolumeManager.instance.Update(m_LightingOverrideVolumeStack, camera.camera.transform, m_LightingOverrideLayerMask);
+            VolumeManager.instance.Update(m_LightingOverrideVolumeStack, hdCamera.camera.transform, m_LightingOverrideLayerMask);
             if(VolumeManager.instance.IsComponentActiveInMask<VisualEnvironment>(m_LightingOverrideLayerMask))
             {
                 SkySettings newSkyOverride = GetSkySetting(m_LightingOverrideVolumeStack);

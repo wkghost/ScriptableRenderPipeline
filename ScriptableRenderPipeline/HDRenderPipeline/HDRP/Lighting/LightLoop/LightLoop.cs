@@ -831,6 +831,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             directionalLightData.diffuseScale = additionalData.affectDiffuse ? diffuseDimmer : 0.0f;
             directionalLightData.specularScale = additionalData.affectSpecular ? specularDimmer : 0.0f;
+            directionalLightData.volumetricDimmer = additionalData.volumetricDimmer;
             directionalLightData.shadowIndex = directionalLightData.cookieIndex = -1;
 
             if (light.light.cookie != null)
@@ -1462,11 +1463,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Return true if BakedShadowMask are enabled
-        public bool PrepareLightsForGPU(CommandBuffer cmd, Camera camera, ShadowSettings shadowSettings, CullResults cullResults,
+        public bool PrepareLightsForGPU(CommandBuffer cmd, HDCamera hdCamera, ShadowSettings shadowSettings, CullResults cullResults,
                                         ReflectionProbeCullResults reflectionProbeCullResults, DensityVolumeList densityVolumes)
         {
             using (new ProfilingSample(cmd, "Prepare Lights For GPU"))
             {
+                Camera camera = hdCamera.camera;
+
                 // If any light require it, we need to enabled bake shadow mask feature
                 m_enableBakeShadowMask = false;
                 m_maxShadowDistance = shadowSettings.maxShadowDistance;
@@ -1883,9 +1886,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 
                 UpdateDataBuffers();
-
-                return m_enableBakeShadowMask;
             }
+
+            m_enableBakeShadowMask = m_enableBakeShadowMask && hdCamera.frameSettings.enableShadowMask;
+
+            return m_enableBakeShadowMask;
         }
 
         static float CalculateProbeLogVolume(Bounds bounds)
