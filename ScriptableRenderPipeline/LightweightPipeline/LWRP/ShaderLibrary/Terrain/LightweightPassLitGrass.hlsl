@@ -19,9 +19,9 @@ struct GrassVertexOutput
     float2 uv                       : TEXCOORD0;
     DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 1);
 
-    float4 posWSShininess           : TEXCOORD2;    // xyz: posWS, w: Shininess * 128
+    float3 posWS                    : TEXCOORD2;
 
-    half3  normal                   : TEXCOORD3;
+    half3 normal                    : TEXCOORD3;
     half3 viewDir                   : TEXCOORD4;
 
     half4 fogFactorAndVertexLight   : TEXCOORD5; // x: fogFactor, yzw: vertex light
@@ -38,7 +38,7 @@ struct GrassVertexOutput
 
 void InitializeInputData(GrassVertexOutput IN, out InputData inputData)
 {
-    inputData.positionWS = IN.posWSShininess.xyz;
+    inputData.positionWS = IN.posWS;
 
     half3 viewDir = IN.viewDir;
     inputData.normalWS = FragmentNormalWS(IN.normal);
@@ -58,11 +58,10 @@ void InitializeVertData(GrassVertexInput IN, inout GrassVertexOutput vertData)
 {
     vertData.uv = IN.texcoord;
 
-    vertData.posWSShininess.xyz = TransformObjectToWorld(IN.vertex.xyz);
-    vertData.posWSShininess.w = 32;
-    vertData.clipPos = TransformWorldToHClip(vertData.posWSShininess.xyz);
+    vertData.posWS = TransformObjectToWorld(IN.vertex.xyz);
+    vertData.clipPos = TransformWorldToHClip(vertData.posWS);
 
-    half3 viewDir = VertexViewDirWS(GetCameraPositionWS() - vertData.posWSShininess.xyz);
+    half3 viewDir = VertexViewDirWS(GetCameraPositionWS() - vertData.posWS);
     vertData.viewDir = viewDir;
     // initializes o.normal and if _NORMALMAP also o.tangent and o.binormal
     OUTPUT_NORMAL(IN, vertData);
@@ -74,7 +73,7 @@ void InitializeVertData(GrassVertexInput IN, inout GrassVertexOutput vertData)
     OUTPUT_LIGHTMAP_UV(IN.lightmapUV, unity_LightmapST, vertData.lightmapUV);
     OUTPUT_SH(vertData.normal.xyz, vertData.vertexSH);
 
-    half3 vertexLight = VertexLighting(vertData.posWSShininess.xyz, vertData.normal.xyz);
+    half3 vertexLight = VertexLighting(vertData.posWS, vertData.normal.xyz);
     half fogFactor = ComputeFogFactor(vertData.clipPos.z);
     vertData.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 
@@ -82,7 +81,7 @@ void InitializeVertData(GrassVertexInput IN, inout GrassVertexOutput vertData)
 #if SHADOWS_SCREEN
     vertData.shadowCoord = ComputeShadowCoord(vertData.clipPos);
 #else
-    vertData.shadowCoord = TransformWorldToShadowCoord(vertData.posWSShininess.xyz);
+    vertData.shadowCoord = TransformWorldToShadowCoord(vertData.posWS);
 #endif
 #endif
 }
@@ -108,7 +107,7 @@ GrassVertexOutput WavingGrassVert(GrassVertexInput v)
     // MeshGrass v.color.a: 1 on top vertices, 0 on bottom vertices
     // _WaveAndDistance.z == 0 for MeshLit
     float waveAmount = v.color.a * _WaveAndDistance.z;
-    o.color = TerrainWaveGrass (v.vertex, waveAmount, v.color);
+    o.color = TerrainWaveGrass(v.vertex, waveAmount, v.color);
 
     InitializeVertData(v, o);
 
@@ -122,10 +121,10 @@ GrassVertexOutput WavingGrassBillboardVert(GrassVertexInput v)
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    TerrainBillboardGrass (v.vertex, v.tangent.xy);
+    TerrainBillboardGrass(v.vertex, v.tangent.xy);
     // wave amount defined by the grass height
     float waveAmount = v.tangent.y;
-    o.color = TerrainWaveGrass (v.vertex, waveAmount, v.color);
+    o.color = TerrainWaveGrass(v.vertex, waveAmount, v.color);
 
     InitializeVertData(v, o);
 
@@ -145,14 +144,13 @@ half4 LitPassFragmentGrass(GrassVertexOutput IN) : SV_Target
     AlphaDiscard(alpha, _Cutoff);
     alpha *= IN.color.a;
 
-    half3 emission = 0;
-    half4 specularGloss = 0.1;// SampleSpecularGloss(uv, diffuseAlpha.a, _SpecColor, TEXTURE2D_PARAM(_SpecGlossMap, sampler_SpecGlossMap));
-    half shininess = IN.posWSShininess.w;
+    half3 emission = 0.0h;
+    half4 specularGloss = 0.1h;// SampleSpecularGloss(uv, diffuseAlpha.a, _SpecColor, TEXTURE2D_PARAM(_SpecGlossMap, sampler_SpecGlossMap));
 
     InputData inputData;
     InitializeInputData(IN, inputData);
 
-    return LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, shininess, emission, alpha);
+    return LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, 32.0h, emission, alpha);
 };
 
 #endif

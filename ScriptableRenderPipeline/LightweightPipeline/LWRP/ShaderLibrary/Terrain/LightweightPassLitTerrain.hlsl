@@ -57,10 +57,10 @@ void InitializeInputData(VertexOutput IN, half3 normalTS, out InputData input)
 void SplatmapMix(VertexOutput IN, half4 defaultAlpha, out half4 splat_control, out half weight, out half4 mixedDiffuse, inout half3 mixedNormal)
 {
     splat_control = SAMPLE_TEXTURE2D(_Control, sampler_Control, IN.uvControlAndLM.xy);
-    weight = dot(splat_control, 1);
+    weight = dot(splat_control, 1.0h);
 
 #if !defined(SHADER_API_MOBILE) && defined(TERRAIN_SPLAT_ADDPASS)
-    clip(weight == 0.0f ? -1 : 1);
+    clip(weight == 0.0h ? -1.0h : 1.0h);
 #endif
 
     // Normalize weights before lighting and restore weights in final modifier functions so that the overal
@@ -68,10 +68,10 @@ void SplatmapMix(VertexOutput IN, half4 defaultAlpha, out half4 splat_control, o
     splat_control /= (weight + 1e-3f);
 
     mixedDiffuse = 0.0f;
-    mixedDiffuse += splat_control.r * SAMPLE_TEXTURE2D(_Splat0, sampler_Splat0, IN.uvSplat01.xy) * half4(1.0, 1.0, 1.0, defaultAlpha.r);
-    mixedDiffuse += splat_control.g * SAMPLE_TEXTURE2D(_Splat1, sampler_Splat0, IN.uvSplat01.zw) * half4(1.0, 1.0, 1.0, defaultAlpha.g);
-    mixedDiffuse += splat_control.b * SAMPLE_TEXTURE2D(_Splat2, sampler_Splat0, IN.uvSplat23.xy) * half4(1.0, 1.0, 1.0, defaultAlpha.b);
-    mixedDiffuse += splat_control.a * SAMPLE_TEXTURE2D(_Splat3, sampler_Splat0, IN.uvSplat23.zw) * half4(1.0, 1.0, 1.0, defaultAlpha.a);
+    mixedDiffuse += SAMPLE_TEXTURE2D(_Splat0, sampler_Splat0, IN.uvSplat01.xy) * half4(splat_control.rrr, defaultAlpha.r * splat_control.r);
+    mixedDiffuse += SAMPLE_TEXTURE2D(_Splat1, sampler_Splat0, IN.uvSplat01.zw) * half4(splat_control.ggg, defaultAlpha.g * splat_control.g);
+    mixedDiffuse += SAMPLE_TEXTURE2D(_Splat2, sampler_Splat0, IN.uvSplat23.xy) * half4(splat_control.bbb, defaultAlpha.b * splat_control.b);
+    mixedDiffuse += SAMPLE_TEXTURE2D(_Splat3, sampler_Splat0, IN.uvSplat23.zw) * half4(splat_control.aaa, defaultAlpha.a * splat_control.a);
 
 #ifdef _TERRAIN_NORMAL_MAP
     half4 nrm = 0.0f;
@@ -81,18 +81,18 @@ void SplatmapMix(VertexOutput IN, half4 defaultAlpha, out half4 splat_control, o
     nrm += splat_control.a * SAMPLE_TEXTURE2D(_Normal3, sampler_Normal0, IN.uvSplat23.zw);
     mixedNormal = UnpackNormal(nrm);
 #else
-    mixedNormal = half3(0, 0, 1);
+    mixedNormal = half3(0.0h, 0.0h, 1.0h);
 #endif
 }
 
 void SplatmapFinalColor(inout half4 color, half fogCoord)
 {
     color.rgb *= color.a;
-    #ifdef TERRAIN_SPLAT_ADDPASS
-        ApplyFogColor(color.rgb, half3(0,0,0), fogCoord);
-    #else
-        ApplyFog(color.rgb, fogCoord);
-    #endif
+#ifdef TERRAIN_SPLAT_ADDPASS
+    ApplyFogColor(color.rgb, half3(0.0h, 0.0h, 0.0h), fogCoord);
+#else
+    ApplyFog(color.rgb, fogCoord);
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,16 +149,16 @@ half4 SpatmapFragment(VertexOutput IN) : SV_TARGET
     half3 albedo = mixedDiffuse.rgb;
     half smoothness = mixedDiffuse.a;
     half metallic = dot(splat_control, half4(_Metallic0, _Metallic1, _Metallic2, _Metallic3));
-    half3 specular = half3(0, 0, 0);
+    half3 specular = half3(0.0h, 0.0h, 0.0h);
     half alpha = weight;
 
     InputData inputData;
     InitializeInputData(IN, normalTS, inputData);
-    half4 color = LightweightFragmentPBR(inputData, albedo, metallic, specular, smoothness, /* occlusion */ 1.0, /* emission */ half3(0, 0, 0), alpha);
+    half4 color = LightweightFragmentPBR(inputData, albedo, metallic, specular, smoothness, /* occlusion */ 1.0h, /* emission */ half3(0.0h, 0.0h, 0.0h), alpha);
 
     SplatmapFinalColor(color, inputData.fogCoord);
 
-    return half4(color.rgb, 1);
+    return half4(color.rgb, 1.0h);
 }
 
 #endif // LIGHTWEIGHT_PASS_LIT_TERRAIN_INCLUDED

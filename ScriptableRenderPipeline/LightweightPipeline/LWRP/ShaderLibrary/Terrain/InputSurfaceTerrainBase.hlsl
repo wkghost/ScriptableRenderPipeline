@@ -24,7 +24,7 @@ half4 SampleMetallicSpecGloss(float2 uv, half albedoAlpha)
 inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
 {
     half4 albedoSmoothness= SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
-    outSurfaceData.alpha = 1;
+    outSurfaceData.alpha = 1.0h;
 
     half4 specGloss = SampleMetallicSpecGloss(uv, albedoSmoothness.a);
     outSurfaceData.albedo = albedoSmoothness.rgb;
@@ -34,8 +34,8 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
 
     outSurfaceData.smoothness = specGloss.a;
     outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
-    outSurfaceData.occlusion = 1;
-    outSurfaceData.emission = 0;
+    outSurfaceData.occlusion = 1.0h;
+    outSurfaceData.emission = 0.0h;
 }
 
 #endif // LIGHTWEIGHT_INPUT_SURFACE_TERRAIN_BASE_INCLUDED

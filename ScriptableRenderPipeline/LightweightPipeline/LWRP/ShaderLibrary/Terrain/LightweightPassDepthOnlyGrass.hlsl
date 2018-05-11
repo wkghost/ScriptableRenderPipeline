@@ -27,7 +27,7 @@ VertexOutput DepthOnlyVertex(VertexInput v)
     // MeshGrass v.color.a: 1 on top vertices, 0 on bottom vertices
     // _WaveAndDistance.z == 0 for MeshLit
     float waveAmount = v.color.a * _WaveAndDistance.z;
-    o.color = TerrainWaveGrass (v.position, waveAmount, v.color);
+    o.color = TerrainWaveGrass(v.position, waveAmount, v.color);
     o.clipPos = TransformObjectToHClip(v.position.xyz);
     return o;
 }
