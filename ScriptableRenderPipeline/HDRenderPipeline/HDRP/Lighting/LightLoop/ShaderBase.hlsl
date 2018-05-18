@@ -2,7 +2,7 @@
 #define __SHADERBASE_H__
 
 // can't use UNITY_REVERSED_Z since it's not enabled in compute shaders
-#if !defined(SHADER_API_GLES3) && !defined(SHADER_API_GLCORE)
+#if defined(SHADER_API_SWITCH) || (!defined(SHADER_API_GLES3) && !defined(SHADER_API_GLCORE))
     #define REVERSE_ZBUF
 #endif
 
